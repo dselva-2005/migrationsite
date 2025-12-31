@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/register/actions.js", "app/login/page.tsx", "app/login/actions.ts"  ],
+, "app/(auth)/register/actions.js", "app/(auth)/login/page.tsx", "app/(auth)/login/actions.ts"  ],
   "exclude": ["node_modules"]
 }

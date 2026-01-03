@@ -37,6 +37,7 @@ export function CompanyReviewCard({
                                 alt={name}
                                 fill
                                 className="rounded-[6px]"
+                                unoptimized
                             />
                         </AspectRatio>
                     </div>

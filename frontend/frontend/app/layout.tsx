@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/app/providers/AuthProvider"
+import { AuthProvider } from "@/providers/AuthProvider"
 import Navbar from "@/components/header/navbar";
 import { Footer } from "@/components/Footer"
 import { ScrollProgressCircle } from "@/components/ScrollProgress"
 import Breadcrumbs from "@/components/header/Breadcrumbs";
-
+import { GlobalPrefetch } from "@/components/GlobalPrefetch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           <Navbar/>
           <Breadcrumbs/>
+          <GlobalPrefetch />
           {children}
           <ScrollProgressCircle />
           <Footer />

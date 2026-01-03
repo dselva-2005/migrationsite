@@ -34,6 +34,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +46,10 @@ INSTALLED_APPS = [
     "auth_app",
     "django_extensions",
     "rest_framework_simplejwt.token_blacklist",
+    'content',
+    'company',
+    'review',
+    'blog',
 ]
 
 MIDDLEWARE = [
@@ -131,6 +136,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://localhost:3000",
     "http://192.168.1.113:3000",
     "https://192.168.1.113:3000",
+    "https://twin-proved-tune-also.trycloudflare.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -152,3 +158,66 @@ REST_FRAMEWORK = {
 }
 # settings.py
 AUTH_USER_MODEL = "auth_app.User"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "myapp",
+    }
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# URL prefix for media files
+MEDIA_URL = '/media/'
+
+# Folder where uploaded media files are stored
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+JAZZMIN_SETTINGS = {
+    # Title on the login screen
+    "site_title": "Admin Panel",
+
+    # Title on the brand
+    "site_header": "Admin Dashboard",
+
+    # Title in browser tab
+    "site_brand": "My Project",
+
+    # Logo (static path)
+    # "site_logo": "images/logo.png",
+
+    # Welcome text
+    "welcome_sign": "Welcome to the Admin Panel",
+
+    # Footer text
+    "copyright": "© 2026 My Company",
+
+    # Top menu links
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"model": "auth.User"},
+    ],
+
+    # User avatar
+    "user_avatar": None,
+
+    # Sidebar
+    "show_sidebar": True,
+    "navigation_expanded": True,
+
+    # Theme
+    "theme": "darkly",  # ← very popular
+}
+JAZZMIN_SETTINGS["icons"] = {
+    "auth": "fas fa-users-cog",
+    "auth.user": "fas fa-user",
+    "auth.Group": "fas fa-users",
+    "review.Review": "fas fa-star",
+    "company.Company": "fas fa-building",
+}

@@ -1,3 +1,5 @@
+"use client"
+
 import { Review } from "@/types/review"
 import { ReviewCard } from "./ReviewCard"
 import { ReviewFilterState } from "./ReviewFilters"
@@ -7,16 +9,11 @@ interface ReviewListProps {
     filter: ReviewFilterState
 }
 
-export function ReviewList({
-    reviews,
-    filter,
-}: ReviewListProps) {
+export function ReviewList({ reviews, filter }: ReviewListProps) {
     let filtered = [...reviews]
 
     if (filter.rating) {
-        filtered = filtered.filter(
-            (r) => r.rating === filter.rating
-        )
+        filtered = filtered.filter(r => r.rating === filter.rating)
     }
 
     switch (filter.sort) {
@@ -29,8 +26,8 @@ export function ReviewList({
         case "recent":
             filtered.sort(
                 (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime()
             )
             break
     }
@@ -45,7 +42,7 @@ export function ReviewList({
 
     return (
         <div className="space-y-4">
-            {filtered.map((review) => (
+            {filtered.map(review => (
                 <ReviewCard
                     key={review.id}
                     review={review}

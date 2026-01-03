@@ -1,163 +1,157 @@
 "use client"
 
+import { useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CountriesCarousel } from "./CountriesCarousel"
-const DATA = {
-    education: [
-        {
-            id: "canada-edu",
-            name: "Canada",
-            description:
-                "World-class universities, post-study work permits, and a welcoming immigration system for international students.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-5-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/066-canada.svg",
-            link: "/canada",
-        },
-        {
-            id: "southafrica-edu",
-            name: "South Africa",
-            description:
-                "Affordable education with globally recognized degrees and diverse cultural exposure.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-1-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/188-south-africa.svg",
-            link: "/south-africa",
-        },
-        {
-            id: "brazil-edu",
-            name: "Brazil",
-            description:
-                "Emerging education hub offering research-focused universities and vibrant student life.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-6-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/022-brazil.svg",
-            link: "/brazil",
-        },
-        {
-            id: "uk-edu",
-            name: "United Kingdom",
-            description:
-                "Home to historic universities, globally ranked institutions, and shorter degree durations.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-4-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/110-united-kingdom.svg",
-            link: "/united-kingdom",
-        },
-        {
-            id: "australia-edu",
-            name: "Australia",
-            description:
-                "High academic standards, strong research focus, and excellent post-study work options.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-2-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/009-australia.svg",
-            link: "/australia",
-        },
-    ],
+import { usePageContent } from "@/providers/PageContentProvider"
 
-    immigration: [
-        {
-            id: "germany-imm",
-            name: "Germany",
-            description:
-                "Skilled worker programs, strong economy, and long-term settlement opportunities.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/e2-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/208-germany.svg",
-            link: "/germany",
-        },
-        {
-            id: "uae-imm",
-            name: "UAE",
-            description:
-                "Golden visa programs, tax-free income, and a fast-growing global business hub.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/e13-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/195-united-arab-emirates.svg",
-            link: "/uae",
-        },
-        {
-            id: "canada-imm",
-            name: "Canada",
-            description:
-                "Points-based immigration system with clear pathways to permanent residency.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/e1-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/066-canada.svg",
-            link: "/canada-immigration",
-        },
-        {
-            id: "newzealand-imm",
-            name: "New Zealand",
-            description:
-                "High quality of life, skilled migration visas, and family-friendly policies.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/e8-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/215-new-zealand.svg",
-            link: "/new-zealand",
-        },
-    ],
+/* ---------------- Types (local only) ---------------- */
 
-    business: [
-        {
-            id: "usa-biz",
-            name: "United States",
-            description:
-                "Global business capital offering startup visas, investor programs, and innovation ecosystems.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/e3-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/186-united-states.svg",
-            link: "/usa",
-        },
-        {
-            id: "india-biz",
-            name: "India",
-            description:
-                "Rapidly growing economy with vast market potential and startup-friendly initiatives.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/e4-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/055-india.svg",
-            link: "/india",
-        },
-        {
-            id: "singapore-biz",
-            name: "Singapore",
-            description:
-                "Asia’s financial hub with strong legal systems and ease of doing business.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-7-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/191-singapore.svg",
-            link: "/singapore",
-        },
-        {
-            id: "uk-biz",
-            name: "United Kingdom",
-            description:
-                "Gateway to European markets with investor and innovator visa routes.",
-            image:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/02/i-4-370x250.jpg",
-            flag:
-                "https://migrationreviews.com/1123/wp-content/uploads/2022/04/110-united-kingdom.svg",
-            link: "/uk-business",
-        },
-    ],
+type Country = {
+    id: string
+    name: string
+    category: "education" | "immigration" | "business"
+    description: string
+    image: string
+    flag: string
+    link: string
 }
 
+type HeaderData = {
+    eyebrow: string
+    title: string
+}
+
+type FiltersData = {
+    education: string
+    immigration: string
+    business: string
+}
+
+/* ---------------- Static Countries Data ---------------- */
+
+export const COUNTRIES: Country[] = [
+    {
+        id: "canada-education",
+        name: "Canada",
+        category: "education",
+        description:
+            "Globally ranked universities with strong post-study work options.",
+        image:
+            "https://images.unsplash.com/photo-1508973375-1d5be6c98b00?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/canada.svg",
+        link: "/study-in-canada",
+    },
+    {
+        id: "germany-education",
+        name: "Germany",
+        category: "education",
+        description:
+            "Low tuition fees and world-class technical education.",
+        image:
+            "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/germany.svg",
+        link: "/study-in-germany",
+    },
+    {
+        id: "uk-education",
+        name: "United Kingdom",
+        category: "education",
+        description:
+            "Shorter degrees and top global institutions.",
+        image:
+            "https://images.unsplash.com/photo-1486299267070-83823f5448dd?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/uk.svg",
+        link: "/study-in-uk",
+    },
+    {
+        id: "australia-immigration",
+        name: "Australia",
+        category: "immigration",
+        description:
+            "Points-based immigration with strong demand occupations.",
+        image:
+            "https://images.unsplash.com/photo-1506973035872-a4f23e576c59?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/australia.svg",
+        link: "/australia-pr",
+    },
+    {
+        id: "canada-immigration",
+        name: "Canada",
+        category: "immigration",
+        description:
+            "Fast-track permanent residency programs via Express Entry.",
+        image:
+            "https://images.unsplash.com/photo-1517935706615-2717063c2225?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/canada.svg",
+        link: "/canada-pr",
+    },
+    {
+        id: "germany-immigration",
+        name: "Germany",
+        category: "immigration",
+        description:
+            "EU residency through the Germany Blue Card program.",
+        image:
+            "https://images.unsplash.com/photo-1528728329032-2972f65dfb3f?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/germany.svg",
+        link: "/germany-blue-card",
+    },
+    {
+        id: "usa-business",
+        name: "United States",
+        category: "business",
+        description:
+            "LLC setup, investor visas, and large-scale business expansion.",
+        image:
+            "https://images.unsplash.com/photo-1508433957232-3107f5fd5995?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/usa.svg",
+        link: "/business-in-usa",
+    },
+    {
+        id: "uae-business",
+        name: "UAE",
+        category: "business",
+        description:
+            "Zero-tax free zones with fast company formation.",
+        image:
+            "https://images.unsplash.com/photo-1518684079-3c830dcef090?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/uae.svg",
+        link: "/business-in-uae",
+    },
+    {
+        id: "singapore-business",
+        name: "Singapore",
+        category: "business",
+        description:
+            "Asia’s most business-friendly ecosystem.",
+        image:
+            "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=1200&auto=format&fit=crop",
+        flag: "/flags/singapore.svg",
+        link: "/business-in-singapore",
+    },
+]
+
+/* ---------------- Component ---------------- */
 
 export default function CountriesSection() {
+    const content = usePageContent()
+
+    const header = content["countries.header"] as HeaderData | undefined
+    const filters = content["countries.filters"] as FiltersData | undefined
+
+    const grouped = useMemo(() => {
+        return {
+            education: COUNTRIES.filter(c => c.category === "education"),
+            immigration: COUNTRIES.filter(c => c.category === "immigration"),
+            business: COUNTRIES.filter(c => c.category === "business"),
+        }
+    }, [])
+
+    /* -------- Graceful failure -------- */
+
+    if (!header || !filters) return null
+
     return (
         <section className="py-2">
             <div className="mx-auto max-w-7xl px-4">
@@ -165,30 +159,36 @@ export default function CountriesSection() {
                 {/* Header */}
                 <div className="mb-12 text-center">
                     <p className="text-sm uppercase tracking-widest text-muted-foreground">
-                        Countries We Offer
+                        {header.eyebrow}
                     </p>
                     <h2 className="mt-2 text-3xl font-bold sm:text-4xl">
-                        Best Countries to Travel
+                        {header.title}
                     </h2>
                 </div>
 
                 <Tabs defaultValue="education">
                     <TabsList className="mx-auto mb-10 flex w-fit gap-6">
-                        <TabsTrigger value="education">Education</TabsTrigger>
-                        <TabsTrigger value="immigration">Immigration</TabsTrigger>
-                        <TabsTrigger value="business">Business</TabsTrigger>
+                        <TabsTrigger value="education">
+                            {filters.education}
+                        </TabsTrigger>
+                        <TabsTrigger value="immigration">
+                            {filters.immigration}
+                        </TabsTrigger>
+                        <TabsTrigger value="business">
+                            {filters.business}
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="education">
-                        <CountriesCarousel items={DATA.education} />
+                        <CountriesCarousel items={grouped.education} />
                     </TabsContent>
 
                     <TabsContent value="immigration">
-                        <CountriesCarousel items={DATA.immigration} />
+                        <CountriesCarousel items={grouped.immigration} />
                     </TabsContent>
 
                     <TabsContent value="business">
-                        <CountriesCarousel items={DATA.business} />
+                        <CountriesCarousel items={grouped.business} />
                     </TabsContent>
                 </Tabs>
             </div>

@@ -1,42 +1,36 @@
-// =====================
-// Review related types
-// =====================
+export type ReviewReplyInline = {
+    id: number
+    body: string
+    created_at: string
+}
 
-export interface Company {
-    id: string
-    name: string
-    domain: string
-    slug: string
+export type Review = {
+    id: number
+    title: string
+    body: string
     rating: number
-    totalReviews: number
-    ratingDistribution: RatingDistribution
+    author: string
+    author_profile_image_url: string | null
+    created_at: string
+    reply?: ReviewReplyInline | null
 }
 
-export type RatingDistribution = {
-    1: number
-    2: number
-    3: number
-    4: number
-    5: number
+/* Dashboard-only types (NO conflicts) */
+
+export type DashboardReviewReply = {
+    id: number
+    body: string
+    created_at: string
 }
 
-export interface Review {
-    id: string
+export type DashboardReview = {
+    id: number
     rating: number
     title: string
     body: string
-    author: string
-    createdAt: string // ISO string
-}
-
-export interface CompanyReviewResponse {
-    company: Company
-    reviews: Review[]
-    pagination: Pagination
-}
-
-export interface Pagination {
-    page: number
-    pageSize: number
-    total: number
+    author_name: string
+    is_verified: boolean
+    is_approved: boolean
+    created_at: string
+    reply?: DashboardReviewReply | null
 }

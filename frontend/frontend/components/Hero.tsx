@@ -4,60 +4,62 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { getPageContent } from "@/services/content"
 
-const HERO_IMAGES = [
-    "https://picsum.photos/id/1011/600/800",
-    "https://picsum.photos/id/1015/600/800",
-    "https://picsum.photos/id/1024/600/800",
-]
+type Slide = {
+    title: string
+    description: string
+}
 
-const HERO_CONTENT = [
-    {
-        title: "Study In Recognized Universities!",
-        description:
-            "We help students secure admissions in top global universities with end-to-end visa support.",
-    },
-    {
-        title: "Build Your Global Career",
-        description:
-            "Expert immigration consultants guiding you through every step of your journey abroad.",
-    },
-    {
-        title: "Trusted Visa & Migration Experts",
-        description:
-            "Professional assistance for student, work, and permanent residency visas.",
-    },
-]
+type ImageItem = {
+    url: string
+    alt: string
+}
 
 export default function Hero() {
+    const [slides, setSlides] = useState<Slide[]>([])
+    const [images, setImages] = useState<ImageItem[]>([])
+    const [cta, setCta] = useState<{ label: string; href: string }>({
+        label: "",
+        href: "#",
+    })
     const [index, setIndex] = useState(0)
 
     useEffect(() => {
+        getPageContent("home")
+            .then(data => {
+                setSlides(data["hero.slides"] ?? [])
+                setImages(data["hero.images"] ?? [])
+                setCta(data["hero.cta"] ?? {})
+            })
+            .catch(() => {
+                // fail silently for CMS content
+            })
+    }, [])
+
+    useEffect(() => {
+        if (!slides.length) return
+
         const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % HERO_CONTENT.length)
+            setIndex(prev => (prev + 1) % slides.length)
         }, 4500)
 
         return () => clearInterval(interval)
-    }, [])
+    }, [slides])
 
-    const content = HERO_CONTENT[index]
+    if (!slides.length) return null
+
+    const content = slides[index]
 
     return (
         <section className="relative w-full overflow-hidden bg-muted">
             <div className="mx-auto max-w-7xl px-6 py-20">
                 <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
 
-                    {/* LEFT — LOOPING CONTENT */}
+                    {/* LEFT */}
                     <div className="relative max-w-xl min-h-[220px]">
-                        <div
-                            key={index}
-                            className="
-                absolute inset-0
-                animate-hero-text
-                space-y-6
-              "
-                        >
-                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+                        <div key={index} className="absolute inset-0 animate-hero-text space-y-6">
+                            <h1 className="text-3xl font-bold sm:text-4xl md:text-5xl">
                                 {content.title}
                             </h1>
 
@@ -65,24 +67,26 @@ export default function Hero() {
                                 {content.description}
                             </p>
 
-                            <Button size="lg" className="gap-2">
-                                More Details
-                                <ArrowRight className="h-4 w-4" />
+                            <Button size="lg" className="gap-2" asChild>
+                                <a href={cta.href}>
+                                    {cta.label}
+                                    <ArrowRight className="h-4 w-4" />
+                                </a>
                             </Button>
                         </div>
                     </div>
 
-                    {/* RIGHT — IMAGE REEL */}
+                    {/* RIGHT */}
                     <div className="relative h-[320px] overflow-hidden rounded-3xl">
                         <div className="flex w-max gap-6 animate-hero-marquee">
-                            {[...HERO_IMAGES, ...HERO_IMAGES].map((src, i) => (
+                            {[...images, ...images].map((img, i) => (
                                 <div
                                     key={i}
                                     className="relative h-[320px] w-[260px] flex-shrink-0 overflow-hidden rounded-2xl"
                                 >
                                     <Image
-                                        src={src}
-                                        alt="Study abroad"
+                                        src={img.url}
+                                        alt={img.alt}
                                         fill
                                         unoptimized
                                         className="object-cover"

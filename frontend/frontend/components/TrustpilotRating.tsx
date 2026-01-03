@@ -25,6 +25,7 @@ export function TrustpilotRating({
     reviewCount,
     maxStars = 5,
 }: TrustpilotRatingProps) {
+    rating = rating || 0
     const color = trustpilotColor(rating)
 
     return (

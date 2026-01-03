@@ -9,6 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from .authentication import JWTAuthenticationFromCookie
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from company.models import CompanyMembership
+from .serializers import ProfileSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class ProtectedView(APIView):
@@ -62,7 +65,6 @@ class LoginView(APIView):
         return res
 
 
-
 class RefreshView(APIView):
     @method_decorator(csrf_exempt)
     def post(self, request):
@@ -81,7 +83,7 @@ class RefreshView(APIView):
             str(token.access_token),
             httponly=True,
             secure=True,
-            samesite="None",   # ✅ MUST MATCH
+            samesite="None",
             path="/",
         )
         return res
@@ -117,15 +119,106 @@ class LogoutView(APIView):
         res.delete_cookie("refresh", **cookie_kwargs)
 
         return res
-
+    
 
 class MeView(APIView):
-    authentication_classes = [JWTAuthenticationFromCookie]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
+
+        memberships = (
+            CompanyMembership.objects
+            .filter(
+                user=user,
+                status="ACTIVE",
+            )
+            .select_related("company")
+        )
+
         return Response({
-            "id": request.user.id,
-            "email": request.user.email,
-            "name": request.user.get_username(),
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+
+            # Business user if at least one active company
+            "is_business": memberships.exists(),
+
+            "companies": [
+                {
+                    "company_id": m.company.id,          
+                    "company_slug": m.company.slug,      
+                    "company_name": m.company.name,
+                    "role": m.role,
+                }
+                for m in memberships
+            ],
         })
+    
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request):
+        user = request.user
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "profile_image_url": (
+                user.profile_image.url if user.profile_image else None
+            ),
+        })
+
+    def patch(self, request):
+        user = request.user
+
+        username = request.data.get("username")
+        image = request.FILES.get("profile_image")
+
+        if username:
+            user.username = username
+
+        if image:
+            user.profile_image = image
+
+        user.save()
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "profile_image_url": (
+                user.profile_image.url if user.profile_image else None
+            ),
+        })
+
+    authentication_classes = [JWTAuthenticationFromCookie]
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get(self, request):
+        serializer = ProfileSerializer(
+            request.user,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = ProfileSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )

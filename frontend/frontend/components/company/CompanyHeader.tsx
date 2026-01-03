@@ -1,62 +1,101 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 
-import { Company } from "@/lib/api/types"
+import { Company } from "@/types/company"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { TrustpilotRating } from "../TrustpilotRating"
+import { ReviewModal } from "@/components/review/ReviewModal"
+import { useAuth } from "@/providers/AuthProvider"
+import { useRouter } from "next/navigation"
+
 type Props = {
     company: Company
 }
 
 export function CompanyHeader({ company }: Props) {
+    const [open, setOpen] = useState(false)
+    const { isLoggedIn, loading } = useAuth()
+    const router = useRouter()
+
+    const handleWriteReview = () => {
+        if (loading) return
+        if (!isLoggedIn) {
+            router.push("/login")
+            return
+        }
+        setOpen(true)
+    }
+
     return (
-        <section className="flex flex-col gap-6">
-            {/* Top Row */}
-            <div className="flex items-start gap-6">
-                {/* Logo */}
-                <Link href={company.websiteUrl} target="_blank">
-                    <Image
-                        src={company.logoUrl}
-                        alt={`${company.name} logo`}
-                        width={120}
-                        height={90}
-                        className="rounded-md border-0"
-                    />
-                </Link>
-
-                {/* Company Meta */}
-                <div className="flex flex-col gap-2 flex-1">
-                    <h1 className="text-3xl font-bold">
-                        {company.name}{" "}
-                        <span className="text-muted-foreground text-lg font-normal">
-                            Reviews {company.totalReviews}
-                        </span>
-                    </h1>
-                    <TrustpilotRating
-                        rating={company.rating}
-                        reviewCount={company.totalReviews}
-                        starsize={22}
-                    />
-                </div>
-
-                {/* Desktop Actions */}
-                <div className="hidden md:flex gap-3">
-                    <Button asChild>
-                        <Link href={`/evaluate/${company.slug}`}>Write a review</Link>
-                    </Button>
-
-                    <Button variant="outline" asChild>
-                        <Link href={company.websiteUrl} target="_blank">
-                            Visit website
+        <>
+            <section className="flex flex-col gap-6">
+                <div className="flex items-start gap-6">
+                    {/* Logo */}
+                    {company.logo ? (
+                        <Link href={company.website} target="_blank">
+                            <Image
+                                src={company.logo}
+                                alt={`${company.name} logo`}
+                                width={120}
+                                height={90}
+                                className="rounded-md object-contain"
+                                unoptimized
+                            />
                         </Link>
-                    </Button>
-                </div>
-            </div>
+                    ) : (
+                        <div className="w-[120px] h-[90px] bg-muted rounded-md flex items-center justify-center text-sm text-muted-foreground">
+                            No logo
+                        </div>
+                    )}
 
-            <Separator />
-        </section>
+                    {/* Meta */}
+                    <div className="flex flex-col gap-2 flex-1">
+                        <h1 className="text-3xl font-bold">
+                            {company.name}{" "}
+                            <span className="text-muted-foreground text-lg font-normal">
+                                ({company.rating_count} reviews)
+                            </span>
+                        </h1>
+
+                        <TrustpilotRating
+                            rating={Number(company.rating_average)}
+                            reviewCount={company.rating_count}
+                            starsize={22}
+                        />
+
+                        {company.tagline && (
+                            <p className="text-muted-foreground">
+                                {company.tagline}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="hidden md:flex gap-3">
+                        <Button onClick={handleWriteReview}>
+                            Write a review
+                        </Button>
+
+                        <Button variant="outline" asChild>
+                            <Link href={company.website} target="_blank">
+                                Visit website
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <Separator />
+            </section>
+
+            <ReviewModal
+                open={open}
+                onClose={() => setOpen(false)}
+                company={company}
+            />
+        </>
     )
 }

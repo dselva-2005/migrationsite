@@ -1,5 +1,5 @@
 // components/blog/BlogList.tsx
-import { BlogPost } from "@/lib/blog"
+import { BlogPost } from "@/types/blog"
 import { BlogRowCard } from "./BlogRowCard"
 
 export function BlogList({ posts }: { posts: BlogPost[] }) {

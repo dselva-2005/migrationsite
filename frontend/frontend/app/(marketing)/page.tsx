@@ -7,10 +7,13 @@ import CountriesSection from "@/components/CountriesSection"
 import { Section } from "@/components/Section"
 import WhyChooseUsSection from "@/components/WhyChooseUsSection"
 import NewsSection from "@/components/NewsSection"
+import { PageContentProvider } from "@/providers/PageContentProvider"
+import Hero from "@/components/Hero"
 
 export default function Home() {
     return (
-        <>
+        <PageContentProvider page="home">
+            <Hero/>
             <Section tone="base">
                 <InfoSection />
             </Section>
@@ -38,6 +41,6 @@ export default function Home() {
             <Section tone="base">
                 <NewsSection />
             </Section>
-        </>
+        </PageContentProvider>
     )
 }

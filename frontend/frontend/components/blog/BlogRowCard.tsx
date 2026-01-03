@@ -1,7 +1,7 @@
 // components/blog/BlogRowCard.tsx
 import Image from "next/image"
 import Link from "next/link"
-import { BlogPost } from "@/lib/blog"
+import { BlogPost } from "@/types/blog"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { Badge } from "@/components/ui/badge"
 
@@ -17,6 +17,7 @@ export function BlogRowCard({ post }: { post: BlogPost }) {
                             alt={post.title}
                             fill
                             className="object-cover"
+                            unoptimized
                         />
                     </Link>
                 </div>

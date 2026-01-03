@@ -1,48 +1,41 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import { usePageContent } from "@/providers/PageContentProvider";
 
 interface HeroMessage {
-    title: string
-    subtitle: string
+    title: string;
+    subtitle: string;
 }
 
-const HERO_MESSAGES: HeroMessage[] = [
-    {
-        title: "Trusted company reviews",
-        subtitle:
-            "Honest customer experiences, transparent ratings, and real feedback.",
-    },
-    {
-        title: "Make confident decisions",
-        subtitle:
-            "Compare companies based on verified customer reviews and ratings.",
-    },
-    {
-        title: "Real voices, real impact",
-        subtitle:
-            "Discover what customers actually think before you choose.",
-    },
-]
-
 export function ReviewHero() {
-    const [index, setIndex] = React.useState(0)
+    const content = usePageContent();
+
+    // Memoize messages so useEffect dependencies are stable
+    const messages: HeroMessage[] = React.useMemo(() => {
+        return (content["review.hero.messages"] as HeroMessage[]) || [];
+    }, [content]);
+
+    const [index, setIndex] = React.useState(0);
 
     React.useEffect(() => {
+        if (!messages.length) return;
+
         const id = setInterval(() => {
-            setIndex((prev) => (prev + 1) % HERO_MESSAGES.length)
-        }, 3200) // slightly longer than animation duration
+            setIndex((prev) => (prev + 1) % messages.length);
+        }, 3200);
 
-        return () => clearInterval(id)
-    }, [])
+        return () => clearInterval(id);
+    }, [messages]); // stable dependency now
 
-    const message = HERO_MESSAGES[index]
+    if (!messages.length) return null; // fallback while loading
+
+    const message = messages[index];
 
     return (
         <section className="border-0 bg-violet-50/70 dark:bg-rose-950/20">
             <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
                 <div className="relative max-w-xl min-h-[220px] mx-auto text-center">
-                    {/* Remount to restart animation */}
                     <div
                         key={index}
                         className="absolute inset-0 animate-hero-text space-y-6"
@@ -58,5 +51,5 @@ export function ReviewHero() {
                 </div>
             </div>
         </section>
-    )
+    );
 }

@@ -2,7 +2,17 @@
 
 import Image from "next/image"
 import Link from "next/link"
+
 import { Card, CardContent } from "@/components/ui/card"
+import { usePageContent } from "@/providers/PageContentProvider"
+
+/* ---------------- Types ---------------- */
+
+type WhyChooseHeader = {
+    eyebrow: string
+    title: string
+    highlight: string
+}
 
 type Feature = {
     title: string
@@ -11,59 +21,46 @@ type Feature = {
     href: string
 }
 
-const FEATURES: Feature[] = [
-    {
-        title: "Direct Interviews",
-        description: "Expound actual teachings to the great explorers of truth.",
-        icon: "https://migrationreviews.com/1123/wp-content/uploads/2022/03/job-interview-1.svg",
-        href: "/about",
-    },
-    {
-        title: "Faster Processing",
-        description: "Give you a complete account of the system and procedures.",
-        icon: "https://migrationreviews.com/1123/wp-content/uploads/2022/03/worldwide-1.svg",
-        href: "/about",
-    },
-    {
-        title: "Visa Assistance",
-        description: "Professional visa guidance for individuals and businesses.",
-        icon: "https://migrationreviews.com/1123/wp-content/uploads/2022/03/video-call-1.svg",
-        href: "/about",
-    },
-    {
-        title: "Cost-Effective",
-        description: "Affordable solutions without compromising service quality.",
-        icon: "https://migrationreviews.com/1123/wp-content/uploads/2022/03/receipt-1.svg",
-        href: "/about",
-    },
-]
+/* ---------------- Component ---------------- */
 
 export default function WhyChooseUsSection() {
+    const content = usePageContent()
+
+    const header = content["why_choose.header"] as WhyChooseHeader | undefined
+    const items = content["why_choose.items"] as Feature[] | undefined
+
+    /* Graceful CMS failure */
+    if (!header || !items?.length) return null
+
     return (
         <section className="py-2">
             <div className="mx-auto max-w-7xl px-4">
-                {/* Section Title */}
+
+                {/* Header (CMS-controlled) */}
                 <div className="mb-14 text-center">
                     <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary/80">
-                        Why Choose Us
+                        {header.eyebrow}
                     </p>
 
                     <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-                        Offer Tailor-Made Services That{" "}
-                        <span className="text-primary">Our Clients Require</span>
+                        {header.title}{" "}
+                        <span className="text-primary">
+                            {header.highlight}
+                        </span>
                     </h2>
                 </div>
 
-                {/* Cards */}
+                {/* Cards (CMS-driven) */}
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                    {FEATURES.map((item) => (
+                    {items.map((item) => (
                         <Card
                             key={item.title}
-                            className="group h-full rounded-2xl border-0 transition"
+                            className="group h-full rounded-2xl border-0 transition hover:shadow-lg"
                         >
                             <CardContent className="flex h-full flex-col p-6 text-center">
+
                                 {/* Icon */}
-                                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl">
+                                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-muted">
                                     <Image
                                         src={item.icon}
                                         alt={item.title}
@@ -72,9 +69,11 @@ export default function WhyChooseUsSection() {
                                     />
                                 </div>
 
-                                <h4 className="text-lg font-semibold">{item.title}</h4>
+                                <h4 className="text-lg font-semibold">
+                                    {item.title}
+                                </h4>
 
-                                <p className="mt-2 text-sm line-clamp-3">
+                                <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
                                     {item.description}
                                 </p>
 
@@ -86,6 +85,7 @@ export default function WhyChooseUsSection() {
                                         Read More →
                                     </Link>
                                 </div>
+
                             </CardContent>
                         </Card>
                     ))}

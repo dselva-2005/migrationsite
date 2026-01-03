@@ -1,0 +1,235 @@
+# company/models.py
+from django.db import models
+from django.utils import timezone
+from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.contenttypes.fields import GenericRelation
+from django.core.exceptions import ValidationError
+from auth_app.models import User
+
+
+class CompanyCategory(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+
+    class Meta:
+        verbose_name_plural = "Company Categories"
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class Company(models.Model):
+    # --------------------
+    # Ownership
+    # --------------------
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="companies"
+    )
+
+    # --------------------
+    # Core Identity
+    # --------------------
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, db_index=True)
+
+    tagline = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+
+    # --------------------
+    # Branding
+    # --------------------
+    logo = models.ImageField(upload_to="companies/logos/", blank=True, null=True)
+    cover_image = models.ImageField(upload_to="companies/covers/", blank=True, null=True)
+
+    website = models.URLField(blank=True)
+
+    # --------------------
+    # Classification
+    # --------------------
+    category = models.ForeignKey(
+        CompanyCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="companies"
+    )
+
+    # --------------------
+    # Review Aggregates
+    # --------------------
+    rating_average = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=0.0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+    rating_count = models.PositiveIntegerField(default=0)
+
+    reviews = GenericRelation(
+        "review.Review",
+        related_query_name="company"
+    )
+
+    # --------------------
+    # Trust & Visibility
+    # --------------------
+    is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    # --------------------
+    # SEO
+    # --------------------
+    meta_title = models.CharField(max_length=255, blank=True)
+    meta_description = models.CharField(max_length=500, blank=True)
+
+    # --------------------
+    # Timestamps
+    # --------------------
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-rating_average", "-rating_count"]
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["rating_average"]),
+            models.Index(fields=["rating_count"]),
+            models.Index(fields=["is_verified"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)
+            slug = base
+            i = 1
+            while Company.objects.filter(slug=slug).exists():
+                slug = f"{base}-{i}"
+                i += 1
+            self.slug = slug
+
+        self.updated_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class CompanyOnboardingRequest(models.Model):
+    REQUEST_TYPE_CHOICES = (
+        ("NEW", "New Company"),
+        ("EXISTING", "Existing Company"),
+    )
+
+    STATUS_CHOICES = (
+        ("PENDING", "Pending"),
+        ("APPROVED", "Approved"),
+        ("REJECTED", "Rejected"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="onboarding_requests"
+    )
+
+    request_type = models.CharField(
+        max_length=10,
+        choices=REQUEST_TYPE_CHOICES
+    )
+
+    # Existing company (only if EXISTING)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    # New company snapshot (only if NEW)
+    company_name = models.CharField(max_length=255, blank=True)
+    tagline = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+    website = models.URLField(blank=True)
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="PENDING"
+    )
+
+    reviewed_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_onboarding_requests"
+    )
+
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} → {self.request_type}"
+    
+    def clean(self):
+        if self.request_type == "NEW" and self.company:
+            raise ValidationError("New company request cannot reference existing company")
+
+        if self.request_type == "EXISTING" and not self.company:
+            raise ValidationError("Existing company request must reference a company")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class CompanyMembership(models.Model):
+    ROLE_CHOICES = (
+        ("OWNER", "Owner"),
+        ("MANAGER", "Manager"),
+        ("EMPLOYEE", "Employee"),
+    )
+
+    STATUS_CHOICES = (
+        ("PENDING", "Pending"),
+        ("ACTIVE", "Active"),
+        ("REVOKED", "Revoked"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="company_memberships"
+    )
+
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name="memberships"
+    )
+
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default="PENDING"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "company")
+
+    def __str__(self):
+        return f"{self.user} @ {self.company}"

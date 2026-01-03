@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import axios from "axios"
 
 import api from "@/lib/axios"
-import { useAuth } from "@/app/providers/AuthProvider"
+import { useAuth } from "@/providers/AuthProvider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,23 +36,26 @@ export default function LoginForm({
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
-    function validate(): boolean {
-        if (!email) {
+    const validate = (): boolean => {
+        if (!email.trim()) {
             setError("Email is required")
             return false
         }
-        if (!email.includes("@")) {
-            setError("Enter a valid email")
+
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            setError("Enter a valid email address")
             return false
         }
+
         if (!password || password.length < 8) {
             setError("Password must be at least 8 characters")
             return false
         }
+
         return true
     }
 
-    async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError(null)
 
@@ -66,16 +69,15 @@ export default function LoginForm({
             })
 
             await refreshAuth()
-
             router.replace(redirectPath)
-        } catch (err: unknown) {
+        } catch (err) {
             if (axios.isAxiosError<LoginErrorResponse>(err)) {
                 setError(
                     err.response?.data?.detail ??
                     "Invalid email or password"
                 )
             } else {
-                setError("Something went wrong")
+                setError("Unexpected error occurred")
             }
         } finally {
             setLoading(false)
@@ -96,9 +98,10 @@ export default function LoginForm({
                         <Input
                             id="email"
                             type="email"
-                            autoComplete="username"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
 
@@ -111,6 +114,7 @@ export default function LoginForm({
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
 
@@ -119,14 +123,16 @@ export default function LoginForm({
                         <p className="text-sm text-red-600">{error}</p>
                     )}
 
-                    <div>
-                        <Link className="text-sm" href="/register">
-                            Create new account?
-                        </Link>
+                    <div className="flex justify-between text-sm">
+                        <Link href="/register">Create new account</Link>
                     </div>
 
                     {/* Submit */}
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={loading}
+                    >
                         {loading ? "Logging in..." : "Login"}
                     </Button>
                 </form>

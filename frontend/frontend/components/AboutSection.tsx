@@ -5,8 +5,60 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { usePageContent } from "@/providers/PageContentProvider"
+
+
+type AboutImage = {
+    src: string
+    alt: string
+}
+
+type AboutExperience = {
+    years: number
+    label: string
+}
+
+type AboutHeader = {
+    eyebrow: string
+    title: string
+    subtitle?: string
+}
+
+type AboutHighlight = {
+    icon: string
+    eyebrow: string
+    title: string
+}
+
+type AboutCTA = {
+    label: string
+    href: string
+}
+
+/* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function AboutSection() {
+    const content = usePageContent()
+
+    const images = content["about.images"] as AboutImage[] | undefined
+    const experience = content["about.experience"] as AboutExperience | undefined
+    const header = content["about.header"] as AboutHeader | undefined
+    const highlight = content["about.highlight"] as AboutHighlight | undefined
+    const description = content["about.description"] as string | undefined
+    const cta = content["about.cta"] as AboutCTA | undefined
+
+    /* ───────────── Graceful failure ───────────── */
+
+    if (
+        !images ||
+        images.length < 3 ||
+        !experience ||
+        !header ||
+        !highlight
+    ) {
+        return null
+    }
+
     return (
         <section
             id="about"
@@ -19,41 +71,41 @@ export default function AboutSection() {
                     {/* Image 1 */}
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
-                            src="https://migrationreviews.com/1123/wp-content/uploads/2022/02/about-1.jpg"
-                            alt="Immigration consultation"
+                            src={images[0].src}
+                            alt={images[0].alt}
                             fill
                             priority
-                            className="object-cover transition-all duration-1000 ease-in-out filter hover:grayscale-[40%] hover:brightness-90"
+                            className="object-cover transition-all duration-1000 ease-in-out hover:grayscale-[40%] hover:brightness-90"
                         />
                     </div>
 
                     {/* Experience */}
                     <div className="flex aspect-[4/5] flex-col items-center justify-center rounded-2xl bg-muted text-center">
-                        <span className="text-5xl font-semibold tracking-tight tabular-nums sm:text-6xl">
-                            14
+                        <span className="text-5xl font-semibold tabular-nums sm:text-6xl">
+                            {experience.years}
                         </span>
-                        <span className="mt-3 text-sm font-medium text-muted-foreground leading-tight">
-                            Years of <br /> Experience
+                        <span className="mt-3 text-sm font-medium leading-tight text-muted-foreground">
+                            {experience.label}
                         </span>
                     </div>
 
                     {/* Image 2 */}
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
-                            src="https://migrationreviews.com/1123/wp-content/uploads/2022/02/about-2.jpg"
-                            alt="Client consultation"
+                            src={images[1].src}
+                            alt={images[1].alt}
                             fill
-                            className="object-cover transition-all duration-1000 ease-in-out filter hover:grayscale-[40%] hover:brightness-90"
+                            className="object-cover transition-all duration-1000 ease-in-out hover:grayscale-[40%] hover:brightness-90"
                         />
                     </div>
 
                     {/* Image 3 */}
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
-                            src="https://migrationreviews.com/1123/wp-content/uploads/2022/02/about-3.jpg"
-                            alt="Immigration services"
+                            src={images[2].src}
+                            alt={images[2].alt}
                             fill
-                            className="object-cover transition-all duration-1000 ease-in-out filter hover:grayscale-[40%] hover:brightness-90"
+                            className="object-cover transition-all duration-1000 ease-in-out hover:grayscale-[40%] hover:brightness-90"
                         />
                     </div>
                 </div>
@@ -63,12 +115,17 @@ export default function AboutSection() {
                     {/* Heading */}
                     <div className="space-y-3">
                         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                            About Immigo
+                            {header.eyebrow}
                         </p>
 
                         <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                            Trusted Immigration <br className="hidden sm:block" />
-                            Consulting Experts
+                            {header.title}
+                            {header.subtitle && (
+                                <>
+                                    <br className="hidden sm:block" />
+                                    {header.subtitle}
+                                </>
+                            )}
                         </h2>
                     </div>
 
@@ -77,7 +134,7 @@ export default function AboutSection() {
                     {/* Highlight */}
                     <div className="flex items-start gap-4">
                         <Image
-                            src="https://migrationreviews.com/1123/wp-content/themes/immigo/assets/images/icons/icon-4.png"
+                            src={highlight.icon}
                             alt=""
                             width={48}
                             height={48}
@@ -85,28 +142,29 @@ export default function AboutSection() {
                         />
                         <div className="space-y-1">
                             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                U.S. Based
+                                {highlight.eyebrow}
                             </p>
                             <h3 className="text-lg font-semibold">
-                                Immigration Consultant Agency
+                                {highlight.title}
                             </h3>
                         </div>
                     </div>
 
                     {/* Description */}
-                    <p className="max-w-xl text-base leading-relaxed text-muted-foreground">
-                        All this mistaken idea of denouncing pleasure and praising pain was
-                        born and will give you a complete account of the system, expound the
-                        actual teachings of the great explorer of the truth, and the
-                        master-builder of human happiness.
-                    </p>
+                    {description && (
+                        <p className="max-w-xl text-base leading-relaxed text-muted-foreground">
+                            {description}
+                        </p>
+                    )}
 
                     {/* CTA */}
-                    <div>
-                        <Button asChild size="lg" className="rounded-full px-8">
-                            <Link href="/about">Learn More</Link>
-                        </Button>
-                    </div>
+                    {cta && (
+                        <div>
+                            <Button asChild size="lg" className="rounded-full px-8">
+                                <Link href={cta.href}>{cta.label}</Link>
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         </section>

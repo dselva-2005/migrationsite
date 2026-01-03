@@ -1,56 +1,71 @@
+"use client"
+
 import { InfoCard } from "./InfoCard"
 import { InfoCardCarousel } from "./InfoCardCarousel"
 import { ShieldCheck, Globe, FileText } from "lucide-react"
+import { usePageContent } from "@/providers/PageContentProvider"
+
+/* ───────────────────────── TYPES ───────────────────────── */
+
+type InfoHeader = {
+    eyebrow: string
+    title: string
+    highlight: string
+}
+
+type InfoCardCMS = {
+    title: string
+    description: string
+    buttonText: string
+    buttonLink: string
+}
+
+/* ───────────────────────── ICON MAP ───────────────────────── */
+
+const ICONS = [
+    <ShieldCheck key={1} className="h-8 w-8 text-red-500" />,
+    <Globe key={2} className="h-8 w-8 text-blue-500" />,
+    <FileText key={3} className="h-8 w-8 text-green-500" />,
+    <ShieldCheck key={4} className="h-8 w-8 text-purple-500" />,
+]
+
+/* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function InfoSection() {
+    const content = usePageContent()
+
+    const header = content["info.header"] as InfoHeader | undefined
+    const cards = content["info.cards"] as InfoCardCMS[] | undefined
+
+    // graceful CMS failure
+    if (!header || !cards || cards.length === 0) return null
+
     return (
         <div className="py-4">
-
+            {/* Header */}
             <div className="mb-12 text-center">
-                {/* Eyebrow / Subtitle */}
-                <p className="mb-3 text-sm font-medium tracking-widest text-primary/80 uppercase">
-                    Welcome to Immigo
+                <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary/80">
+                    {header.eyebrow}
                 </p>
 
-                {/* Main Heading */}
-                <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-4xl">
-                    A One-Stop Solution For All{" "}
-                    <span className="text-primary">Your Visa Needs</span>
+                <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+                    {header.title}{" "}
+                    <span className="text-primary">{header.highlight}</span>
                 </h2>
             </div>
 
+            {/* Cards */}
             <InfoCardCarousel>
-                <InfoCard
-                    icon={<ShieldCheck className="h-8 w-8 text-red-500" />}
-                    title="Visa Expiring or Expired"
-                    description="Understand your options and next steps."
-                    buttonText="Online Services"
-                    buttonLink="#"
-                />
-
-                <InfoCard
-                    icon={<Globe className="h-8 w-8 text-blue-500" />}
-                    title="Immigration Support"
-                    description="Guidance from registered professionals."
-                    buttonText="Get Help"
-                    buttonLink="#"
-                />
-
-                <InfoCard
-                    icon={<FileText className="h-8 w-8 text-green-500" />}
-                    title="Document Review"
-                    description="Ensure your paperwork is correct."
-                    buttonText="Start Review"
-                    buttonLink="#"
-                />
-
-                <InfoCard
-                    icon={<ShieldCheck className="h-8 w-8 text-purple-500" />}
-                    title="Legal Compliance"
-                    description="Stay compliant with current laws."
-                    buttonText="Learn More"
-                    buttonLink="#"
-                />
+                {cards.map((card, idx) => (
+                    <InfoCard
+                        key={idx}
+                        icon={ICONS[idx] ?? null}
+                        title={card.title}
+                        description={card.description}
+                        buttonText={card.buttonText}
+                        buttonLink={card.buttonLink}
+                    />
+                ))}
             </InfoCardCarousel>
         </div>
     )

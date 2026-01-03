@@ -4,6 +4,36 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle } from "lucide-react"
+import { usePageContent } from "@/providers/PageContentProvider"
+import { useEffect, useState } from "react"
+import publicApi from "@/lib/publicApi"
+
+/* ---------------- Types ---------------- */
+
+type NewsHeader = {
+    eyebrow: string
+    title: string
+}
+
+type BlogApiItem = {
+    slug: string
+    title: string
+    excerpt: string
+    image: string
+    category: string
+    author: string
+    date: string
+    views: number
+    rating: number
+    reviewCount: number
+}
+
+type BlogApiResponse = {
+    count: number
+    next: string | null
+    previous: string | null
+    results: BlogApiItem[]
+}
 
 type NewsItem = {
     id: string
@@ -20,65 +50,64 @@ type NewsItem = {
     href: string
 }
 
-const NEWS: NewsItem[] = [
-    {
-        id: "1",
-        title: "Project concepts or related queries should be",
-        excerpt:
-            "Nemo ipsam egestas volute turpis dolores and aliquam quaerat in which toil and pain procure...",
-        image:
-            "https://migrationreviews.com/1123/wp-content/uploads/2022/02/visa-15-370x300.jpg",
-        date: { day: "04", month: "Mar" },
-        category: "Immigration",
-        author: "Admin",
-        comments: 0,
-        href: "#",
-    },
-    {
-        id: "2",
-        title: "Covid-19 And Its Impact On UK Immigration",
-        excerpt:
-            "Indignation and dislike men who are beguiled and demoralized in which toil and pain procure...",
-        image:
-            "https://migrationreviews.com/1123/wp-content/uploads/2022/02/visa-16-370x300.jpg",
-        date: { day: "05", month: "Feb" },
-        category: "Immigration",
-        author: "Admin",
-        comments: 0,
-        href: "#",
-    },
-    {
-        id: "3",
-        title: "Customers Applying for Priority Visas",
-        excerpt:
-            "Fusce sollicitudin ante et felis cursus, id tristique ex volutpat. An magnis nulla dolor sapien...",
-        image:
-            "https://migrationreviews.com/1123/wp-content/uploads/2022/02/visa-14-370x300.jpg",
-        date: { day: "05", month: "Feb" },
-        category: "Immigration",
-        author: "Admin",
-        comments: 0,
-        href: "#",
-    },
-]
+/* ---------------- Component ---------------- */
 
 export default function NewsSection() {
+    const content = usePageContent()
+    const header = content["news.header"] as NewsHeader | undefined
+    const [blogs, setBlogs] = useState<NewsItem[]>([])
+
+    useEffect(() => {
+        async function fetchBlogs(): Promise<void> {
+            try {
+                // Fetch only 3 blogs using DRF pagination
+                const { data } = await publicApi.get<BlogApiResponse>("/api/blog/", {
+                    params: { page_size: 3 },
+                })
+
+                const mapped: NewsItem[] = data.results.map((b) => {
+                    const dateObj = new Date(b.date)
+                    const day = dateObj.getUTCDate().toString().padStart(2, "0")
+                    const month = dateObj.toLocaleString("default", { month: "short" })
+
+                    return {
+                        id: b.slug,
+                        title: b.title,
+                        excerpt: b.excerpt,
+                        image: b.image,
+                        date: { day, month },
+                        category: b.category,
+                        author: b.author,
+                        comments: b.reviewCount,
+                        href: `/blog/${b.slug}`,
+                    }
+                })
+
+                setBlogs(mapped)
+            } catch (err) {
+                console.error("Failed to fetch blogs", err)
+            }
+        }
+
+        fetchBlogs()
+    }, [])
+
+    if (!header) return null
+
     return (
         <section id="news" className="bg-background py-20">
             <div className="mx-auto max-w-7xl px-4">
-                {/* Section Header */}
+                {/* Header */}
                 <div className="mb-14 text-center">
                     <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary/80">
-                        News & Updates
+                        {header.eyebrow}
                     </p>
-                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                        Read Our Latest Insights
-                    </h2>
+                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">{header.title}</h2>
                 </div>
 
                 {/* News Grid */}
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                    {NEWS.map((post) => (
+                    {blogs.map((post) => (
                         <Card
                             key={post.id}
                             className="group overflow-hidden rounded-2xl border p-0 transition-shadow hover:shadow-lg"
@@ -90,17 +119,13 @@ export default function NewsSection() {
                                     alt={post.title}
                                     width={370}
                                     height={300}
-                                    className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                                    className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    unoptimized
                                 />
-
-                                {/* Date Badge */}
+                                {/* Date badge */}
                                 <div className="absolute left-4 top-4 rounded-xl bg-background px-3 py-2 text-center shadow-sm">
-                                    <div className="text-lg font-semibold leading-none">
-                                        {post.date.day}
-                                    </div>
-                                    <div className="text-xs uppercase text-muted-foreground">
-                                        {post.date.month}
-                                    </div>
+                                    <div className="text-lg font-semibold leading-none">{post.date.day}</div>
+                                    <div className="text-xs uppercase text-muted-foreground">{post.date.month}</div>
                                 </div>
                             </div>
 
@@ -108,23 +133,19 @@ export default function NewsSection() {
                             <CardContent className="flex h-75 flex-col gap-4 p-8">
                                 {/* Meta */}
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span className="font-medium text-primary">
-                                        {post.category}
-                                    </span>
+                                    <span className="font-medium text-primary">{post.category}</span>
                                     <span>By {post.author}</span>
                                 </div>
 
                                 {/* Title */}
-                                <h4 className="text-lg font-semibold leading-snug line-clamp-2">
+                                <h4 className="line-clamp-2 text-lg font-semibold leading-snug">
                                     <Link href={post.href} className="hover:underline">
                                         {post.title}
                                     </Link>
                                 </h4>
 
                                 {/* Excerpt */}
-                                <p className="text-sm text-muted-foreground line-clamp-3">
-                                    {post.excerpt}
-                                </p>
+                                <p className="line-clamp-3 text-sm text-muted-foreground">{post.excerpt}</p>
 
                                 {/* Footer */}
                                 <div className="mt-auto flex items-center justify-between pt-4">

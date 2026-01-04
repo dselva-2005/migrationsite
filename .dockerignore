@@ -1,0 +1,15 @@
+# Python
+backend/venv
+backend/__pycache__
+*.pyc
+
+# Node
+frontend/frontend/node_modules
+.next
+
+# Git
+.git
+.gitignore
+
+# Media (optional)
+media

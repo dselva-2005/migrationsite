@@ -1,0 +1,63 @@
+services:
+  backend:
+    image: migrationsite
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: django
+    command: gunicorn CoreApi.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - .env
+    volumes:
+      - media:/app/media
+    depends_on:
+      - db
+      - redis
+    expose:
+      - "8000"
+
+  celery:
+    image: migrationsite
+    container_name: celery
+    command: celery -A CoreApi worker -l info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  frontend:
+    image: migrationsite-frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: nextjs
+    expose:
+      - "3000"
+
+  db:
+    image: postgres:16
+    container_name: postgres
+    env_file:
+      - .env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - media:/media
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres:
+  media:

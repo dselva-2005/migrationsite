@@ -18,6 +18,7 @@ from .serializers import (
     ReviewReplyCreateSerializer,
     ReviewMediaUploadSerializer
 )
+from .tasks import send_review_approved_email
 
 
 class ReviewBulkActionView(APIView):
@@ -82,8 +83,21 @@ class ApproveReviewView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # ⛔ Prevent duplicate emails
+        if review.is_approved:
+            return Response(
+                {"detail": "Review already approved"},
+                status=status.HTTP_200_OK,
+            )
+
         review.is_approved = True
         review.save(update_fields=["is_approved"])
+
+        # ✅ Send approval email
+        send_review_approved_email.delay(
+            user_id=review.user.id,
+            review_id=review.id,
+        )
 
         return Response({"detail": "Review approved"})
 

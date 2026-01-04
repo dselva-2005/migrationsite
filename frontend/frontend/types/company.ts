@@ -1,5 +1,5 @@
 // types/company.ts
-import { Review } from "./review"
+import { CompanyReview } from "./review"
 
 export interface Company {
     id: number
@@ -23,5 +23,5 @@ export type CompanyAccount = {
     rating_average: number
     rating_count: number
     is_verified: boolean
-    reviews: Review[]
+    reviews: CompanyReview[]
 }

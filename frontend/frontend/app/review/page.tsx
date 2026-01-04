@@ -7,7 +7,6 @@ import { Section } from "@/components/Section"
 import { ReviewHero } from "@/components/review/ReviewHero"
 import { ReviewPagination } from "@/components/company/ReviewPagination"
 import { PageContentProvider } from "@/providers/PageContentProvider"
-
 import { getCompanies } from "@/services/company"
 import { Company } from "@/types/company"
 

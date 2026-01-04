@@ -76,7 +76,7 @@ class BlogPostAdmin(admin.ModelAdmin):
             "fields": ("title", "slug", "author", "status")
         }),
         ("Content", {
-            "fields": ("excerpt", "content", "featured_image")
+            "fields": ("excerpt", "content", "featured_image","search_vector")
         }),
         ("Classification", {
             "fields": ("category", "tags")

@@ -3,7 +3,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericRelation
 from review.models import Review
-
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 
 class BlogCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -81,6 +82,13 @@ class BlogPost(models.Model):
     view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
+    
+    class Meta:
+        indexes = [
+            GinIndex(fields=["search_vector"]),  # full-text search index
+        ]
 
     def save(self, *args, **kwargs):
         if (

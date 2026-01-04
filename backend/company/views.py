@@ -26,6 +26,7 @@ from review.services import get_reviews_for_object
 # Company List
 # ------------------------------------
 
+
 class CompanyListAPIView(ListAPIView):
     serializer_class = CompanyListSerializer
     pagination_class = CompanyPagination
@@ -48,6 +49,7 @@ class CompanyListAPIView(ListAPIView):
 # Company Detail
 # ------------------------------------
 
+
 class CompanyDetailView(RetrieveAPIView):
     serializer_class = CompanyDetailSerializer
     lookup_field = "slug"
@@ -59,6 +61,7 @@ class CompanyDetailView(RetrieveAPIView):
 # ------------------------------------
 # Company Reviews (GET + POST)
 # ------------------------------------
+
 
 class CompanyReviewAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -79,7 +82,11 @@ class CompanyReviewAPIView(APIView):
             page_size=page_size,
         )
 
-        serializer = ReviewSerializer(data["results"], many=True,context={"request": request})
+        serializer = ReviewSerializer(
+            data["results"],
+            many=True,
+            context={"request": request},
+        )
 
         return Response(
             {
@@ -90,12 +97,6 @@ class CompanyReviewAPIView(APIView):
         )
 
     def post(self, request, slug):
-        if not request.user.is_authenticated:
-            return Response(
-                {"detail": "Authentication required"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
         company = get_object_or_404(
             Company,
             slug=slug,
@@ -105,7 +106,8 @@ class CompanyReviewAPIView(APIView):
         serializer = ReviewCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save(
+        # ✅ CAPTURE THE CREATED REVIEW
+        review = serializer.save(
             content_type=ContentType.objects.get_for_model(Company),
             object_id=company.id,
             author_name=request.user.username,
@@ -117,8 +119,12 @@ class CompanyReviewAPIView(APIView):
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
         )
 
+        # ✅ RETURN THE ID
         return Response(
-            {"detail": "Review submitted successfully"},
+            {
+                "id": review.id,
+                "detail": "Review submitted successfully",
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -126,6 +132,7 @@ class CompanyReviewAPIView(APIView):
 # ------------------------------------
 # Business Onboarding
 # ------------------------------------
+
 
 class BusinessOnboardingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -149,12 +156,12 @@ class BusinessOnboardingView(APIView):
 # Simple Company List (internal use)
 # ------------------------------------
 
+
 class CompanyList(APIView):
     def get(self, request):
         companies = Company.objects.all()
         serializer = CompanyListInfo(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 
 class CompanyDashboardView(APIView):
@@ -169,5 +176,9 @@ class CompanyDashboardView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = CompanyDashboardSerializer(company)
+        serializer = CompanyDashboardSerializer(
+            company,
+            context={"request": request},
+        )
+
         return Response(serializer.data)

@@ -3,11 +3,7 @@ import axios, {
     InternalAxiosRequestConfig,
 } from "axios"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
-
-if (!BASE_URL) {
-    throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined")
-}
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -21,36 +17,42 @@ const refreshApi = axios.create({
 
 let isRefreshing = false
 
-let queue: {
+type QueueItem = {
     resolve: () => void
     reject: (err: unknown) => void
-}[] = []
+}
+
+let queue: QueueItem[] = []
 
 const processQueue = (error?: unknown) => {
     queue.forEach(({ resolve, reject }) => {
-        if (error) reject(error)
-        else resolve()
+        error ? reject(error) : resolve()
     })
     queue = []
 }
+
+const isAuthEndpoint = (url = "") =>
+    url.includes("/api/auth/login") ||
+    url.includes("/api/auth/refresh") ||
+    url.includes("/api/auth/forgot-password") ||
+    url.includes("/api/auth/reset-password")
 
 api.interceptors.response.use(
     (response) => response,
 
     async (error: AxiosError) => {
-        const originalRequest = error.config as
-            | (InternalAxiosRequestConfig & { _retry?: boolean })
-            | undefined
+        const originalRequest =
+            error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         const status = error.response?.status
         const url = originalRequest?.url ?? ""
 
-        // ⛔ never retry refresh itself
+        // 🚫 Never refresh in these cases
         if (
             status !== 401 ||
             !originalRequest ||
             originalRequest._retry ||
-            url.includes("/api/auth/refresh")
+            isAuthEndpoint(url)
         ) {
             return Promise.reject(error)
         }
@@ -75,7 +77,7 @@ api.interceptors.response.use(
         } catch (err) {
             processQueue(err)
 
-            // 🔑 ONLY redirect if this was NOT /me
+            // ❗ only redirect for protected routes
             if (
                 typeof window !== "undefined" &&
                 !url.includes("/api/auth/me")

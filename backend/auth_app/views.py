@@ -1,29 +1,53 @@
 # auth_app/views.py
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+from django.contrib.auth import get_user_model, authenticate
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
 from rest_framework import status
-from .serializers import RegisterSerializer
 from rest_framework.permissions import IsAuthenticated
-from .authentication import JWTAuthenticationFromCookie
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from company.models import CompanyMembership
-from .serializers import ProfileSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+from company.models import CompanyMembership
+
+from .authentication import JWTAuthenticationFromCookie
+from .serializers import (
+    RegisterSerializer,
+    ProfileSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
+)
+
+User = get_user_model()
+
+
+# ==========================
+# AUTH CORE
+# ==========================
 
 class ProtectedView(APIView):
     authentication_classes = [JWTAuthenticationFromCookie]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"message": f"Hello {request.user.email}, you are authorized!"})
+        return Response(
+            {"message": f"Hello {request.user.email}, you are authorized!"}
+        )
+
 
 class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(
@@ -50,7 +74,7 @@ class LoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
-        res = Response({"detail": "Logged in"}, status=200)
+        res = Response({"detail": "Logged in"}, status=status.HTTP_200_OK)
 
         cookie_kwargs = {
             "httponly": True,
@@ -69,6 +93,7 @@ class RefreshView(APIView):
     @method_decorator(csrf_exempt)
     def post(self, request):
         refresh = request.COOKIES.get("refresh")
+
         if not refresh:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -77,7 +102,7 @@ class RefreshView(APIView):
         except Exception:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        res = Response(status=200)
+        res = Response(status=status.HTTP_200_OK)
         res.set_cookie(
             "access",
             str(token.access_token),
@@ -90,14 +115,13 @@ class RefreshView(APIView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthenticationFromCookie]
+    permission_classes = [IsAuthenticated]
 
     @method_decorator(csrf_exempt)
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh")
 
-        # Invalidate refresh token (SimpleJWT)
         if refresh_token:
             try:
                 token = RefreshToken(refresh_token)
@@ -110,16 +134,15 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK,
         )
 
-        cookie_kwargs = {
-            "path": "/",
-            "samesite": "None",
-        }
-
-        res.delete_cookie("access", **cookie_kwargs)
-        res.delete_cookie("refresh", **cookie_kwargs)
+        res.delete_cookie("access", path="/", samesite="None")
+        res.delete_cookie("refresh", path="/", samesite="None")
 
         return res
-    
+
+
+# ==========================
+# USER DATA
+# ==========================
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -129,10 +152,7 @@ class MeView(APIView):
 
         memberships = (
             CompanyMembership.objects
-            .filter(
-                user=user,
-                status="ACTIVE",
-            )
+            .filter(user=user, status="ACTIVE")
             .select_related("company")
         )
 
@@ -140,61 +160,20 @@ class MeView(APIView):
             "id": user.id,
             "email": user.email,
             "username": user.username,
-
-            # Business user if at least one active company
             "is_business": memberships.exists(),
-
             "companies": [
                 {
-                    "company_id": m.company.id,          
-                    "company_slug": m.company.slug,      
+                    "company_id": m.company.id,
+                    "company_slug": m.company.slug,
                     "company_name": m.company.name,
                     "role": m.role,
                 }
                 for m in memberships
             ],
         })
-    
+
 
 class ProfileView(APIView):
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-
-    def get(self, request):
-        user = request.user
-
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-            "profile_image_url": (
-                user.profile_image.url if user.profile_image else None
-            ),
-        })
-
-    def patch(self, request):
-        user = request.user
-
-        username = request.data.get("username")
-        image = request.FILES.get("profile_image")
-
-        if username:
-            user.username = username
-
-        if image:
-            user.profile_image = image
-
-        user.save()
-
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-            "profile_image_url": (
-                user.profile_image.url if user.profile_image else None
-            ),
-        })
-
     authentication_classes = [JWTAuthenticationFromCookie]
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -221,4 +200,62 @@ class ProfileView(APIView):
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+# ==========================
+# PASSWORD RESET (FIXED)
+# ==========================
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        # DO NOT reveal user existence
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.id))
+            token = PasswordResetTokenGenerator().make_token(user)
+
+            reset_url = (
+                f"{settings.FRONTEND_URL}/reset-password"
+                f"?uid={uid}&token={token}"
+            )
+
+            email_message = EmailMultiAlternatives(
+                subject="Reset your password",
+                body=(
+                    "Reset your password using the link below:\n\n"
+                    f"{reset_url}\n\n"
+                    "If you did not request this, ignore this email."
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
+            )
+
+            email_message.send()
+
+        return Response(
+            {"detail": "If the email exists, a reset link has been sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        password = serializer.validated_data["password"]
+
+        user.set_password(password)
+        user.save()
+
+        return Response(
+            {"detail": "Password reset successful"},
+            status=status.HTTP_200_OK,
         )

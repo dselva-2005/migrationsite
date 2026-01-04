@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import PageContentView
+from .views import PageContentView,SearchView
 
 urlpatterns = [
-    path("<str:page>/", PageContentView.as_view())
+    path("search/", SearchView.as_view(), name="global-search"),
+    path("<str:page>/", PageContentView.as_view()),
 ]
-

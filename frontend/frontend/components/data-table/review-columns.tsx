@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/axios"
 import { useState } from "react"
+import { MediaCell } from "./mediaCell"
 
 /* ---------------- Reply Cell ---------------- */
 
@@ -19,9 +20,7 @@ function ReplyCell({ review }: { review: CompanyReview }) {
 
         setLoading(true)
         try {
-            await api.post(`/api/review/${review.id}/reply/`, {
-                body,
-            })
+            await api.post(`/api/review/${review.id}/reply/`, { body })
         } finally {
             setLoading(false)
         }
@@ -71,6 +70,13 @@ export const reviewColumns = (
         ),
     },
     {
+        id: "media",
+        header: "Media",
+        cell: ({ row }) => (
+            <MediaCell media={row.original.media} />
+        ),
+    },
+    {
         accessorKey: "is_approved",
         header: "Status",
         cell: ({ row }) => (
@@ -81,9 +87,7 @@ export const reviewColumns = (
                         : "outline"
                 }
             >
-                {row.original.is_approved
-                    ? "Approved"
-                    : "Pending"}
+                {row.original.is_approved ? "Approved" : "Pending"}
             </Badge>
         ),
     },
@@ -91,9 +95,7 @@ export const reviewColumns = (
         accessorKey: "created_at",
         header: "Date",
         cell: ({ row }) =>
-            new Date(
-                row.original.created_at
-            ).toLocaleDateString(),
+            new Date(row.original.created_at).toLocaleDateString(),
     },
     {
         id: "reply",
@@ -110,14 +112,10 @@ export const reviewColumns = (
 
             async function handle() {
                 if (review.is_approved) {
-                    await api.patch(
-                        `/api/review/${review.id}/reject/`
-                    )
+                    await api.patch(`/api/review/${review.id}/reject/`)
                     onStatusChange(review.id, false)
                 } else {
-                    await api.patch(
-                        `/api/review/${review.id}/approve/`
-                    )
+                    await api.patch(`/api/review/${review.id}/approve/`)
                     onStatusChange(review.id, true)
                 }
             }
@@ -126,15 +124,11 @@ export const reviewColumns = (
                 <Button
                     size="sm"
                     variant={
-                        review.is_approved
-                            ? "destructive"
-                            : "default"
+                        review.is_approved ? "destructive" : "default"
                     }
                     onClick={handle}
                 >
-                    {review.is_approved
-                        ? "Unapprove"
-                        : "Approve"}
+                    {review.is_approved ? "Unapprove" : "Approve"}
                 </Button>
             )
         },

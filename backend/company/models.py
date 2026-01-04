@@ -6,7 +6,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from auth_app.models import User
-
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 
 class CompanyCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -97,10 +98,12 @@ class Company(models.Model):
     # --------------------
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
+    search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
 
     class Meta:
         ordering = ["-rating_average", "-rating_count"]
         indexes = [
+            GinIndex(fields=["search_vector"]),  # full-text search index
             models.Index(fields=["slug"]),
             models.Index(fields=["rating_average"]),
             models.Index(fields=["rating_count"]),

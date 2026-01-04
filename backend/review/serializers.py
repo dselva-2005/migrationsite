@@ -1,7 +1,34 @@
 from rest_framework import serializers
-from .models import Review
 from django.contrib.contenttypes.models import ContentType
+from rest_framework.validators import ValidationError
+from .models import Review, ReviewMedia
 from review.models import ReviewReply
+
+
+# =========================================================
+# REVIEW MEDIA
+# =========================================================
+
+class ReviewMediaSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReviewMedia
+        fields = (
+            "id",
+            "media_type",
+            "url",
+        )
+
+    def get_url(self, obj):
+        request = self.context.get("request")
+        if obj.file:
+            return (
+                request.build_absolute_uri(obj.file.url)
+                if request
+                else obj.file.url
+            )
+        return None
 
 
 # =========================================================
@@ -11,10 +38,10 @@ from review.models import ReviewReply
 class ReviewBulkActionSerializer(serializers.Serializer):
     ids = serializers.ListField(
         child=serializers.IntegerField(),
-        allow_empty=False
+        allow_empty=False,
     )
     action = serializers.ChoiceField(
-        choices=["approve", "reject"]
+        choices=["approve", "reject"],
     )
 
 
@@ -40,11 +67,12 @@ class ReviewReplyInlineSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.CharField(
         source="author_name",
-        read_only=True
+        read_only=True,
     )
 
     author_profile_image_url = serializers.SerializerMethodField()
     reply = ReviewReplyInlineSerializer(read_only=True)
+    media = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -55,6 +83,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "body",
             "author",
             "author_profile_image_url",
+            "media",
             "created_at",
             "reply",
         )
@@ -63,11 +92,25 @@ class ReviewSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         user = obj.user
 
-        if user and user.profile_image:
-            url = user.profile_image.url
-            return request.build_absolute_uri(url) if request else url
-
+        if user and getattr(user, "profile_image", None):
+            return (
+                request.build_absolute_uri(user.profile_image.url)
+                if request
+                else user.profile_image.url
+            )
         return None
+
+    def get_media(self, obj):
+        """
+        Ensures absolute URLs even for nested serializers
+        """
+        request = self.context.get("request")
+        serializer = ReviewMediaSerializer(
+            obj.media.all(),
+            many=True,
+            context={"request": request},
+        )
+        return serializer.data
 
 
 # =========================================================
@@ -78,7 +121,6 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
     """
     Review creation serializer.
     Target object (content_object) is injected by the view.
-    Author info is derived from request.user.
     """
 
     class Meta:
@@ -90,7 +132,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate_rating(self, value):
-        if not (1 <= value <= 5):
+        if not 1 <= value <= 5:
             raise serializers.ValidationError(
                 "Rating must be between 1 and 5."
             )
@@ -128,9 +170,11 @@ class ReviewReplySerializer(serializers.ModelSerializer):
         company = self.get_company(obj)
 
         if company and company.logo:
-            url = company.logo.url
-            return request.build_absolute_uri(url) if request else url
-
+            return (
+                request.build_absolute_uri(company.logo.url)
+                if request
+                else company.logo.url
+            )
         return None
 
 
@@ -149,10 +193,8 @@ class ReviewReplyCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         request = self.context.get("request")
-        review = self.context.get("review")
-        user = request.user if request else None
 
-        if not user or not user.is_authenticated:
+        if not request or not request.user.is_authenticated:
             raise serializers.ValidationError(
                 "Authentication required."
             )
@@ -166,6 +208,7 @@ class ReviewReplyCreateSerializer(serializers.ModelSerializer):
 
 class ReviewDashboardSerializer(serializers.ModelSerializer):
     reply = ReviewReplySerializer(read_only=True)
+    media = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -178,6 +221,54 @@ class ReviewDashboardSerializer(serializers.ModelSerializer):
             "author_email",
             "is_verified",
             "is_approved",
+            "media",
             "created_at",
             "reply",
         ]
+
+    def get_media(self, obj):
+        request = self.context.get("request")
+        serializer = ReviewMediaSerializer(
+            obj.media.all(),
+            many=True,
+            context={"request": request},
+        )
+        return serializer.data
+
+
+# =========================================================
+# REVIEW MEDIA UPLOAD
+# =========================================================
+
+class ReviewMediaUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReviewMedia
+        fields = ("file",)
+
+    def validate_file(self, file):
+        """
+        Validate file exists and determine media type
+        """
+        name = file.name.lower()
+
+        if name.endswith(("jpg", "jpeg", "png", "webp")):
+            self.media_type = "image"
+        elif name.endswith(("mp4", "mov", "webm")):
+            self.media_type = "video"
+        else:
+            raise ValidationError("Unsupported media format")
+
+        return file
+
+    def create(self, validated_data):
+        review = self.context.get("review")
+        if not review:
+            raise ValidationError("Review context is required")
+
+        file = validated_data["file"]
+
+        return ReviewMedia.objects.create(
+            review=review,
+            file=file,
+            media_type=self.media_type,
+        )

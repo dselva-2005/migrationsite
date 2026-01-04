@@ -4,7 +4,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.conf import settings
-
+from django.core.validators import FileExtensionValidator
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 
 class Review(models.Model):
     # --------------------
@@ -60,10 +62,12 @@ class Review(models.Model):
         blank=True,
         related_name="reviews",
     )
-
+    search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
+    
     class Meta:
         ordering = ["-created_at"]
         indexes = [
+            GinIndex(fields=["search_vector"]),  # full-text search index
             models.Index(fields=["content_type", "object_id"]),
             models.Index(fields=["rating"]),
             models.Index(fields=["is_approved"]),
@@ -108,3 +112,46 @@ class ReviewReply(models.Model):
 
     def __str__(self):
         return f"Reply to Review #{self.review_id}"
+
+
+
+def review_media_upload_path(instance, filename):
+    return f"reviews/{instance.review_id}/{filename}"
+
+
+class ReviewMedia(models.Model):
+    MEDIA_TYPE_CHOICES = (
+        ("image", "Image"),
+        ("video", "Video"),
+    )
+
+    review = models.ForeignKey(
+        "Review",
+        on_delete=models.CASCADE,
+        related_name="media",
+    )
+
+    file = models.FileField(
+        upload_to=review_media_upload_path,
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["jpg", "jpeg", "png", "webp", "mp4", "mov", "webm"]
+            )
+        ],
+    )
+
+    media_type = models.CharField(
+        max_length=10,
+        choices=MEDIA_TYPE_CHOICES,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["media_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.media_type} for Review #{self.review_id}"

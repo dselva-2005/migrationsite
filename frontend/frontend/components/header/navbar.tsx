@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Menu, Search } from "lucide-react"
+import { Menu } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/AuthProvider"
+import { GlobalSearch } from "@/components/GlobalSearch"
 
 import {
     Sheet,
@@ -32,13 +32,9 @@ export default function Navbar() {
                 <div className="hidden md:flex items-center gap-8">
                     <NavLinks />
 
-                    <div className="relative">
-                        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search..."
-                            className="h-9 w-56 pl-8"
-                        />
+                    {/* Global Search */}
+                    <div className="w-72">
+                        <GlobalSearch />
                     </div>
                 </div>
 
@@ -63,7 +59,6 @@ function NavLinks() {
     const companies = user?.companies ?? []
     const isBusinessUser = companies.length > 0
 
-    // If exactly one company → direct dashboard
     const dashboardHref =
         companies.length === 1
             ? `/listing/${companies[0].companySlug}/account`
@@ -88,6 +83,11 @@ function NavLinks() {
                     <Link href="/business-login">Become a Business</Link>
                     <button onClick={logout}>Logout</button>
                 </>
+            )}
+
+            {/* Logged in – common */}
+            {isLoggedIn && (
+                <Link href="/profile">Profile</Link>
             )}
 
             {/* Logged in – business user */}
@@ -130,13 +130,9 @@ function MobileNav() {
                     Mobile navigation menu
                 </SheetDescription>
 
-                <div className="relative mb-6">
-                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Search..."
-                        className="pl-8"
-                    />
+                {/* Global Search */}
+                <div className="mb-6">
+                    <GlobalSearch />
                 </div>
 
                 {loading ? null : (

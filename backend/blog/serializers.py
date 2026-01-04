@@ -1,6 +1,7 @@
 # blog/serializers.py
 from rest_framework import serializers
 from .models import BlogPost
+from .models import BlogCategory
 
 
 class BlogPostBaseSerializer(serializers.ModelSerializer):
@@ -53,4 +54,17 @@ class BlogPostDetailSerializer(BlogPostBaseSerializer):
             "content",
             "seo_title",
             "seo_description",
+        )
+
+
+class BlogCategorySerializer(serializers.ModelSerializer):
+    post_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = BlogCategory
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "post_count",
         )

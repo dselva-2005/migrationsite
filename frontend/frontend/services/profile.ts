@@ -1,5 +1,7 @@
 import api from "@/lib/axios"
 
+/* ---------- Types ---------- */
+
 export interface UserProfile {
     id: number
     email: string
@@ -8,10 +10,40 @@ export interface UserProfile {
     date_joined: string
 }
 
-export async function getProfile(): Promise<UserProfile> {
-    const res = await api.get<UserProfile>("/api/auth/profile/")
-    return res.data
+/* ---------- Cache ---------- */
+
+let profileCache: UserProfile | null = null
+let profilePromise: Promise<UserProfile> | null = null
+
+/* ---------- Get Profile ---------- */
+
+export async function getProfile(
+    forceRefresh: boolean = false
+): Promise<UserProfile> {
+    // ✅ Return cached data
+    if (profileCache && !forceRefresh) {
+        return profileCache
+    }
+
+    // ✅ Deduplicate parallel requests
+    if (profilePromise && !forceRefresh) {
+        return profilePromise
+    }
+
+    profilePromise = api
+        .get<UserProfile>("/api/auth/profile/")
+        .then((res) => {
+            profileCache = res.data
+            return res.data
+        })
+        .finally(() => {
+            profilePromise = null
+        })
+
+    return profilePromise
 }
+
+/* ---------- Update Profile Image ---------- */
 
 export async function updateProfileImage(
     image: File
@@ -29,5 +61,14 @@ export async function updateProfileImage(
         }
     )
 
+    // 🔁 Invalidate + update cache
+    profileCache = res.data
+
     return res.data
+}
+
+/* ---------- Optional Manual Invalidation ---------- */
+
+export function clearProfileCache() {
+    profileCache = null
 }

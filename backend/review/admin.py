@@ -1,6 +1,6 @@
 # reviews/admin.py
 from django.contrib import admin
-from .models import Review,ReviewReply
+from .models import Review,ReviewReply,ReviewMedia
 
 
 @admin.register(Review)
@@ -41,3 +41,4 @@ class ReviewAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ReviewReply)
+admin.site.register(ReviewMedia)

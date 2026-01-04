@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
@@ -15,6 +16,7 @@ from .models import Review, ReviewReply
 from .serializers import (
     ReviewReplySerializer,
     ReviewReplyCreateSerializer,
+    ReviewMediaUploadSerializer
 )
 
 
@@ -148,3 +150,39 @@ class ReviewReplyUpsertView(generics.GenericAPIView):
             context={"request": request},
         )
         return Response(serializer.data)
+
+
+class ReviewMediaUploadView(generics.CreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ReviewMediaUploadSerializer
+
+    def get_review(self):
+        """
+        Get the review object for this media upload
+        """
+        try:
+            return Review.objects.get(pk=self.kwargs["review_id"])
+        except Review.DoesNotExist:
+            raise ValidationError("Review not found")
+
+    def get_serializer_context(self):
+        """
+        Add review to serializer context
+        """
+        context = super().get_serializer_context()
+        context["review"] = self.get_review()
+        return context
+
+    def perform_create(self, serializer):
+        review = self.get_review()
+
+        # Max 5 media files per review
+        if review.media.count() >= 5:
+            raise ValidationError("Maximum 5 media files allowed")
+
+        # Only the review owner or staff can upload
+        if review.user != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Not allowed")
+
+        # Save the serializer
+        serializer.save()

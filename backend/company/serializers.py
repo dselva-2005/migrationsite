@@ -115,7 +115,6 @@ class CompanyListInfo(serializers.ModelSerializer):
         ]
 
 
-
 class CompanyDashboardSerializer(serializers.ModelSerializer):
     reviews = serializers.SerializerMethodField()
 
@@ -142,4 +141,8 @@ class CompanyDashboardSerializer(serializers.ModelSerializer):
             object_id=company.id,
         ).order_by("-created_at")
 
-        return ReviewDashboardSerializer(qs, many=True,).data
+        return ReviewDashboardSerializer(
+            qs,
+            many=True,
+            context=self.context,
+        ).data

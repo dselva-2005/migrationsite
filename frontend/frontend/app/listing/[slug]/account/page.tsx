@@ -1,10 +1,14 @@
 "use client"
 
 import { use, useEffect, useState } from "react"
+
 import {
     getCompanyAccountBySlug,
     updateCompanyAccountCache,
 } from "@/services/CompanyAccount"
+
+import api from "@/lib/axios"
+
 import { CompanyAccount } from "@/types/company"
 
 import {
@@ -13,12 +17,15 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Section } from "@/components/Section"
 
 import { DataTable } from "@/components/data-table/DataTable"
 import { reviewColumns } from "@/components/data-table/review-columns"
+
+/* ------------------------------------------------------------------ */
 
 export default function CompanyAccountPage({
     params,
@@ -27,7 +34,8 @@ export default function CompanyAccountPage({
 }) {
     const { slug } = use(params)
 
-    const [company, setCompany] = useState<CompanyAccount | null>(null)
+    const [company, setCompany] =
+        useState<CompanyAccount | null>(null)
     const [loading, setLoading] = useState(true)
 
     /* ---------------- Fetch company account ---------------- */
@@ -36,9 +44,13 @@ export default function CompanyAccountPage({
 
         ;(async () => {
             setLoading(true)
-            const account = await getCompanyAccountBySlug(slug)
-            if (alive) setCompany(account)
-            setLoading(false)
+            try {
+                const account =
+                    await getCompanyAccountBySlug(slug)
+                if (alive) setCompany(account)
+            } finally {
+                setLoading(false)
+            }
         })()
 
         return () => {
@@ -46,57 +58,69 @@ export default function CompanyAccountPage({
         }
     }, [slug])
 
-    /* ---------------- BULK ACTION ---------------- */
-async function bulkAction(
-    ids: number[],
-    action: "approve" | "reject"
-) {
-    if (!ids.length || !company) return
+    /* ---------------- BULK ACTION (approve / reject) ---------------- */
+    async function bulkAction(
+        ids: number[],
+        action: "approve" | "reject"
+    ) {
+        if (!ids.length || !company) return
 
-    // optimistic UI: update cache first
-    const optimisticUpdates = ids.map(id => ({
-        id,
-        is_approved: action === "approve",
-        rating:
-            company.reviews.find(r => r.id === id)?.rating || 0,
-    }))
+        /* ---------- optimistic UI ---------- */
+        const optimisticUpdates = ids.map(id => ({
+            id,
+            is_approved: action === "approve",
+            rating:
+                company.reviews.find(r => r.id === id)
+                    ?.rating ?? 0,
+        }))
 
-    // fallback to null if undefined
-    const updatedAccount = updateCompanyAccountCache(slug, optimisticUpdates) ?? null
-    setCompany(updatedAccount)
+        const optimisticCompany =
+            updateCompanyAccountCache(
+                slug,
+                optimisticUpdates
+            ) ?? null
 
-    // call backend
-    await fetch("/api/review/bulk-action/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ids, action }),
-    })
-}
+        setCompany(optimisticCompany)
 
+        /* ---------- backend request ---------- */
+        try {
+            await api.post("/api/review/bulk-action/", {
+                ids,
+                action,
+            })
+        } catch (err) {
+            console.error("Bulk action failed", err)
+            // Optional: refetch or rollback here
+        }
+    }
 
-    if (loading || !company) return <Skeleton className="h-64 w-full" />
+    /* ---------------- Loading ---------------- */
+    if (loading || !company) {
+        return <Skeleton className="h-64 w-full" />
+    }
 
     /* ---------------- UI ---------------- */
     return (
         <Section>
-            {/* Company header */}
+            {/* ---------- Company Header ---------- */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>{company.name}</CardTitle>
 
                     {company.is_verified && (
-                        <Badge variant="secondary">Verified</Badge>
+                        <Badge variant="secondary">
+                            Verified
+                        </Badge>
                     )}
                 </CardHeader>
 
                 <CardContent className="text-sm text-muted-foreground">
-                    ⭐ {company.rating_average} · {company.rating_count} reviews
+                    ⭐ {company.rating_average} ·{" "}
+                    {company.rating_count} reviews
                 </CardContent>
             </Card>
 
-            {/* Reviews table */}
+            {/* ---------- Reviews Table ---------- */}
             <Card>
                 <CardHeader>
                     <CardTitle>Customer Reviews</CardTitle>
@@ -107,12 +131,20 @@ async function bulkAction(
                         data={company.reviews}
                         columns={reviewColumns(
                             (id, approved) => {
-                                // single row update
-                                bulkAction([id], approved ? "approve" : "reject")
+                                bulkAction(
+                                    [id],
+                                    approved
+                                        ? "approve"
+                                        : "reject"
+                                )
                             }
                         )}
-                        onBulkApprove={ids => bulkAction(ids, "approve")}
-                        onBulkReject={ids => bulkAction(ids, "reject")}
+                        onBulkApprove={ids =>
+                            bulkAction(ids, "approve")
+                        }
+                        onBulkReject={ids =>
+                            bulkAction(ids, "reject")
+                        }
                     />
                 </CardContent>
             </Card>

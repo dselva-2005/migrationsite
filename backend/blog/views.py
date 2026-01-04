@@ -5,23 +5,21 @@ from django.utils import timezone
 from django.db.models import Avg, Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-
+from .models import BlogCategory
+from .serializers import BlogCategorySerializer
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
-
 from .models import BlogPost
 from .serializers import (
     BlogPostListSerializer,
     BlogPostDetailSerializer,
 )
 from .pagination import BlogPostPagination
-
 from review.serializers import ReviewSerializer, ReviewCreateSerializer
 from review.services import get_reviews_for_object
-
 
 # ------------------------------------
 # Blog List (PAGINATED, supports ?page_size=3)
@@ -31,6 +29,7 @@ class BlogPostListView(ListAPIView):
     GET /api/blog/
     Supports pagination: ?page=<number>&page_size=<number>
     """
+
     permission_classes = [AllowAny]
     serializer_class = BlogPostListSerializer
     pagination_class = BlogPostPagination
@@ -39,8 +38,7 @@ class BlogPostListView(ListAPIView):
         ct = ContentType.objects.get_for_model(BlogPost)
 
         return (
-            BlogPost.objects
-            .select_related("author", "category")
+            BlogPost.objects.select_related("author", "category")
             .prefetch_related("tags")
             .annotate(
                 rating=Avg(
@@ -73,6 +71,7 @@ class BlogPostDetailView(RetrieveAPIView):
     """
     GET /api/blog/<slug>/
     """
+
     permission_classes = [AllowAny]
     serializer_class = BlogPostDetailSerializer
     lookup_field = "slug"
@@ -81,8 +80,7 @@ class BlogPostDetailView(RetrieveAPIView):
         ct = ContentType.objects.get_for_model(BlogPost)
 
         return (
-            BlogPost.objects
-            .select_related("author", "category")
+            BlogPost.objects.select_related("author", "category")
             .prefetch_related("tags")
             .annotate(
                 rating=Avg(
@@ -136,6 +134,7 @@ class BlogPostReviewAPIView(APIView):
     GET  /api/blog/<slug>/reviews/
     POST /api/blog/<slug>/reviews/
     """
+
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, slug):
@@ -198,4 +197,28 @@ class BlogPostReviewAPIView(APIView):
         return Response(
             {"detail": "Review submitted successfully"},
             status=status.HTTP_201_CREATED,
+        )
+
+
+class BlogCategoryListView(ListAPIView):
+    """
+    GET /api/blog/categories/
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = BlogCategorySerializer
+
+    def get_queryset(self):
+        return (
+            BlogCategory.objects.annotate(
+                post_count=Count(
+                    "posts",
+                    filter=Q(
+                        posts__status="PUBLISHED",
+                        posts__published_at__lte=timezone.now(),
+                    ),
+                )
+            )
+            .filter(post_count__gt=0)
+            .order_by("name")
         )

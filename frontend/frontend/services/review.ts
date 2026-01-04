@@ -10,13 +10,11 @@ export type CreateReviewPayload = {
     body: string
 }
 
-/* 🔹 ADD: paginated response type */
 export type PaginatedReviewResponse = {
     count: number
     results: Review[]
 }
 
-/* 🔹 ADD: reply response type */
 export type ReviewReplyResponse = {
     id: number
     body: string
@@ -26,56 +24,100 @@ export type ReviewReplyResponse = {
 /* ---------------- Cache ---------------- */
 
 // Cache: { "company:<slug>": { [page]: data } }
-/* 🔹 ADD: narrow `unknown` usage via type assertion at read time */
 const reviewCache: Record<string, Record<number, unknown>> = {}
 
-/* ---------------- Create Review ---------------- */
-/**
- * Create a review for a company (authenticated)
- */
-export async function createCompanyReview(
-    companySlug: string,
-    payload: CreateReviewPayload
-) {
-    /* 🔹 ADD: generic response typing */
-    const res = await api.post<Review>(
-        `/api/company/${companySlug}/reviews/`,
-        payload
-    )
+/* ---------------- Helpers ---------------- */
 
-    // Invalidate cache for this company
-    const cacheKey = `company:${companySlug}`
-    if (reviewCache[cacheKey]) {
-        delete reviewCache[cacheKey]
+/**
+ * Build FormData for REVIEW CREATION ONLY (NO MEDIA)
+ */
+export function buildReviewFormData(data: CreateReviewPayload) {
+    const formData = new FormData()
+
+    formData.append("rating", data.rating.toString())
+    formData.append("body", data.body)
+
+    if (data.title) {
+        formData.append("title", data.title)
     }
 
+    return formData
+}
+
+/* ---------------- Create review ---------------- */
+
+/**
+ * Create company review (text only)
+ * Returns { id }
+ */
+export async function createCompanyReview(
+    slug: string,
+    data: FormData
+) {
+    const res = await api.post(
+        `/api/company/${slug}/reviews/`,
+        data
+    )
     return res.data
 }
 
+/**
+ * Create blog review (text only)
+ * Returns { id }
+ */
+export async function createBlogReview(
+    slug: string,
+    data: FormData
+) {
+    const res = await api.post(
+        `/api/blog/${slug}/reviews/`,
+        data
+    )
+    return res.data
+}
+
+/* ---------------- Upload review media ---------------- */
+
+/**
+ * Upload ONE media file for a review
+ */
+export async function uploadReviewMedia(
+    reviewId: number,
+    file: File
+) {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    return api.post(
+        `/api/review/${reviewId}/media/`,
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    )
+}
+
 /* ---------------- Fetch Reviews ---------------- */
+
 /**
  * Get company reviews (public, paginated, cached)
  */
 export async function getCompanyReviews(
     companySlug: string,
-    page: number = 1
+    page = 1
 ) {
     const cacheKey = `company:${companySlug}`
 
-    if (!reviewCache[cacheKey]) {
-        reviewCache[cacheKey] = {}
-    }
+    reviewCache[cacheKey] ||= {}
 
-    /* 🔹 ADD: safe cast when reading cache */
     const cached = reviewCache[cacheKey][page] as
         | PaginatedReviewResponse
         | undefined
 
-    if (cached) {
-        return cached
-    }
+    if (cached) return cached
 
-    /* 🔹 ADD: generic response typing */
     const res = await publicApi.get<PaginatedReviewResponse>(
         `/api/company/${companySlug}/reviews/`,
         { params: { page } }
@@ -85,56 +127,40 @@ export async function getCompanyReviews(
     return res.data
 }
 
-
 /**
- * GET top blog reviews (public)
+ * Get blog reviews (public)
  */
 export async function getBlogReviews(
     slug: string,
     page = 1,
     pageSize = 4
 ) {
-    const res = await publicApi.get<{
-        count: number
-        results: Review[]
-    }>(`/api/blog/${slug}/reviews/`, {
-        params: {
-            page,
-            page_size: pageSize,
-        },
-    })
-
-    return res.data
-}
-
-/**
- * POST blog review (authenticated)
- */
-export async function createBlogReview(
-    slug: string,
-    payload: {
-        rating: number
-        title?: string
-        body: string
-    }
-) {
-    /* 🔹 ADD: generic response typing */
-    const res = await api.post<Review>(
+    const res = await publicApi.get<PaginatedReviewResponse>(
         `/api/blog/${slug}/reviews/`,
-        payload
+        {
+            params: {
+                page,
+                page_size: pageSize,
+            },
+        }
     )
 
     return res.data
 }
 
+/* ---------------- Replies ---------------- */
+
+/**
+ * Reply to a review (company owner / manager)
+ */
 export async function replyToReview(
     reviewId: number,
     body: string
 ) {
-    /* 🔹 ADD: generic response typing */
     const res = await api.post<ReviewReplyResponse>(
-        `/api/reviews/${reviewId}/reply/`,
+        `/api/review/${reviewId}/reply/`,
         { body }
     )
+
     return res.data
 }

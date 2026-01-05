@@ -1,28 +1,32 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
+// Pull allowed image domains from environment variable
+const allowedImageDomains: string[] =
+  process.env.NEXT_PUBLIC_IMAGE_HOSTS?.split(",").map((h) => h.trim()) || [];
+
+// Pull API base URL from environment (optional, useful for SSR calls)
+const apiBaseUrl: string = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
   images: {
+    domains: allowedImageDomains,
     remotePatterns: [
+      // Always allow your backend images
       {
         protocol: "http",
-        hostname: "localhost",
+        hostname: "django",
         port: "8000",
       },
       {
-        protocol: 'http',
-        hostname: '192.168.1.113',
-        port: '8000',
-        pathname: '/media/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '192.168.1.113',
-        port: '8000',
-        pathname: '/media/**',
+        protocol: "https",
+        hostname: "**",  // wildcard for all domains
       },
     ],
-    domains: ["migrationreviews.com", "placeimg.com", "picsum.photos", "consumersiteimages.trustpilot.net", "images.unsplash.com"], // add your image host here
+  },
+  env: {
+    NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
   },
 };
 

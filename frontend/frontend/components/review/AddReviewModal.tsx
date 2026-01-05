@@ -15,16 +15,20 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
     const [body, setBody] = useState("")
     const [loading, setLoading] = useState(false)
 
-    // Handle submitting the review
     async function handleSubmit() {
         if (!body.trim()) {
             alert("Review body cannot be empty")
             return
         }
 
+        const formData = new FormData()
+        formData.append("rating", rating.toString())
+        formData.append("title", title)
+        formData.append("body", body)
+
         setLoading(true)
         try {
-            await createBlogReview(slug, { rating, title, body })
+            await createBlogReview(slug, formData)
             onSuccess()
             onClose()
         } catch (err) {
@@ -35,7 +39,6 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
         }
     }
 
-    // Clickable stars for rating
     const StarInput = () => (
         <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -43,7 +46,9 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                     key={star}
                     type="button"
                     onClick={() => setRating(star)}
-                    className={`text-2xl ${star <= rating ? "text-yellow-400" : "text-gray-300"}`}
+                    className={`text-2xl ${
+                        star <= rating ? "text-yellow-400" : "text-gray-300"
+                    }`}
                 >
                     ★
                 </button>
@@ -56,7 +61,7 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
             <div className="bg-background rounded-xl p-6 w-full max-w-md space-y-4">
                 <h3 className="text-lg font-semibold">Add Review</h3>
 
-                {/* Rating Input */}
+                {/* Rating */}
                 <div className="flex items-center gap-2">
                     <span className="text-sm">Rating:</span>
                     <StarInput />
@@ -80,7 +85,7 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                     disabled={loading}
                 />
 
-                {/* Buttons */}
+                {/* Actions */}
                 <div className="flex gap-2">
                     <button
                         onClick={onClose}

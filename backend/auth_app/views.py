@@ -16,7 +16,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
+from django.views.decorators.csrf import ensure_csrf_cookie
 from company.models import CompanyMembership
 
 from .authentication import JWTAuthenticationFromCookie
@@ -59,7 +59,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
-    @method_decorator(csrf_exempt)
+
     def post(self, request):
         user = authenticate(
             email=request.data.get("email"),
@@ -118,7 +118,6 @@ class LogoutView(APIView):
     authentication_classes = [JWTAuthenticationFromCookie]
     permission_classes = [IsAuthenticated]
 
-    @method_decorator(csrf_exempt)
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh")
 
@@ -147,6 +146,7 @@ class LogoutView(APIView):
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @method_decorator(ensure_csrf_cookie)
     def get(self, request):
         user = request.user
 

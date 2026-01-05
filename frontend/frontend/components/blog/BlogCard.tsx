@@ -7,6 +7,7 @@ import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { Badge } from "@/components/ui/badge"
 
 export function BlogCard({ post }: { post: BlogPost }) {
+    const imageSrc = post.image ?? "/images/placeholder.png"
     return (
         <Card className="p-0 overflow-hidden blog-layout-1">
             <div className="blog-box">
@@ -14,7 +15,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
                 <div className="relative h-[220px]">
                     <Link href={`/blog/${post.slug}`}>
                         <Image
-                            src={post.image}
+                            src={imageSrc}
                             alt={post.title}
                             fill
                             className="object-cover"

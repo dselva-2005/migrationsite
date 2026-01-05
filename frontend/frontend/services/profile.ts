@@ -12,35 +12,39 @@ export interface UserProfile {
 
 /* ---------- Cache ---------- */
 
-let profileCache: UserProfile | null = null
-let profilePromise: Promise<UserProfile> | null = null
+// key is fixed for now, but future-proof
+const PROFILE_KEY = "me"
+
+const profileCache = new Map<string, UserProfile>()
+const profilePromise = new Map<string, Promise<UserProfile>>()
 
 /* ---------- Get Profile ---------- */
 
 export async function getProfile(
     forceRefresh: boolean = false
 ): Promise<UserProfile> {
-    // ✅ Return cached data
-    if (profileCache && !forceRefresh) {
-        return profileCache
+    // ✅ Cached value
+    if (!forceRefresh && profileCache.has(PROFILE_KEY)) {
+        return profileCache.get(PROFILE_KEY)!
     }
 
     // ✅ Deduplicate parallel requests
-    if (profilePromise && !forceRefresh) {
-        return profilePromise
+    if (!forceRefresh && profilePromise.has(PROFILE_KEY)) {
+        return profilePromise.get(PROFILE_KEY)!
     }
 
-    profilePromise = api
+    const promise = api
         .get<UserProfile>("/api/auth/profile/")
-        .then((res) => {
-            profileCache = res.data
+        .then(res => {
+            profileCache.set(PROFILE_KEY, res.data)
             return res.data
         })
         .finally(() => {
-            profilePromise = null
+            profilePromise.delete(PROFILE_KEY)
         })
 
-    return profilePromise
+    profilePromise.set(PROFILE_KEY, promise)
+    return promise
 }
 
 /* ---------- Update Profile Image ---------- */
@@ -61,14 +65,15 @@ export async function updateProfileImage(
         }
     )
 
-    // 🔁 Invalidate + update cache
-    profileCache = res.data
+    // 🔁 Update cache
+    profileCache.set(PROFILE_KEY, res.data)
 
     return res.data
 }
 
-/* ---------- Optional Manual Invalidation ---------- */
+/* ---------- Manual Invalidation ---------- */
 
 export function clearProfileCache() {
-    profileCache = null
+    profileCache.clear()
+    profilePromise.clear()
 }

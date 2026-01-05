@@ -14,13 +14,14 @@ from company.serializers import (
     CompanyListSerializer,
     CompanyDetailSerializer,
     CompanyListInfo,
+    CompanyLogoUpdateSerializer,
 )
 from company.serializers import BusinessOnboardingSerializer
 from company.permissions import user_can_manage_company
 from company.serializers import CompanyDashboardSerializer
 from review.serializers import ReviewSerializer, ReviewCreateSerializer
 from review.services import get_reviews_for_object
-
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # ------------------------------------
 # Company List
@@ -182,3 +183,34 @@ class CompanyDashboardView(APIView):
         )
 
         return Response(serializer.data)
+
+
+class CompanyLogoUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request, slug):
+        company = get_object_or_404(Company, slug=slug, is_active=True)
+
+        if not user_can_manage_company(request.user, company):
+            return Response(
+                {"detail": "Access denied"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = CompanyLogoUpdateSerializer(
+            company,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "detail": "Company logo updated successfully",
+                "logo": serializer.data["logo"],
+            },
+            status=status.HTTP_200_OK,
+        )

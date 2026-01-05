@@ -1,22 +1,25 @@
 import publicApi from "@/lib/publicApi"
+type CacheEntry<T> = {
+    value: T
+    expiresAt: number
+}
 
-// Simple in-memory cache
-const pageContentCache: Record<string, unknown> = {}
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const pageContentCache = new Map<string, CacheEntry<unknown>>()
 
-/**
- * Get page content with caching
- */
 export async function getPageContent(page: string) {
-    // Return cached data if exists
-    if (pageContentCache[page]) {
-        return pageContentCache[page]
+    const cached = pageContentCache.get(page)
+
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.value
     }
 
-    // Fetch from API
     const res = await publicApi.get(`/api/content/${page}/`)
 
-    // Store in cache
-    pageContentCache[page] = res.data
+    pageContentCache.set(page, {
+        value: res.data,
+        expiresAt: Date.now() + CACHE_TTL,
+    })
 
     return res.data
 }

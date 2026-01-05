@@ -165,6 +165,7 @@ class CompanyDashboardSerializer(serializers.ModelSerializer):
             "rating_average",
             "rating_count",
             "is_verified",
+            "logo",
             "reviews",
         ]
 
@@ -184,3 +185,18 @@ class CompanyDashboardSerializer(serializers.ModelSerializer):
             many=True,
             context=self.context,
         ).data
+
+
+class CompanyLogoUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["logo"]
+
+    def validate_logo(self, value):
+        if value.size > 2 * 1024 * 1024:
+            raise serializers.ValidationError("Logo size must be under 2MB")
+
+        if value.content_type not in ["image/png", "image/jpeg", "image/webp"]:
+            raise serializers.ValidationError("Unsupported image format")
+
+        return value

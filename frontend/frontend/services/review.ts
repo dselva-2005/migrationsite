@@ -23,17 +23,16 @@ export type ReviewReplyResponse = {
 
 /* ---------------- Cache ---------------- */
 
-// Cache: { "company:<slug>": { [page]: data } }
-const reviewCache: Record<string, Record<number, unknown>> = {}
+// company:<slug> -> page -> response
+const reviewCache = new Map<
+    string,
+    Map<number, PaginatedReviewResponse>
+>()
 
 /* ---------------- Helpers ---------------- */
 
-/**
- * Build FormData for REVIEW CREATION ONLY (NO MEDIA)
- */
 export function buildReviewFormData(data: CreateReviewPayload) {
     const formData = new FormData()
-
     formData.append("rating", data.rating.toString())
     formData.append("body", data.body)
 
@@ -46,10 +45,6 @@ export function buildReviewFormData(data: CreateReviewPayload) {
 
 /* ---------------- Create review ---------------- */
 
-/**
- * Create company review (text only)
- * Returns { id }
- */
 export async function createCompanyReview(
     slug: string,
     data: FormData
@@ -58,29 +53,22 @@ export async function createCompanyReview(
         `/api/company/${slug}/reviews/`,
         data
     )
+
+    // 🔥 Optional: invalidate company review cache
+    reviewCache.delete(`company:${slug}`)
+
     return res.data
 }
 
-/**
- * Create blog review (text only)
- * Returns { id }
- */
 export async function createBlogReview(
     slug: string,
     data: FormData
 ) {
-    const res = await api.post(
-        `/api/blog/${slug}/reviews/`,
-        data
-    )
-    return res.data
+    return api.post(`/api/blog/${slug}/reviews/`, data)
 }
 
 /* ---------------- Upload review media ---------------- */
 
-/**
- * Upload ONE media file for a review
- */
 export async function uploadReviewMedia(
     reviewId: number,
     file: File
@@ -101,20 +89,18 @@ export async function uploadReviewMedia(
 
 /* ---------------- Fetch Reviews ---------------- */
 
-/**
- * Get company reviews (public, paginated, cached)
- */
 export async function getCompanyReviews(
     companySlug: string,
     page = 1
 ) {
     const cacheKey = `company:${companySlug}`
 
-    reviewCache[cacheKey] ||= {}
+    if (!reviewCache.has(cacheKey)) {
+        reviewCache.set(cacheKey, new Map())
+    }
 
-    const cached = reviewCache[cacheKey][page] as
-        | PaginatedReviewResponse
-        | undefined
+    const companyCache = reviewCache.get(cacheKey)!
+    const cached = companyCache.get(page)
 
     if (cached) return cached
 
@@ -123,13 +109,10 @@ export async function getCompanyReviews(
         { params: { page } }
     )
 
-    reviewCache[cacheKey][page] = res.data
+    companyCache.set(page, res.data)
     return res.data
 }
 
-/**
- * Get blog reviews (public)
- */
 export async function getBlogReviews(
     slug: string,
     page = 1,
@@ -150,9 +133,6 @@ export async function getBlogReviews(
 
 /* ---------------- Replies ---------------- */
 
-/**
- * Reply to a review (company owner / manager)
- */
 export async function replyToReview(
     reviewId: number,
     body: string

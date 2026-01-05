@@ -39,5 +39,6 @@ export type CompanyAccount = {
     rating_average: number
     rating_count: number
     is_verified: boolean
+    logo?: string
     reviews: CompanyReview[]
 }

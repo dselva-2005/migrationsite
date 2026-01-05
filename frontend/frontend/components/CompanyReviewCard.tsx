@@ -17,6 +17,8 @@ interface CompanyReviewCardProps {
     imageUrl: string
     rating: number
     reviewCount: number
+    tagline?: string | null
+    city?: string | null
 }
 
 export function CompanyReviewCard({
@@ -26,32 +28,42 @@ export function CompanyReviewCard({
     imageUrl,
     rating,
     reviewCount,
+    tagline,
+    city,
 }: CompanyReviewCardProps) {
     return (
         <Card className="p-0 hover:shadow-lg">
             <Link href={`/review/${slug}`} className="block">
-                    <div className="w-full">
-                        <AspectRatio ratio={1.2/ 1}>
-                            <Image
-                                src={imageUrl}
-                                alt={name}
-                                fill
-                                className="rounded-[6px]"
-                                unoptimized
-                            />
-                        </AspectRatio>
-                    </div>
-                <CardContent className="p-4 space-y-3 rounded-md">
-                    {/* Image */}
+                {/* Image */}
+                <div className="w-full">
+                    <AspectRatio ratio={1.2 / 1}>
+                        <Image
+                            src={imageUrl}
+                            alt={name}
+                            fill
+                            className="rounded-[6px]"
+                            unoptimized
+                        />
+                    </AspectRatio>
+                </div>
 
-                    {/* Company name */}
+                {/* Card Content */}
+                <CardContent className="p-4 space-y-2 rounded-md">
+                    {/* Company Name */}
                     <h3 className="text-sm font-semibold leading-tight">
                         {name}
                     </h3>
 
-                    {/* Domain */}
-                    <p className="text-sm text-muted-foreground">
-                        {domain}
+                    {/* Tagline */}
+                    {tagline && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                            {tagline}
+                        </p>
+                    )}
+
+                    {/* Domain and City */}
+                    <p className="text-xs text-muted-foreground">
+                        {domain} {city ? `• ${city}` : ""}
                     </p>
 
                     {/* Rating */}

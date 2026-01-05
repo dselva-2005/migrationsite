@@ -12,6 +12,7 @@ class CompanyListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "city",
             "slug",
             "tagline",
             "logo",
@@ -28,14 +29,29 @@ class CompanyDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = [
+            # Core
             "id",
             "name",
             "slug",
             "tagline",
             "description",
             "website",
+
+            # Branding
             "logo",
             "cover_image",
+
+            # Address & contact
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "phone",
+            "email",
+
+            # Meta
             "rating_average",
             "rating_count",
             "is_verified",
@@ -71,10 +87,21 @@ class BusinessOnboardingSerializer(serializers.Serializer):
         source="company",
     )
 
+    # Company snapshot
     company_name = serializers.CharField(required=False, allow_blank=True)
     tagline = serializers.CharField(required=False, allow_blank=True)
     description = serializers.CharField(required=False, allow_blank=True)
     website = serializers.URLField(required=False, allow_blank=True)
+
+    # ✅ Address snapshot
+    address_line_1 = serializers.CharField(required=False, allow_blank=True)
+    address_line_2 = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(required=False, allow_blank=True)
+    state = serializers.CharField(required=False, allow_blank=True)
+    postal_code = serializers.CharField(required=False, allow_blank=True)
+    country = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate(self, data):
         request_type = data["request_type"]
@@ -99,10 +126,21 @@ class BusinessOnboardingSerializer(serializers.Serializer):
             user=user,
             request_type=validated_data["request_type"],
             company=validated_data.get("company"),
+
             company_name=validated_data.get("company_name", ""),
             tagline=validated_data.get("tagline", ""),
             description=validated_data.get("description", ""),
             website=validated_data.get("website", ""),
+
+            # ✅ Address snapshot
+            address_line_1=validated_data.get("address_line_1", ""),
+            address_line_2=validated_data.get("address_line_2", ""),
+            city=validated_data.get("city", ""),
+            state=validated_data.get("state", ""),
+            postal_code=validated_data.get("postal_code", ""),
+            country=validated_data.get("country", ""),
+            phone=validated_data.get("phone_number", ""),
+            email=validated_data.get("email", ""),
         )
 
 

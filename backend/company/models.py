@@ -27,6 +27,18 @@ class CompanyCategory(models.Model):
 
 
 class Company(models.Model):
+
+    address_line_1 = models.CharField(max_length=255, blank=True)
+    address_line_2 = models.CharField(max_length=255, blank=True)
+
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    
     # --------------------
     # Ownership
     # --------------------
@@ -181,6 +193,19 @@ class CompanyOnboardingRequest(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # --------------------
+    # Address snapshot
+    # --------------------
+    address_line_1 = models.CharField(max_length=255, blank=True)
+    address_line_2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
 
     def __str__(self):
         return f"{self.user} → {self.request_type}"

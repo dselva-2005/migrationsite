@@ -61,11 +61,21 @@ export default function BusinessLoginForm() {
     const isNewCompany = selectedCompany === NEW_COMPANY_VALUE
     const [companyPopoverOpen, setCompanyPopoverOpen] = useState(false)
 
-    /* New company fields */
+    /* New company core */
     const [companyName, setCompanyName] = useState("")
     const [tagline, setTagline] = useState("")
     const [description, setDescription] = useState("")
     const [website, setWebsite] = useState("")
+
+    /* Company address snapshot */
+    const [addressLine1, setAddressLine1] = useState("")
+    const [addressLine2, setAddressLine2] = useState("")
+    const [city, setCity] = useState("")
+    const [state, setState] = useState("")
+    const [postalCode, setPostalCode] = useState("")
+    const [country, setCountry] = useState("")
+    const [companyEmail, setCompanyEmail] = useState("")
+    const [companyPhone, setCompanyPhone] = useState("")
 
     /* UI */
     const [error, setError] = useState<string | null>(null)
@@ -80,8 +90,7 @@ export default function BusinessLoginForm() {
                 setCompaniesLoading(true)
                 const res = await api.get("/api/company/list/")
                 setCompanies(res.data)
-            } catch (err) {
-                console.error("Failed to load companies", err)
+            } catch {
                 setError("Unable to load companies")
             } finally {
                 setCompaniesLoading(false)
@@ -96,20 +105,21 @@ export default function BusinessLoginForm() {
     const validate = (): boolean => {
         setError(null)
 
-        if (!fullName.trim())
-            return setError("Full name is required"), false
-
+        if (!fullName.trim()) return setError("Full name is required"), false
         if (!phone.match(/^\d{7,15}$/))
             return setError("Enter a valid phone number"), false
+        if (!role) return setError("Select your business role"), false
+        if (!selectedCompany) return setError("Select a company"), false
 
-        if (!role)
-            return setError("Select your business role"), false
-
-        if (!selectedCompany)
-            return setError("Select a company"), false
-
-        if (isNewCompany && !companyName.trim())
-            return setError("Company name is required"), false
+        if (isNewCompany) {
+            if (!companyName.trim())
+                return setError("Company name is required"), false
+            if (!addressLine1.trim())
+                return setError("Address line 1 is required"), false
+            if (!city.trim()) return setError("City is required"), false
+            if (!country.trim())
+                return setError("Country is required"), false
+        }
 
         return true
     }
@@ -135,6 +145,15 @@ export default function BusinessLoginForm() {
                 tagline: isNewCompany ? tagline : "",
                 description: isNewCompany ? description : "",
                 website: isNewCompany ? website : "",
+
+                address_line_1: isNewCompany ? addressLine1 : "",
+                address_line_2: isNewCompany ? addressLine2 : "",
+                city: isNewCompany ? city : "",
+                state: isNewCompany ? state : "",
+                postal_code: isNewCompany ? postalCode : "",
+                country: isNewCompany ? country : "",
+                email: isNewCompany ? companyEmail : "",
+                phone_number: isNewCompany ? companyPhone : "",
             })
 
             setSubmitted(true)
@@ -160,20 +179,15 @@ export default function BusinessLoginForm() {
                 <CardHeader>
                     <CardTitle>Business Onboarding</CardTitle>
                     <CardDescription>
-                        Verify your identity and associate your company.
+                        Verify your identity and associate your company
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent>
                     {submitted ? (
-                        <div className="space-y-4 text-center py-10">
-                            <h3 className="text-xl font-semibold text-green-600">
-                                🎉 Request Submitted
-                            </h3>
-                            <p className="text-muted-foreground">
-                                Your onboarding request has been submitted.
-                            </p>
-                        </div>
+                        <CardDescription className="text-center py-10 text-green-600">
+                            🎉 Your onboarding request has been submitted
+                        </CardDescription>
                     ) : (
                         <form onSubmit={onSubmit} className="space-y-6">
                             {/* Full Name */}
@@ -199,7 +213,6 @@ export default function BusinessLoginForm() {
                                         }
                                     />
                                     <Input
-                                        placeholder="XXXXXXXXXX"
                                         value={phone}
                                         onChange={(e) =>
                                             setPhone(e.target.value)
@@ -231,7 +244,7 @@ export default function BusinessLoginForm() {
                                 </Select>
                             </div>
 
-                            {/* Company Combobox */}
+                            {/* Company selector */}
                             <div>
                                 <Label>Company</Label>
                                 <Popover
@@ -244,48 +257,28 @@ export default function BusinessLoginForm() {
                                             role="combobox"
                                             className="w-full justify-between"
                                         >
-                                            {selectedCompany
-                                                ? companies.find(
+                                            {isNewCompany
+                                                ? "Add new company"
+                                                : companies.find(
                                                     (c) =>
                                                         c.id ===
                                                         selectedCompany
                                                 )?.name ??
-                                                "Select company"
-                                                : "Select company"}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                                "Select company"}
+                                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
 
-                                    <PopoverContent className="w-full p-0">
+                                    <PopoverContent className="p-0">
                                         <Command>
                                             <CommandInput placeholder="Search company..." />
-
                                             <CommandEmpty>
-                                                <div className="p-2 text-sm">
-                                                    No company found.
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="mt-2 w-full"
-                                                        onClick={() => {
-                                                            setSelectedCompany(
-                                                                NEW_COMPANY_VALUE
-                                                            )
-                                                            setCompanyPopoverOpen(
-                                                                false
-                                                            )
-                                                        }}
-                                                    >
-                                                        + Add new company
-                                                    </Button>
-                                                </div>
+                                                No company found
                                             </CommandEmpty>
-
                                             <CommandGroup>
                                                 {companies.map((c) => (
                                                     <CommandItem
                                                         key={c.id}
-                                                        value={c.name}
                                                         onSelect={() => {
                                                             setSelectedCompany(
                                                                 c.id
@@ -305,10 +298,7 @@ export default function BusinessLoginForm() {
                                                         {c.name}
                                                     </CommandItem>
                                                 ))}
-
                                                 <CommandItem
-                                                    value="new-company"
-                                                    className="font-medium"
                                                     onSelect={() => {
                                                         setSelectedCompany(
                                                             NEW_COMPANY_VALUE
@@ -318,7 +308,7 @@ export default function BusinessLoginForm() {
                                                         )
                                                     }}
                                                 >
-                                                    My company is not listed
+                                                    + My company is not listed
                                                 </CommandItem>
                                             </CommandGroup>
                                         </Command>
@@ -326,55 +316,105 @@ export default function BusinessLoginForm() {
                                 </Popover>
                             </div>
 
-                            {/* New Company Fields */}
+                            {/* New company fields */}
                             {isNewCompany && (
                                 <>
-                                    <div>
-                                        <Label>Company Name</Label>
-                                        <Input
-                                            value={companyName}
-                                            onChange={(e) =>
-                                                setCompanyName(e.target.value)
-                                            }
-                                        />
-                                    </div>
+                                    <Input
+                                        placeholder="Company name"
+                                        value={companyName}
+                                        onChange={(e) =>
+                                            setCompanyName(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Tagline"
+                                        value={tagline}
+                                        onChange={(e) =>
+                                            setTagline(e.target.value)
+                                        }
+                                    />
+                                    <Textarea
+                                        placeholder="Description"
+                                        value={description}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Website"
+                                        value={website}
+                                        onChange={(e) =>
+                                            setWebsite(e.target.value)
+                                        }
+                                    />
 
-                                    <div>
-                                        <Label>Tagline</Label>
-                                        <Input
-                                            value={tagline}
-                                            onChange={(e) =>
-                                                setTagline(e.target.value)
-                                            }
-                                        />
-                                    </div>
+                                    <CardDescription>
+                                        Company Address
+                                    </CardDescription>
 
-                                    <div>
-                                        <Label>Description</Label>
-                                        <Textarea
-                                            value={description}
-                                            onChange={(e) =>
-                                                setDescription(e.target.value)
-                                            }
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label>Website</Label>
-                                        <Input
-                                            value={website}
-                                            onChange={(e) =>
-                                                setWebsite(e.target.value)
-                                            }
-                                        />
-                                    </div>
+                                    <Input
+                                        placeholder="Address line 1"
+                                        value={addressLine1}
+                                        onChange={(e) =>
+                                            setAddressLine1(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Address line 2"
+                                        value={addressLine2}
+                                        onChange={(e) =>
+                                            setAddressLine2(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="City"
+                                        value={city}
+                                        onChange={(e) =>
+                                            setCity(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="State"
+                                        value={state}
+                                        onChange={(e) =>
+                                            setState(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Postal code"
+                                        value={postalCode}
+                                        onChange={(e) =>
+                                            setPostalCode(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Country"
+                                        value={country}
+                                        onChange={(e) =>
+                                            setCountry(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Company email"
+                                        value={companyEmail}
+                                        onChange={(e) =>
+                                            setCompanyEmail(e.target.value)
+                                        }
+                                    />
+                                    <Input
+                                        placeholder="Company phone"
+                                        value={companyPhone}
+                                        onChange={(e) =>
+                                            setCompanyPhone(e.target.value)
+                                        }
+                                    />
                                 </>
                             )}
 
                             {error && (
-                                <p className="text-sm text-red-600">
+                                <CardDescription className="text-red-600">
                                     {error}
-                                </p>
+                                </CardDescription>
                             )}
 
                             <Button

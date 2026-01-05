@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { usePageContent } from "@/providers/PageContentProvider";
-import { GlobalSearch } from "@/components/GlobalSearch"
 
 interface HeroMessage {
     title: string;
@@ -50,7 +49,6 @@ export function ReviewHero() {
                         </p>
                     </div>
                 </div>
-                <GlobalSearch/>
             </div>
         </section>
     );

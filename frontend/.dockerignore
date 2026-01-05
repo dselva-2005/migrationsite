@@ -1,8 +1,29 @@
-node_modules
+# === Next.js build artifacts ===
+frontend/.next
+frontend/node_modules
+
+# Safety (in case of future restructuring)
 .next
+node_modules
+
+# === Environment files ===
 .env
+.env.*
+*.env
+
+# === VCS ===
 .git
 .gitignore
-Dockerfile
+
+# === Logs ===
 npm-debug.log
 pnpm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# === OS junk ===
+.DS_Store
+
+# === Docker files (not needed in image) ===
+Dockerfile
+dockerfile

@@ -1,18 +1,22 @@
-# company/admin.py
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from company.models import Company, CompanyMembership
-from .models import (
+from django.utils import timezone
+from django.utils.html import format_html
+
+from company.models import (
     Company,
     CompanyCategory,
     CompanyOnboardingRequest,
     CompanyMembership,
 )
 from review.models import Review
-from django.utils import timezone
-from django.contrib import messages
-from django.utils.html import format_html
+
+
+# ======================================================
+# Review Inline
+# ======================================================
 
 
 class ReviewInline(GenericTabularInline):
@@ -26,10 +30,10 @@ class ReviewInline(GenericTabularInline):
         "author_name",
         "title",
         "body",
+        "media_preview",
         "is_verified",
         "is_approved",
         "created_at",
-        "media_preview",
     )
 
     fields = (
@@ -44,26 +48,21 @@ class ReviewInline(GenericTabularInline):
     )
 
     def media_preview(self, obj):
-        """
-        Display review media thumbnails / links
-        """
         media_qs = obj.media.all()
-
         if not media_qs.exists():
             return "—"
 
         html = []
-
         for media in media_qs:
             url = media.file.url
-
             if media.media_type == "image":
                 html.append(
                     f"""
                     <a href="{url}" target="_blank">
                         <img src="{url}"
-                            style="max-height:80px; max-width:120px; margin:4px;
-                                    border-radius:4px; object-fit:cover;" />
+                             style="max-height:80px; max-width:120px;
+                             margin:4px; border-radius:4px;
+                             object-fit:cover;" />
                     </a>
                     """
                 )
@@ -75,10 +74,14 @@ class ReviewInline(GenericTabularInline):
                     </a>
                     """
                 )
-
         return format_html("".join(html))
 
     media_preview.short_description = "Media"
+
+
+# ======================================================
+# Company Admin
+# ======================================================
 
 
 @admin.register(Company)
@@ -118,7 +121,16 @@ class CompanyAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             "Basic Info",
-            {"fields": ("name", "slug", "tagline", "description", "category")},
+            {
+                "fields": (
+                    "name",
+                    "slug",
+                    "tagline",
+                    "description",
+                    "category",
+                    "search_vector",
+                )
+            },
         ),
         ("Branding", {"fields": ("logo", "cover_image", "website")}),
         ("Trust & Visibility", {"fields": ("is_verified", "is_active")}),
@@ -133,39 +145,81 @@ class CompanyAdmin(admin.ModelAdmin):
     inlines = [ReviewInline]
 
 
+# ======================================================
+# Category Admin
+# ======================================================
+
+
 @admin.register(CompanyCategory)
 class CompanyCategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
 
 
+# ======================================================
+# 🔥 SINGLE SOURCE OF TRUTH — APPROVAL LOGIC
+# ======================================================
+
+
 @transaction.atomic
 def approve_onboarding_request(request_obj, admin_user):
-    if request_obj.status != "PENDING":
-        raise ValueError("Request already processed")
 
-    if request_obj.request_type == "NEW":
+    data = {
+        "user_id": request_obj.user_id,
+        "request_type": request_obj.request_type,
+        "company_id": request_obj.company_id,
+        "company_name": request_obj.company_name,
+        "tagline": request_obj.tagline,
+        "description": request_obj.description,
+        "website": request_obj.website,
+        "address_line_1": request_obj.address_line_1,
+        "address_line_2": request_obj.address_line_2,
+        "city": request_obj.city,
+        "state": request_obj.state,
+        "postal_code": request_obj.postal_code,
+        "country": request_obj.country,
+        "email": request_obj.email,
+        "phone": request_obj.phone,
+    }
+
+    if data["request_type"] == "NEW":
         company = Company.objects.create(
-            name=request_obj.company_name,
-            tagline=request_obj.tagline,
-            description=request_obj.description,
-            website=request_obj.website,
-            owner=request_obj.user,
+            name=data["company_name"],
+            tagline=data["tagline"],
+            description=data["description"],
+            website=data["website"],
+            address_line_1=data["address_line_1"],
+            address_line_2=data["address_line_2"],
+            city=data["city"],
+            state=data["state"],
+            postal_code=data["postal_code"],
+            country=data["country"],
+            email=data["email"],
+            phone=data["phone"],
+            owner_id=data["user_id"],
+            is_verified=True,
+            is_active=True,
         )
     else:
-        company = request_obj.company
-        if not company:
-            raise ValueError("Existing company not set")
+        company = Company.objects.get(pk=data["company_id"])
 
-    CompanyMembership.objects.create(
-        user=request_obj.user, company=company, role="OWNER", status="ACTIVE"
+    CompanyMembership.objects.update_or_create(
+        user_id=data["user_id"],
+        company=company,
+        defaults={"role": "OWNER", "status": "ACTIVE"},
     )
 
-    request_obj.status = "APPROVED"
-    request_obj.company = company
-    request_obj.reviewed_by = admin_user
-    request_obj.reviewed_at = timezone.now()
-    request_obj.save()
+    CompanyOnboardingRequest.objects.filter(pk=request_obj.pk).update(
+        status="APPROVED",
+        company=company,
+        reviewed_by=admin_user,
+        reviewed_at=timezone.now(),
+    )
+
+
+# ======================================================
+# Onboarding Request Admin
+# ======================================================
 
 
 @admin.register(CompanyOnboardingRequest)
@@ -181,6 +235,7 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("request_type", "status", "created_at")
+
     search_fields = (
         "user__email",
         "user__username",
@@ -196,6 +251,14 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         "tagline",
         "description",
         "website",
+        "address_line_1",
+        "address_line_2",
+        "city",
+        "state",
+        "postal_code",
+        "country",
+        "phone",
+        "email",
         "created_at",
         "reviewed_by",
         "reviewed_at",
@@ -218,36 +281,7 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         approved = 0
 
         for req in queryset.filter(status="PENDING"):
-            company = None
-
-            # NEW COMPANY → create it
-            if req.request_type == "NEW":
-                company = Company.objects.create(
-                    name=req.company_name,
-                    tagline=req.tagline,
-                    description=req.description,
-                    website=req.website,
-                    owner=req.user,
-                    is_verified=True,
-                )
-            else:
-                company = req.company
-
-            # Create or activate membership
-            CompanyMembership.objects.update_or_create(
-                user=req.user,
-                company=company,
-                defaults={
-                    "role": "OWNER",
-                    "status": "ACTIVE",
-                },
-            )
-
-            req.status = "APPROVED"
-            req.reviewed_by = request.user
-            req.reviewed_at = timezone.now()
-            req.save()
-
+            approve_onboarding_request(req, request.user)
             approved += 1
 
         self.message_user(

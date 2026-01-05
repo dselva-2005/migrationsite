@@ -20,10 +20,21 @@ def update_blog_search_vector(sender, instance, **kwargs):
 def update_company_search_vector(sender, instance, **kwargs):
     Company.objects.filter(pk=instance.pk).update(
         search_vector=(
+            # Core identity
             SearchVector("name", weight="A") +
-            SearchVector("description", weight="B")
+            SearchVector("tagline", weight="A") +
+            SearchVector("description", weight="B") +
+
+            # Address / Contact
+            SearchVector("address_line_1", weight="C") +
+            SearchVector("address_line_2", weight="C") +
+            SearchVector("city", weight="B") +
+            SearchVector("state", weight="C") +
+            SearchVector("postal_code", weight="D") +
+            SearchVector("country", weight="B")
         )
     )
+
 
 @receiver(post_save, sender=Review)
 def update_review_search_vector(sender, instance, **kwargs):

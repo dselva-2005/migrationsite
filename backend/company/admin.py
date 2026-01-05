@@ -3,15 +3,23 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db import transaction
 from company.models import Company, CompanyMembership
-from .models import Company, CompanyCategory,CompanyOnboardingRequest, CompanyMembership
+from .models import (
+    Company,
+    CompanyCategory,
+    CompanyOnboardingRequest,
+    CompanyMembership,
+)
 from review.models import Review
 from django.utils import timezone
 from django.contrib import messages
+from django.utils.html import format_html
+
 
 class ReviewInline(GenericTabularInline):
     model = Review
     extra = 0
     can_delete = False
+    show_change_link = True
 
     readonly_fields = (
         "rating",
@@ -21,6 +29,7 @@ class ReviewInline(GenericTabularInline):
         "is_verified",
         "is_approved",
         "created_at",
+        "media_preview",
     )
 
     fields = (
@@ -28,10 +37,48 @@ class ReviewInline(GenericTabularInline):
         "author_name",
         "title",
         "body",
+        "media_preview",
         "is_verified",
         "is_approved",
         "created_at",
     )
+
+    def media_preview(self, obj):
+        """
+        Display review media thumbnails / links
+        """
+        media_qs = obj.media.all()
+
+        if not media_qs.exists():
+            return "—"
+
+        html = []
+
+        for media in media_qs:
+            url = media.file.url
+
+            if media.media_type == "image":
+                html.append(
+                    f"""
+                    <a href="{url}" target="_blank">
+                        <img src="{url}"
+                            style="max-height:80px; max-width:120px; margin:4px;
+                                    border-radius:4px; object-fit:cover;" />
+                    </a>
+                    """
+                )
+            else:
+                html.append(
+                    f"""
+                    <a href="{url}" target="_blank">
+                        🎥 {media.file.name.split('/')[-1]}
+                    </a>
+                    """
+                )
+
+        return format_html("".join(html))
+
+    media_preview.short_description = "Media"
 
 
 @admin.register(Company)
@@ -69,21 +116,17 @@ class CompanyAdmin(admin.ModelAdmin):
     )
 
     fieldsets = (
-        ("Basic Info", {
-            "fields": ("name", "slug", "tagline", "description", "category")
-        }),
-        ("Branding", {
-            "fields": ("logo", "cover_image", "website")
-        }),
-        ("Trust & Visibility", {
-            "fields": ("is_verified", "is_active")
-        }),
-        ("SEO", {
-            "fields": ("meta_title", "meta_description")
-        }),
-        ("System", {
-            "fields": ("rating_average", "rating_count", "created_at", "updated_at")
-        }),
+        (
+            "Basic Info",
+            {"fields": ("name", "slug", "tagline", "description", "category")},
+        ),
+        ("Branding", {"fields": ("logo", "cover_image", "website")}),
+        ("Trust & Visibility", {"fields": ("is_verified", "is_active")}),
+        ("SEO", {"fields": ("meta_title", "meta_description")}),
+        (
+            "System",
+            {"fields": ("rating_average", "rating_count", "created_at", "updated_at")},
+        ),
     )
 
     ordering = ("-rating_average", "-rating_count")
@@ -115,10 +158,7 @@ def approve_onboarding_request(request_obj, admin_user):
             raise ValueError("Existing company not set")
 
     CompanyMembership.objects.create(
-        user=request_obj.user,
-        company=company,
-        role="OWNER",
-        status="ACTIVE"
+        user=request_obj.user, company=company, role="OWNER", status="ACTIVE"
     )
 
     request_obj.status = "APPROVED"
@@ -167,6 +207,7 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         if obj.request_type == "EXISTING":
             return obj.company
         return obj.company_name or "-"
+
     company_display.short_description = "Company"
 
     # -----------------------

@@ -6,16 +6,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: backend
-    command: gunicorn CoreApi.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn CoreApi.wsgi:application --bind 0.0.0.0:8000 --workers 4
     env_file:
-      - .env.prod
+      - ./.env.prod
     volumes:
       - media:/app/media
       - static:/app/staticfiles
     depends_on:
       - postgres
       - redis
-    restart: unless-stopped
+    restart: always
+    # ❌ no ports in prod (nginx only)
 
   celery:
     build:
@@ -24,11 +25,11 @@ services:
     container_name: celery
     command: celery -A CoreApi worker -l info
     env_file:
-      - .env.prod
+      - ./.env.prod
     depends_on:
       - redis
       - postgres
-    restart: unless-stopped
+    restart: always
 
   frontend:
     build:
@@ -36,53 +37,56 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     env_file:
-      - .env.prod
-    restart: unless-stopped
+      - ./.env.prod
+    restart: always
+    # ❌ no ports in prod (nginx only)
 
   postgres:
     image: postgres:16
     container_name: postgres
     env_file:
-      - .env.prod
+      - ./.env.prod
     volumes:
       - postgres:/var/lib/postgresql/data
-    restart: unless-stopped
+    restart: always
+    # ❌ no ports in prod
 
   redis:
     image: redis:7
     container_name: redis
-    restart: unless-stopped
+    restart: always
+    # ❌ no ports in prod
 
   nginx:
     image: nginx:alpine
     container_name: nginx
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
       - media:/media
       - static:/staticfiles
+      - certbot-www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
     ports:
       - "80:80"
       - "443:443"
     depends_on:
       - backend
       - frontend
-    restart: unless-stopped
+    restart: always
 
   certbot:
     image: certbot/certbot
+    container_name: certbot
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - certbot-www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
     entrypoint: >
-      sh -c "trap exit TERM;
-      while :; do
-        certbot renew;
-        sleep 12h & wait $${!};
-      done"
+      sh -c "certbot renew --webroot -w /var/www/certbot --quiet"
+    restart: unless-stopped
 
 volumes:
   postgres:
   media:
   static:
+  certbot-www:
+  letsencrypt:

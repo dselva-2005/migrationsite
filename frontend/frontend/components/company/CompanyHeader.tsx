@@ -65,6 +65,7 @@ export function CompanyHeader({ company }: Props) {
                             rating={Number(company.rating_average)}
                             reviewCount={company.rating_count}
                             starsize={22}
+                            ratingFontWeight="text-xl font-bold"
                         />
 
                         {company.tagline && (

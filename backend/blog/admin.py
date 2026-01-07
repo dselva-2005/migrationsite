@@ -15,7 +15,6 @@ class ReviewInline(GenericTabularInline):
         "author_email",
         "body",
         "is_verified",
-        "is_approved",
         "created_at",
     )
 

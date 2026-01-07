@@ -23,7 +23,9 @@ type VisaService = {
 /* ---------------- Component ---------------- */
 
 export function VisaServicesSection() {
-    const content = usePageContent()
+    const { content, loading } = usePageContent()
+
+    if (loading || !content) return null
 
     const header = content["visa.header"] as VisaHeader | undefined
     const services = content["visa.services"] as VisaService[] | undefined
@@ -35,7 +37,7 @@ export function VisaServicesSection() {
         <section className="py-4 sm:py-8">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-4">
 
-                {/* Heading (CMS-controlled) */}
+                {/* Heading */}
                 <div className="mx-auto mb-14 max-w-2xl text-center">
                     <p className="mb-2 text-xs font-medium uppercase tracking-widest text-primary">
                         {header.eyebrow}
@@ -50,7 +52,7 @@ export function VisaServicesSection() {
                     </p>
                 </div>
 
-                {/* Cards (CMS-driven) */}
+                {/* Cards */}
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     {services.map((service) => (
                         <VisaServiceCard

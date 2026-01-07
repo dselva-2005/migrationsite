@@ -2,7 +2,6 @@ from django.urls import path
 from review.views import (
     ApproveReviewView,
     RejectReviewView,
-    ReviewBulkActionView,
     ReviewReplyUpsertView,
     ReviewMediaUploadView,
 )
@@ -12,7 +11,6 @@ urlpatterns = [
         "<int:review_id>/media/",
         ReviewMediaUploadView.as_view(),
     ),
-    path("bulk-action/", ReviewBulkActionView.as_view()),
     path(
         "<int:review_id>/reply/",
         ReviewReplyUpsertView.as_view(),

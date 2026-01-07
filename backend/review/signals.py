@@ -1,4 +1,5 @@
 # reviews/signals.py
+
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
@@ -14,10 +15,10 @@ def update_company_rating(company: Company):
     stats = Review.objects.filter(
         content_type=content_type,
         object_id=company.id,
-        is_approved=True,
+        moderation_status=Review.ModerationStatus.APPROVED,
     ).aggregate(
         avg=Avg("rating"),
-        count=Count("id")
+        count=Count("id"),
     )
 
     company.rating_average = round(stats["avg"] or 0, 2)

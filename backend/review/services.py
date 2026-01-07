@@ -4,10 +4,10 @@ from django.core.paginator import Paginator
 from .models import Review
 
 
-
 def get_reviews_for_object(*, obj, page=1, page_size=10):
     """
     Generic review fetcher for ANY model (Company, Blog, Product, etc.)
+    Returns ONLY approved reviews (public-safe).
     """
 
     content_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
@@ -17,7 +17,7 @@ def get_reviews_for_object(*, obj, page=1, page_size=10):
         .filter(
             content_type=content_type,
             object_id=obj.id,
-            is_approved=True,
+            moderation_status=Review.ModerationStatus.APPROVED,
         )
         .select_related("content_type")
         .order_by("-created_at")

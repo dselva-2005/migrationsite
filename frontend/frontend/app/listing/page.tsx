@@ -1,16 +1,23 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import Image from "next/image"
+import { MapPin } from "lucide-react"
+
 import { Company } from "@/types/company"
 import { Section } from "@/components/Section"
 import { PageContentProvider } from "@/providers/PageContentProvider"
-import Image from "next/image"
+import GlobalSpinner from "@/components/GlobalSpinner"
 import { getCompanies } from "@/services/company"
+import { TrustpilotRating } from "@/components/TrustpilotRating"
+
+/* ---------------- Item ---------------- */
 
 interface CompanyListItemProps {
     name: string
     slug: string
     city?: string
+    country?: string
     rating: number
     reviewCount: number
     tagline?: string
@@ -21,6 +28,7 @@ function CompanyListItem({
     name,
     slug,
     city,
+    country,
     rating,
     reviewCount,
     tagline,
@@ -28,39 +36,62 @@ function CompanyListItem({
 }: CompanyListItemProps) {
     return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b py-4 hover:bg-gray-50 transition">
-            <div className="flex items-center gap-4">
+            {/* LEFT */}
+            <div className="px-8 flex items-center gap-8">
                 {logo ? (
-                    <div className="w-16 h-16 relative flex-shrink-0">
+                    <div className="relative h-30 w-30 flex-shrink-0">
                         <Image
                             src={logo}
                             alt={name}
                             fill
-                            className="object-cover rounded-md"
+                            className="rounded-2xl object-cover"
                             unoptimized
                         />
                     </div>
                 ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0" />
+                    <div className="h-30 w-30 rounded-2xl bg-gray-200 flex-shrink-0" />
                 )}
 
-                <div className="flex flex-col">
+                <div className="space-y-2">
                     <a
                         href={`/review/${slug}`}
                         className="text-lg font-semibold hover:underline"
                     >
                         {name}
                     </a>
-                    {tagline && <p className="text-sm text-gray-500 mt-1">{tagline}</p>}
-                    {city && <p className="text-sm text-gray-400 mt-0.5">City: {city}</p>}
+
+                    {tagline && (
+                        <p className="text-md text-gray-500 leading-relaxed">
+                            {tagline}
+                        </p>
+                    )}
+
+                    {(city || country) && (
+                        <div className="flex items-center gap-2 text-md text-gray-400">
+                            <MapPin className="h-5 w-5 shrink-0" />
+                            <span>
+                                {city && country
+                                    ? `${city}, ${country}`
+                                    : city || country}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="mt-2 sm:mt-0 text-sm text-gray-600">
-                {rating.toFixed(1)} ⭐ ({reviewCount} reviews)
+            {/* RIGHT */}
+            <div className="mt-6 sm:mt-0 px-8 text-right">
+                <TrustpilotRating rating={rating} starsize={17} />
+                <div className="mt-2 text-base text-gray-600">
+                    ({reviewCount} reviews)
+                </div>
             </div>
         </div>
     )
 }
+
+
+/* ---------------- Page ---------------- */
 
 export default function Review() {
     const [companies, setCompanies] = useState<Company[]>([])
@@ -68,22 +99,23 @@ export default function Review() {
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
 
-    // Filters state
-    const [cityFilter, setCityFilter] = useState<string>("All")
-    const [minRating, setMinRating] = useState<number>(0)
+    // filters
+    const [cityFilter, setCityFilter] = useState("All")
+    const [minRating, setMinRating] = useState(0)
 
     const pageSize = 8
 
-    // Load companies (with "load more")
     const loadCompanies = async (pageToLoad: number) => {
         setLoading(true)
         try {
             const data = await getCompanies(pageToLoad, pageSize)
-            if (pageToLoad === 1) {
-                setCompanies(data.results)
-            } else {
-                setCompanies((prev) => [...prev, ...data.results])
-            }
+
+            setCompanies((prev) =>
+                pageToLoad === 1
+                    ? data.results
+                    : [...prev, ...data.results]
+            )
+
             setHasMore(data.results.length === pageSize)
         } finally {
             setLoading(false)
@@ -94,62 +126,60 @@ export default function Review() {
         loadCompanies(1)
     }, [])
 
-    // Filter companies
     const filteredCompanies = useMemo(() => {
         return companies.filter((c) => {
             const cityMatch =
-                cityFilter === "All" || (c.city?.toLowerCase() === cityFilter.toLowerCase())
-            const ratingMatch = Number(c.rating_average) >= minRating
+                cityFilter === "All" ||
+                c.city?.toLowerCase() === cityFilter.toLowerCase()
+
+            const ratingMatch =
+                Number(c.rating_average) >= minRating
+
             return cityMatch && ratingMatch
         })
     }, [companies, cityFilter, minRating])
 
-    const cities = Array.from(
-        new Set(companies.map((c) => c.city ?? "").filter(Boolean))
+    const cities = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    companies.map((c) => c.city).filter(Boolean)
+                )
+            ) as string[],
+        [companies]
     )
 
     const handleLoadMore = () => {
         if (!hasMore) return
-        const nextPage = page + 1
-        setPage(nextPage)
-        loadCompanies(nextPage)
+        const next = page + 1
+        setPage(next)
+        loadCompanies(next)
     }
-
-    if (loading && companies.length === 0)
-        return (
-            <div className="py-20 text-center text-muted-foreground">
-                Loading companies…
-            </div>
-        )
 
     return (
         <PageContentProvider page="review">
             <Section>
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar filters */}
-                    <aside className="lg:w-64 flex-shrink-0 order-first lg:order-last">
+                <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row">
+                    {/* Sidebar */}
+                    <aside className="order-first lg:order-last lg:w-64">
                         <div className="sticky top-24 space-y-6">
-                            {/* City Filter */}
-                            <div className="border border-gray-200 rounded-md p-4 space-y-2">
-                                <h4 className="font-semibold text-lg">City</h4>
-                                <div className="flex flex-col gap-1 mt-2">
-                                    <button
-                                        onClick={() => setCityFilter("All")}
-                                        className={`text-left px-2 py-1 border-b border-transparent transition ${cityFilter === "All"
-                                                ? "border-b-2 border-gray-900 font-semibold"
-                                                : "hover:border-gray-400"
-                                            }`}
-                                    >
-                                        All
-                                    </button>
-                                    {cities.map((city) => (
+                            {/* City filter */}
+                            <div className="rounded-md border p-4">
+                                <h4 className="text-lg font-semibold">
+                                    City
+                                </h4>
+                                <div className="mt-2 space-y-1">
+                                    {["All", ...cities].map((city) => (
                                         <button
                                             key={city}
-                                            onClick={() => setCityFilter(city ?? "All")}
-                                            className={`text-left px-2 py-1 border-b border-transparent transition ${cityFilter === city
-                                                    ? "border-b-2 border-gray-900 font-semibold"
-                                                    : "hover:border-gray-400"
-                                                }`}
+                                            onClick={() =>
+                                                setCityFilter(city)
+                                            }
+                                            className={`block w-full text-left px-2 py-1 ${
+                                                cityFilter === city
+                                                    ? "font-semibold underline"
+                                                    : "hover:underline"
+                                            }`}
                                         >
                                             {city}
                                         </button>
@@ -157,18 +187,23 @@ export default function Review() {
                                 </div>
                             </div>
 
-                            {/* Rating Filter */}
-                            <div className="border border-gray-200 rounded-md p-4 space-y-2">
-                                <h4 className="font-semibold text-lg">Rating</h4>
-                                <div className="flex flex-col gap-1 mt-2">
-                                    {[1, 2, 3, 4, 5].map((r) => (
+                            {/* Rating filter */}
+                            <div className="rounded-md border p-4">
+                                <h4 className="text-lg font-semibold">
+                                    Rating
+                                </h4>
+                                <div className="mt-2 space-y-1">
+                                    {[0,1, 2, 3, 4, 5].map((r) => (
                                         <button
                                             key={r}
-                                            onClick={() => setMinRating(r)}
-                                            className={`text-left px-2 py-1 border-b border-transparent transition ${minRating === r
-                                                    ? "border-b-2 border-gray-900 font-semibold"
-                                                    : "hover:border-gray-400"
-                                                }`}
+                                            onClick={() =>
+                                                setMinRating(r)
+                                            }
+                                            className={`block w-full text-left px-2 py-1 ${
+                                                minRating === r
+                                                    ? "font-semibold underline"
+                                                    : "hover:underline"
+                                            }`}
                                         >
                                             {r}+
                                         </button>
@@ -178,32 +213,40 @@ export default function Review() {
                         </div>
                     </aside>
 
-                    {/* List view */}
-                    <main className="flex-1 space-y-4 order-last lg:order-first">
-                        {filteredCompanies.length === 0 ? (
-                            <div className="py-20 text-center text-muted-foreground">
-                                No companies match the filters.
+                    {/* List */}
+                    <main className="order-last flex-1 lg:order-first">
+                        {loading && companies.length === 0 && (
+                            <div className="flex justify-center py-20">
+                                <GlobalSpinner />
                             </div>
-                        ) : (
-                            filteredCompanies.map((company) => (
-                                <CompanyListItem
-                                    key={company.id}
-                                    name={company.name}
-                                    slug={company.slug}
-                                    city={company.city ?? ""}
-                                    rating={Number(company.rating_average)}
-                                    reviewCount={company.rating_count}
-                                    tagline={company.tagline ?? ""}
-                                    logo={company.logo ?? null}
-                                />
-                            ))
                         )}
 
-                        {hasMore && (
-                            <div className="text-center mt-6">
+                        {!loading &&
+                            filteredCompanies.length === 0 && (
+                                <div className="py-20 text-center text-muted-foreground">
+                                    No companies match the filters.
+                                </div>
+                            )}
+
+                        {filteredCompanies.map((company) => (
+                            <CompanyListItem
+                                key={company.id}
+                                name={company.name}
+                                slug={company.slug}
+                                city={company.city ?? ""}
+                                country={company.country ?? ""}
+                                rating={Number(company.rating_average)}
+                                reviewCount={company.rating_count}
+                                tagline={company.tagline ?? ""}
+                                logo={company.logo ?? null}
+                            />
+                        ))}
+
+                        {hasMore && !loading && (
+                            <div className="mt-8 text-center">
                                 <button
                                     onClick={handleLoadMore}
-                                    className="px-6 py-2 rounded border border-gray-900 text-gray-900 hover:bg-gray-100 transition"
+                                    className="rounded border border-gray-900 px-6 py-2 hover:bg-gray-100"
                                 >
                                     Load More
                                 </button>
@@ -212,7 +255,6 @@ export default function Review() {
                     </main>
                 </div>
             </Section>
-
         </PageContentProvider>
     )
 }

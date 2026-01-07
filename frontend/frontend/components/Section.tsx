@@ -41,7 +41,7 @@ export function Section({ children, tone = "base" }: SectionProps) {
     <section
       ref={ref}
       className={cn(
-        "relative py-20 sm:py-24",
+        "relative py-20 sm:py-20",
         tone === "base" && "bg-background",
         tone === "soft" && "bg-muted/30",
         tone === "neutral" && "bg-muted/50",

@@ -37,8 +37,11 @@ const isAuthEndpoint = (url = "") =>
     url.includes("/api/auth/forgot-password") ||
     url.includes("/api/auth/reset-password")
 
+const isMeEndpoint = (url = "") =>
+    url.includes("/api/auth/me")
+
 api.interceptors.response.use(
-    (response) => response,
+    response => response,
 
     async (error: AxiosError) => {
         const originalRequest =
@@ -47,7 +50,17 @@ api.interceptors.response.use(
         const status = error.response?.status
         const url = originalRequest?.url ?? ""
 
-        // 🚫 Never refresh in these cases
+        if (status === 401 && isMeEndpoint(url)) {
+            return Promise.resolve({ data: null })
+        }
+
+        if (status === 401 && url.includes("/api/auth/refresh")) {
+            if (typeof window !== "undefined") {
+                window.location.href = "/login"
+            }
+            return Promise.resolve({ data: null })
+        }
+
         if (
             status !== 401 ||
             !originalRequest ||
@@ -77,15 +90,14 @@ api.interceptors.response.use(
         } catch (err) {
             processQueue(err)
 
-            // ❗ only redirect for protected routes
             if (
                 typeof window !== "undefined" &&
-                !url.includes("/api/auth/me")
+                !isMeEndpoint(url)
             ) {
                 window.location.href = "/login"
             }
 
-            return Promise.reject(err)
+            return Promise.resolve({ data: null })
         } finally {
             isRefreshing = false
         }

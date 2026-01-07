@@ -212,3 +212,9 @@ body {
 html {
   scrollbar-gutter: stable;
 }
+
+/* Sonner toast description contrast fix */
+[data-sonner-toast] [data-description] {
+  color: hsl(var(--foreground));
+  opacity: 0.8;
+}

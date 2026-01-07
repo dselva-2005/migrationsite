@@ -41,6 +41,7 @@ def update_review_search_vector(sender, instance, **kwargs):
     Review.objects.filter(pk=instance.pk).update(
         search_vector=(
             SearchVector("title", weight="A") +
-            SearchVector("body", weight="B")
+            SearchVector("body", weight="B") +
+            SearchVector("author_name", weight="C")
         )
     )

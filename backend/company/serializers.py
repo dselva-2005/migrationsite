@@ -1,5 +1,4 @@
 # companies/serializers.py
-from review.serializers import ReviewDashboardSerializer
 from rest_framework import serializers
 from .models import Company, CompanyOnboardingRequest
 
@@ -13,6 +12,7 @@ class CompanyListSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "city",
+            "country",
             "slug",
             "tagline",
             "logo",
@@ -154,7 +154,6 @@ class CompanyListInfo(serializers.ModelSerializer):
 
 
 class CompanyDashboardSerializer(serializers.ModelSerializer):
-    reviews = serializers.SerializerMethodField()
 
     class Meta:
         model = Company
@@ -166,26 +165,7 @@ class CompanyDashboardSerializer(serializers.ModelSerializer):
             "rating_count",
             "is_verified",
             "logo",
-            "reviews",
         ]
-
-    def get_reviews(self, company):
-        from django.contrib.contenttypes.models import ContentType
-        from review.models import Review
-
-        ct = ContentType.objects.get_for_model(Company)
-
-        qs = Review.objects.filter(
-            content_type=ct,
-            object_id=company.id,
-        ).order_by("-created_at")
-
-        return ReviewDashboardSerializer(
-            qs,
-            many=True,
-            context=self.context,
-        ).data
-
 
 class CompanyLogoUpdateSerializer(serializers.ModelSerializer):
     class Meta:

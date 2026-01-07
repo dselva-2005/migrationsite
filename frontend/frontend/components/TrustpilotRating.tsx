@@ -3,27 +3,23 @@
 import { TrustpilotStar } from "./TrustpilotStar"
 
 interface TrustpilotRatingProps {
-    starsize:number
+    starsize: number
     rating: number
     reviewCount?: number
     maxStars?: number
+    ratingFontWeight?: string // ✅ new prop
 }
 
 export const trustpilotColor = (rating: number) => {
-    // if (rating >= 4.5) return "#00B67A"
-    // if (rating >= 3.5) return "#73CF11"
-    // if (rating >= 2.5) return "#FFCE00"
-    // if (rating >= 1.5) return "#FF8622"
     return "#FF8622"
-    // return "#E74C3C"
 }
-
 
 export function TrustpilotRating({
     starsize = 18,
     rating,
     reviewCount,
     maxStars = 5,
+    ratingFontWeight = "text-sm", // ✅ default
 }: TrustpilotRatingProps) {
     rating = rating || 0
     const color = trustpilotColor(rating)
@@ -46,7 +42,7 @@ export function TrustpilotRating({
             </div>
 
             {/* Numeric rating */}
-            <span className="text-sm font-medium text-foreground">
+            <span className={`${ratingFontWeight} text-foreground`}>
                 {rating.toFixed(1).replace(".0", "")}
             </span>
 

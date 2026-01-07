@@ -5,20 +5,25 @@ import { getPageContent } from "@/services/content"
 
 type PageContent = Record<string, unknown>
 
-const PageContentContext = createContext<PageContent | null>(null)
+type PageContentContextType = {
+    content: PageContent | null
+    loading: boolean
+}
 
-// module-level cache (persists across navigations)
-export const contentCache: Record<string, PageContent> = {}
+const PageContentContext =
+    createContext<PageContentContextType | null>(null)
+
+export const contentCache = new Map<string, PageContent>()
 
 /* ---------------------------------- */
 /* Prefetch (safe, no React state) */
 /* ---------------------------------- */
 export async function prefetchPageContent(page: string) {
-    if (contentCache[page]) return
+    if (contentCache.has(page)) return
 
     try {
         const data = await getPageContent(page)
-        contentCache[page] = data
+        contentCache.set(page, data)
     } catch {
         // silent fail
     }
@@ -34,39 +39,38 @@ export function PageContentProvider({
     page: string
     children: React.ReactNode
 }) {
-    const [content, setContent] = useState<PageContent | null>(
-        () => contentCache[page] ?? null
-    )
+    const cachedContent = contentCache.get(page) ?? null
+
+    const [content, setContent] = useState<PageContent | null>(cachedContent)
+    const [loading, setLoading] = useState<boolean>(!cachedContent)
 
     useEffect(() => {
-        // 🚫 do nothing if already cached
-        if (contentCache[page]) return
+        if (cachedContent) return
 
         let cancelled = false
 
-        getPageContent(page).then((data) => {
-            if (cancelled) return
-            contentCache[page] = data
-            setContent(data) // ✅ async update only
-        })
+        getPageContent(page)
+            .then((data) => {
+                if (cancelled) return
+                contentCache.set(page, data)
+                setContent(data)
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
 
         return () => {
             cancelled = true
         }
-    }, [page])
-
-    if (!content) return null
+    }, [page, cachedContent])
 
     return (
-        <PageContentContext.Provider value={content}>
+        <PageContentContext.Provider value={{ content, loading }}>
             {children}
         </PageContentContext.Provider>
     )
 }
 
-/* ---------------------------------- */
-/* Hook */
-/* ---------------------------------- */
 export function usePageContent() {
     const ctx = useContext(PageContentContext)
     if (!ctx) {

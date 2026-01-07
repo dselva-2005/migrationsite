@@ -7,6 +7,7 @@ from .views import (
     CompanyList,
     CompanyDashboardView,
     CompanyLogoUpdateView,
+    CompanyDashboardReviewAPIView,
 )
 
 urlpatterns = [
@@ -20,5 +21,9 @@ urlpatterns = [
         "<slug:slug>/logo/",
         CompanyLogoUpdateView.as_view(),
         name="company-logo-update",
+    ),
+    path(
+        "<slug:slug>/dashboard/reviews/",
+        CompanyDashboardReviewAPIView.as_view(),
     ),
 ]

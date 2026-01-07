@@ -5,24 +5,28 @@ from django.utils import timezone
 from django.db.models import Avg, Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-from .models import BlogCategory
-from .serializers import BlogCategorySerializer
+
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
-from .models import BlogPost
+
+from .models import BlogPost, BlogCategory
 from .serializers import (
     BlogPostListSerializer,
     BlogPostDetailSerializer,
+    BlogCategorySerializer,
 )
 from .pagination import BlogPostPagination
+
 from review.serializers import ReviewSerializer, ReviewCreateSerializer
 from review.services import get_reviews_for_object
+from review.models import Review
+
 
 # ------------------------------------
-# Blog List (PAGINATED, supports ?page_size=3)
+# Blog List (PAGINATED)
 # ------------------------------------
 class BlogPostListView(ListAPIView):
     """
@@ -45,14 +49,14 @@ class BlogPostListView(ListAPIView):
                     "reviews__rating",
                     filter=Q(
                         reviews__content_type=ct,
-                        reviews__is_approved=True,
+                        reviews__moderation_status=Review.ModerationStatus.APPROVED,
                     ),
                 ),
                 reviewCount=Count(
                     "reviews",
                     filter=Q(
                         reviews__content_type=ct,
-                        reviews__is_approved=True,
+                        reviews__moderation_status=Review.ModerationStatus.APPROVED,
                     ),
                 ),
             )
@@ -87,14 +91,14 @@ class BlogPostDetailView(RetrieveAPIView):
                     "reviews__rating",
                     filter=Q(
                         reviews__content_type=ct,
-                        reviews__is_approved=True,
+                        reviews__moderation_status=Review.ModerationStatus.APPROVED,
                     ),
                 ),
                 reviewCount=Count(
                     "reviews",
                     filter=Q(
                         reviews__content_type=ct,
-                        reviews__is_approved=True,
+                        reviews__moderation_status=Review.ModerationStatus.APPROVED,
                     ),
                 ),
             )
@@ -121,7 +125,7 @@ class BlogPostDetailView(RetrieveAPIView):
             BlogPost.objects.filter(pk=instance.pk).update(
                 view_count=F("view_count") + 1
             )
-            cache.set(cache_key, True, timeout=60 * 60 * 24)  # 24 hours
+            cache.set(cache_key, True, timeout=60 * 60 * 24)
 
         return super().retrieve(request, *args, **kwargs)
 
@@ -189,17 +193,20 @@ class BlogPostReviewAPIView(APIView):
             author_email=request.user.email,
             user=request.user,
             is_verified=True,
-            is_approved=True,
+            moderation_status=Review.ModerationStatus.PENDING,
             ip_address=request.META.get("REMOTE_ADDR"),
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
         )
 
         return Response(
-            {"detail": "Review submitted successfully"},
+            {"detail": "Review submitted and pending moderation"},
             status=status.HTTP_201_CREATED,
         )
 
 
+# ------------------------------------
+# Blog Categories
+# ------------------------------------
 class BlogCategoryListView(ListAPIView):
     """
     GET /api/blog/categories/

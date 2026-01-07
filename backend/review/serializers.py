@@ -32,20 +32,6 @@ class ReviewMediaSerializer(serializers.ModelSerializer):
 
 
 # =========================================================
-# BULK ACTIONS
-# =========================================================
-
-class ReviewBulkActionSerializer(serializers.Serializer):
-    ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        allow_empty=False,
-    )
-    action = serializers.ChoiceField(
-        choices=["approve", "reject"],
-    )
-
-
-# =========================================================
 # REVIEW REPLY (INLINE – PUBLIC)
 # =========================================================
 
@@ -220,7 +206,7 @@ class ReviewDashboardSerializer(serializers.ModelSerializer):
             "author_name",
             "author_email",
             "is_verified",
-            "is_approved",
+            "moderation_status",
             "media",
             "created_at",
             "reply",

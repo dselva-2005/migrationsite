@@ -1,13 +1,14 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.contenttypes.models import ContentType
-from django.utils import timezone
-
+from django.db.models import F
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework.parsers import MultiPartParser, FormParser
+from .pagination import ReviewDashboardPagination
+from rest_framework.exceptions import PermissionDenied
 from company.models import Company
 from company.pagination import CompanyPagination
 from company.serializers import (
@@ -15,19 +16,23 @@ from company.serializers import (
     CompanyDetailSerializer,
     CompanyListInfo,
     CompanyLogoUpdateSerializer,
+    CompanyDashboardSerializer,
+    BusinessOnboardingSerializer,
 )
-from company.serializers import BusinessOnboardingSerializer
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+)
 from company.permissions import user_can_manage_company
-from company.serializers import CompanyDashboardSerializer
-from review.serializers import ReviewSerializer, ReviewCreateSerializer
+
+from review.serializers import ReviewSerializer, ReviewCreateSerializer,ReviewDashboardSerializer
 from review.services import get_reviews_for_object
-from rest_framework.parsers import MultiPartParser, FormParser
+from review.models import Review
+
 
 # ------------------------------------
 # Company List
 # ------------------------------------
-
-
 class CompanyListAPIView(ListAPIView):
     serializer_class = CompanyListSerializer
     pagination_class = CompanyPagination
@@ -49,8 +54,6 @@ class CompanyListAPIView(ListAPIView):
 # ------------------------------------
 # Company Detail
 # ------------------------------------
-
-
 class CompanyDetailView(RetrieveAPIView):
     serializer_class = CompanyDetailSerializer
     lookup_field = "slug"
@@ -62,8 +65,6 @@ class CompanyDetailView(RetrieveAPIView):
 # ------------------------------------
 # Company Reviews (GET + POST)
 # ------------------------------------
-
-
 class CompanyReviewAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -107,7 +108,7 @@ class CompanyReviewAPIView(APIView):
         serializer = ReviewCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # ✅ CAPTURE THE CREATED REVIEW
+        # ✅ CREATE REVIEW (PENDING BY DEFAULT)
         review = serializer.save(
             content_type=ContentType.objects.get_for_model(Company),
             object_id=company.id,
@@ -115,16 +116,15 @@ class CompanyReviewAPIView(APIView):
             author_email=request.user.email,
             user=request.user,
             is_verified=True,
-            is_approved=False,
+            moderation_status=Review.ModerationStatus.PENDING,
             ip_address=request.META.get("REMOTE_ADDR"),
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
         )
 
-        # ✅ RETURN THE ID
         return Response(
             {
                 "id": review.id,
-                "detail": "Review submitted successfully",
+                "detail": "Review submitted and pending moderation",
             },
             status=status.HTTP_201_CREATED,
         )
@@ -133,8 +133,6 @@ class CompanyReviewAPIView(APIView):
 # ------------------------------------
 # Business Onboarding
 # ------------------------------------
-
-
 class BusinessOnboardingView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -156,8 +154,6 @@ class BusinessOnboardingView(APIView):
 # ------------------------------------
 # Simple Company List (internal use)
 # ------------------------------------
-
-
 class CompanyList(APIView):
     def get(self, request):
         companies = Company.objects.all()
@@ -165,6 +161,9 @@ class CompanyList(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# ------------------------------------
+# Company Dashboard
+# ------------------------------------
 class CompanyDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -185,12 +184,19 @@ class CompanyDashboardView(APIView):
         return Response(serializer.data)
 
 
+# ------------------------------------
+# Company Logo Update
+# ------------------------------------
 class CompanyLogoUpdateView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def patch(self, request, slug):
-        company = get_object_or_404(Company, slug=slug, is_active=True)
+        company = get_object_or_404(
+            Company,
+            slug=slug,
+            is_active=True,
+        )
 
         if not user_can_manage_company(request.user, company):
             return Response(
@@ -204,6 +210,7 @@ class CompanyLogoUpdateView(APIView):
             partial=True,
             context={"request": request},
         )
+
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -214,3 +221,58 @@ class CompanyLogoUpdateView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+class CompanyDashboardReviewAPIView(ListAPIView):
+    """
+    Dashboard-only review listing with:
+    - pagination
+    - moderation status filter
+    - PostgreSQL full-text search
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ReviewDashboardSerializer
+    pagination_class = ReviewDashboardPagination
+
+    def get_company(self):
+        company = get_object_or_404(Company, slug=self.kwargs["slug"])
+
+        if not user_can_manage_company(self.request.user, company):
+            raise PermissionDenied("Access denied")
+
+        return company
+
+    def get_queryset(self):
+        company = self.get_company()
+        ct = ContentType.objects.get_for_model(Company)
+
+        qs = (
+            Review.objects
+            .filter(
+                content_type=ct,
+                object_id=company.id,
+            )
+            .select_related("user")
+            .prefetch_related("media", "reply")
+        )
+
+        # 🔄 Moderation status filter
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            qs = qs.filter(moderation_status=status_filter)
+
+        # 🔍 Full-text search (GIN + search_vector)
+        search = self.request.query_params.get("search")
+        if search:
+            query = SearchQuery(search)
+            qs = (
+                qs.annotate(rank=SearchRank(F("search_vector"), query))
+                .filter(rank__gte=0.1)
+                .order_by("-rank", "-created_at")
+            )
+        else:
+            qs = qs.order_by("-created_at")
+
+        return qs

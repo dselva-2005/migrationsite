@@ -64,8 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(true)
 
         try {
-            const res = await api.get<MeResponse>("/api/auth/me/")
+            const res = await api.get<MeResponse | null>("/api/auth/me/")
             const data = res.data
+
+            if (!data) {
+                setUser(null)
+                return
+            }
 
             const companies: CompanyMembership[] = data.companies.map(
                 (c): CompanyMembership => ({
@@ -83,12 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 isBusiness: companies.length > 0,
                 companies,
             })
-        } catch {
-            setUser(null)
         } finally {
             setLoading(false)
         }
     }, [])
+
 
     const logout = async (): Promise<void> => {
         try {

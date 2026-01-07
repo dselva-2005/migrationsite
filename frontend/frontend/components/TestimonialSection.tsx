@@ -7,6 +7,7 @@ import { TrustpilotRating } from "./TrustpilotRating"
 import { usePageContent } from "@/providers/PageContentProvider"
 
 /* ---------------- Types ---------------- */
+
 type TestimonialsHeader = {
     eyebrow: string
     title: string
@@ -24,13 +25,21 @@ type Testimonial = {
 }
 
 /* ---------------- Component ---------------- */
+
 export default function TestimonialSection() {
-    const content = usePageContent()
+    const { content, loading } = usePageContent()
 
-    const header = content["testimonials.header"] as TestimonialsHeader | undefined
-    const testimonials = content["testimonials.items"] as Testimonial[] | undefined
+    // ✅ early exit AFTER hook
+    if (loading || !content) return null
 
-    if (!header || !testimonials) return null
+    const header =
+        content["testimonials.header"] as TestimonialsHeader | undefined
+
+    const testimonials =
+        content["testimonials.items"] as Testimonial[] | undefined
+
+    // graceful CMS failure
+    if (!header || !testimonials || testimonials.length === 0) return null
 
     return (
         <section className="w-full py-6 sm:py-8 lg:py-8">
@@ -51,6 +60,7 @@ export default function TestimonialSection() {
                     {testimonials.map((item) => (
                         <Card key={item.id} className="h-full">
                             <CardContent className="flex h-full flex-col justify-between p-6 sm:p-8">
+
                                 {/* Content */}
                                 <div className="space-y-3">
                                     <h4 className="text-lg font-semibold">{item.title}</h4>
@@ -88,10 +98,12 @@ export default function TestimonialSection() {
                                         starsize={20}
                                     />
                                 </div>
+
                             </CardContent>
                         </Card>
                     ))}
                 </SafeCarousel>
+
             </div>
         </section>
     )

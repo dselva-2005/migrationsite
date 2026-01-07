@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Review, ReviewReply, ReviewMedia
+from .models import Review, ReviewReply, ReviewMedia, EmailTemplate
 
 
 # =====================================================
@@ -133,14 +133,14 @@ class ReviewAdmin(admin.ModelAdmin):
         "has_reply",
         "has_media",      # ✅ NEW
         "is_verified",
-        "is_approved",
+        "moderation_status",
         "created_at",
     )
 
     list_filter = (
         "rating",
         "is_verified",
-        "is_approved",
+        "moderation_status",
         "content_type",
         "user",
         "reply",
@@ -194,3 +194,10 @@ class ReviewAdmin(admin.ModelAdmin):
     )
     def has_media(self, obj):
         return obj.media.exists()
+
+
+
+@admin.register(EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ("key", "is_active", "updated_at")
+    search_fields = ("key", "subject")

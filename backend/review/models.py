@@ -9,6 +9,18 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 
 class Review(models.Model):
+
+    class ModerationStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
+    moderation_status = models.CharField(
+        max_length=20,
+        choices=ModerationStatus.choices,
+        default=ModerationStatus.PENDING,
+        db_index=True,
+    )
     # --------------------
     # Generic Target
     # --------------------
@@ -38,7 +50,6 @@ class Review(models.Model):
     # Moderation & Trust
     # --------------------
     is_verified = models.BooleanField(default=False)
-    is_approved = models.BooleanField(default=True)
 
     # --------------------
     # Anti-abuse
@@ -70,7 +81,7 @@ class Review(models.Model):
             GinIndex(fields=["search_vector"]),  # full-text search index
             models.Index(fields=["content_type", "object_id"]),
             models.Index(fields=["rating"]),
-            models.Index(fields=["is_approved"]),
+            models.Index(fields=["moderation_status"]),
         ]
 
     def save(self, *args, **kwargs):
@@ -155,3 +166,23 @@ class ReviewMedia(models.Model):
 
     def __str__(self):
         return f"{self.media_type} for Review #{self.review_id}"
+
+
+class EmailTemplate(models.Model):
+    key = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique identifier e.g. REVIEW_APPROVED"
+    )
+
+    subject = models.CharField(max_length=255)
+    body = models.TextField(
+        help_text="You can use placeholders like {{ username }}"
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.key

@@ -32,7 +32,7 @@ class ReviewInline(GenericTabularInline):
         "body",
         "media_preview",
         "is_verified",
-        "is_approved",
+        "moderation_status",
         "created_at",
     )
 
@@ -43,7 +43,7 @@ class ReviewInline(GenericTabularInline):
         "body",
         "media_preview",
         "is_verified",
-        "is_approved",
+        "moderation_status",
         "created_at",
     )
 
@@ -315,3 +315,5 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         if obj and obj.status != "PENDING":
             return False
         return super().has_change_permission(request, obj)
+
+admin.site.register(CompanyMembership)

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 import { Company } from "@/types/company"
 import { useAuth } from "@/providers/AuthProvider"
@@ -41,7 +42,9 @@ export function ReviewModal({ open, onClose, company }: Props) {
         const files = Array.from(e.target.files || [])
 
         if (media.length + files.length > MAX_MEDIA) {
-            alert("Maximum 5 files allowed")
+            toast.warning("Media limit reached", {
+                description: "You can upload up to 5 files only.",
+            })
             return
         }
 
@@ -61,7 +64,6 @@ export function ReviewModal({ open, onClose, company }: Props) {
         try {
             setSubmitting(true)
 
-            /* ---------- STEP 1: Create review ---------- */
             const reviewData = new FormData()
             reviewData.append("rating", rating.toString())
             reviewData.append("body", body)
@@ -71,23 +73,29 @@ export function ReviewModal({ open, onClose, company }: Props) {
                 reviewData
             )
 
-            /* ---------- STEP 2: Upload media ---------- */
             for (const file of media) {
                 await uploadReviewMedia(review.id, file)
             }
 
-            /* ---------- Reset ---------- */
+            toast.success("Review submitted 🎉", {
+                description: "Thank you for sharing your experience.",
+            })
+
             setRating(0)
             setBody("")
             setMedia([])
             onClose()
         } catch (err) {
             console.error(err)
-            alert("Failed to submit review")
+
+            toast.error("Submission failed", {
+                description: "Something went wrong. Please try again.",
+            })
         } finally {
             setSubmitting(false)
         }
     }
+
 
     if (loading) return null
 
@@ -103,6 +111,7 @@ export function ReviewModal({ open, onClose, company }: Props) {
                                 width={40}
                                 height={40}
                                 className="rounded object-contain"
+                                unoptimized
                             />
                         ) : (
                             <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs">

@@ -88,7 +88,7 @@ export default function Hero() {
                                         src={img.url}
                                         alt={img.alt}
                                         fill
-                                        unoptimized
+                                        priority
                                         className="object-cover"
                                         sizes="260px"
                                     />

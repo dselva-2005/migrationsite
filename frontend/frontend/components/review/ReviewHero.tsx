@@ -1,41 +1,44 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { usePageContent } from "@/providers/PageContentProvider";
+import { useEffect, useState } from "react"
+import { usePageContent } from "@/providers/PageContentProvider"
+
+/* ---------------- Types ---------------- */
 
 interface HeroMessage {
-    title: string;
-    subtitle: string;
+    title: string
+    subtitle: string
 }
 
+/* ---------------- Component ---------------- */
+
 export function ReviewHero() {
-    const content = usePageContent();
+    const { content } = usePageContent()
 
-    // Memoize messages so useEffect dependencies are stable
-    const messages: HeroMessage[] = React.useMemo(() => {
-        return (content["review.hero.messages"] as HeroMessage[]) || [];
-    }, [content]);
+    const messages =
+        (content?.["review.hero.messages"] as HeroMessage[]) ?? []
 
-    const [index, setIndex] = React.useState(0);
+    const [index, setIndex] = useState(0)
 
-    React.useEffect(() => {
-        if (!messages.length) return;
+    useEffect(() => {
+        if (messages.length === 0) return
 
         const id = setInterval(() => {
-            setIndex((prev) => (prev + 1) % messages.length);
-        }, 3200);
+            setIndex((prev) => (prev + 1) % messages.length)
+        }, 3200)
 
-        return () => clearInterval(id);
-    }, [messages]); // stable dependency now
+        return () => clearInterval(id)
+    }, [messages.length])
 
-    if (!messages.length) return null; // fallback while loading
+    /* Graceful CMS loading / failure */
+    if (messages.length === 0) return null
 
-    const message = messages[index];
+    const message = messages[index]
 
     return (
         <section className="border-0 bg-violet-50/70 dark:bg-rose-950/20">
             <div className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
-                <div className="relative max-w-xl min-h-[220px] mx-auto text-center">
+                <div className="relative mx-auto min-h-[220px] max-w-xl text-center">
                     <div
                         key={index}
                         className="absolute inset-0 animate-hero-text space-y-6"
@@ -51,5 +54,5 @@ export function ReviewHero() {
                 </div>
             </div>
         </section>
-    );
+    )
 }

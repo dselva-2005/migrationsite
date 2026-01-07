@@ -36,7 +36,7 @@ export function CompanyReviewCard({
             <Link href={`/review/${slug}`} className="block">
                 {/* Image */}
                 <div className="w-full">
-                    <AspectRatio ratio={1.2 / 1}>
+                    <AspectRatio ratio={1}>
                         <Image
                             src={imageUrl}
                             alt={name}

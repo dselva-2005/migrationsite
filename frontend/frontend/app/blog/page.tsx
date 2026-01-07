@@ -1,4 +1,3 @@
-// app/blog/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -7,14 +6,16 @@ import { getBlogPosts, getBlogCategories } from "@/services/blog"
 import { Section } from "@/components/Section"
 import { BlogList } from "@/components/blog/BlogList"
 import { BlogSidebar } from "@/components/blog/BlogSidebar"
+import { PageContentProvider } from "@/providers/PageContentProvider"
 
 export default function BlogPage() {
     const [posts, setPosts] = useState<BlogPost[]>([])
     const [categories, setCategories] = useState<BlogCategory[]>([])
-    const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
+        let cancelled = false
+
         async function load() {
             try {
                 const [postsRes, categoriesRes] = await Promise.all([
@@ -22,33 +23,44 @@ export default function BlogPage() {
                     getBlogCategories(),
                 ])
 
+                if (cancelled) return
+
                 setPosts(postsRes.results)
                 setCategories(categoriesRes)
             } catch (err) {
                 console.error(err)
-                setError("Failed to load blog data")
-            } finally {
-                setLoading(false)
+                if (!cancelled) setError("Failed to load blog data")
             }
         }
 
         load()
+
+        return () => {
+            cancelled = true
+        }
     }, [])
 
-    if (loading) return <div className="p-8">Loading...</div>
-    if (error) return <div className="p-8 text-red-500">{error}</div>
-
     return (
-        <Section tone="base">
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                <div className="xl:col-span-8">
-                    <BlogList posts={posts} />
-                </div>
+        <PageContentProvider page="blog">
+            <>
+                <Section tone="base">
+                    {error ? (
+                        <div className="py-16 text-center text-red-500">
+                            {error}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+                            <div className="xl:col-span-8">
+                                <BlogList posts={posts} />
+                            </div>
 
-                <div className="xl:col-span-4">
-                    <BlogSidebar categories={categories} />
-                </div>
-            </div>
-        </Section>
+                            <div className="xl:col-span-4">
+                                <BlogSidebar categories={categories} />
+                            </div>
+                        </div>
+                    )}
+                </Section>
+            </>
+        </PageContentProvider>
     )
 }

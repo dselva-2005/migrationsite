@@ -4,11 +4,10 @@ import {
     ColumnDef,
     flexRender,
     getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
+
+import { useEffect, useState } from "react"
 
 import {
     Table,
@@ -18,111 +17,113 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
-import { useState } from "react"
+/* =====================================================
+   TYPES
+===================================================== */
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
+interface DataTableProps<TData> {
+    columns: ColumnDef<TData, unknown>[]
     data: TData[]
-    onBulkApprove?: (ids: number[]) => void
-    onBulkReject?: (ids: number[]) => void
+
+    /** server pagination */
+    page: number
+    pageSize: number
+    total: number
+
+    /** callbacks */
+    onPageChange: (page: number) => void
+    onPageSizeChange: (size: number) => void
+    onSearch: (query: string) => void
+
+    loading?: boolean
 }
 
-export function DataTable<TData extends { id: number }, TValue>({
+/* =====================================================
+   COMPONENT
+===================================================== */
+
+export function DataTable<TData>({
     columns,
     data,
-    onBulkApprove,
-    onBulkReject,
-}: DataTableProps<TData, TValue>) {
-    const [globalFilter, setGlobalFilter] = useState("")
-    const [rowSelection, setRowSelection] = useState({})
-    const [selectAllGlobal, setSelectAllGlobal] = useState(false)
+    page,
+    pageSize,
+    total,
+    onPageChange,
+    onPageSizeChange,
+    onSearch,
+    loading = false,
+}: DataTableProps<TData>) {
+    const [search, setSearch] = useState("")
 
     const table = useReactTable({
         data,
         columns,
-        state: {
-            globalFilter,
-            rowSelection,
-        },
-        onRowSelectionChange: setRowSelection,
-        onGlobalFilterChange: setGlobalFilter,
         getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
+        manualPagination: true,
     })
 
-    /** ✅ THE KEY FIX */
-    const selectedIds = selectAllGlobal
-        ? data.map(row => row.id) // ALL rows
-        : table.getSelectedRowModel().rows.map(r => r.original.id)
+    /* 🔍 debounce server search */
+    useEffect(() => {
+        const t = setTimeout(() => {
+            onSearch(search)
+        }, 400)
+        return () => clearTimeout(t)
+    }, [search, onSearch])
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
     return (
         <div className="space-y-4">
             {/* Toolbar */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
                 <Input
                     placeholder="Search reviews..."
-                    value={globalFilter ?? ""}
-                    onChange={e => {
-                        setGlobalFilter(e.target.value)
-                        setSelectAllGlobal(false)
-                    }}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
                     className="max-w-sm"
                 />
 
-                <select
-                    className="border rounded px-2 py-1 text-sm"
-                    value={table.getState().pagination.pageSize}
-                    onChange={e => table.setPageSize(Number(e.target.value))}
-                >
-                    {[10, 20, 50, 100].map(size => (
-                        <option key={size} value={size}>
-                            Show {size}
-                        </option>
-                    ))}
-                </select>
-
-                {selectedIds.length > 0 && (
-                    <>
-                        <Button onClick={() => onBulkApprove?.(selectedIds)}>
-                            Bulk Approve ({selectedIds.length})
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={() => onBulkReject?.(selectedIds)}
-                        >
-                            Bulk Reject ({selectedIds.length})
-                        </Button>
-                    </>
-                )}
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                        Rows
+                    </span>
+                    <Select
+                        value={String(pageSize)}
+                        onValueChange={v => {
+                            onPageSizeChange(Number(v))
+                        }}
+                    >
+                        <SelectTrigger className="w-[80px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {[10, 20, 50, 100].map(n => (
+                                <SelectItem key={n} value={String(n)}>
+                                    {n}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             {/* Table */}
             <Table>
                 <TableHeader>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <TableRow key={headerGroup.id}>
-                            {/* GLOBAL SELECT */}
-                            <TableHead className="w-10">
-                                <Checkbox
-                                    checked={selectAllGlobal}
-                                    onCheckedChange={v => {
-                                        const checked = !!v
-                                        setSelectAllGlobal(checked)
-
-                                        if (!checked) {
-                                            table.resetRowSelection()
-                                        }
-                                    }}
-                                />
-                            </TableHead>
-
-                            {headerGroup.headers.map(header => (
+                    {table.getHeaderGroups().map(hg => (
+                        <TableRow key={hg.id}>
+                            {hg.headers.map(header => (
                                 <TableHead key={header.id}>
                                     {flexRender(
                                         header.column.columnDef.header,
@@ -135,55 +136,66 @@ export function DataTable<TData extends { id: number }, TValue>({
                 </TableHeader>
 
                 <TableBody>
-                    {table.getRowModel().rows.map(row => (
-                        <TableRow key={row.id}>
-                            <TableCell>
-                                <Checkbox
-                                    disabled={selectAllGlobal}
-                                    checked={selectAllGlobal || row.getIsSelected()}
-                                    onCheckedChange={v => {
-                                        if (!selectAllGlobal) {
-                                            row.toggleSelected(!!v)
-                                        }
-                                    }}
-                                />
-
+                    {loading ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                className="text-center"
+                            >
+                                Loading…
                             </TableCell>
-
-                            {row.getVisibleCells().map(cell => (
-                                <TableCell key={cell.id}>
-                                    {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext()
-                                    )}
-                                </TableCell>
-                            ))}
                         </TableRow>
-                    ))}
+                    ) : data.length === 0 ? (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                className="text-center text-muted-foreground"
+                            >
+                                No results found
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        data.map((row, i) => {
+                            const tableRow = table.getRowModel().rows[i]
+                            return (
+                                <TableRow key={tableRow.id}>
+                                    {tableRow
+                                        .getVisibleCells()
+                                        .map(cell => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                </TableRow>
+                            )
+                        })
+                    )}
                 </TableBody>
             </Table>
 
             {/* Pagination */}
-            <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                    Page {table.getState().pagination.pageIndex + 1} of{" "}
-                    {table.getPageCount()}
+            <div className="flex items-center justify-between text-sm">
+                <div className="text-muted-foreground">
+                    Page {page} of {totalPages} · {total} results
                 </div>
 
                 <div className="flex gap-2">
                     <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
+                        disabled={page <= 1}
+                        onClick={() => onPageChange(page - 1)}
                     >
                         Previous
                     </Button>
                     <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
+                        disabled={page >= totalPages}
+                        onClick={() => onPageChange(page + 1)}
                     >
                         Next
                     </Button>

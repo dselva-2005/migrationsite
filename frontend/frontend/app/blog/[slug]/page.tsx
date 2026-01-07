@@ -8,6 +8,7 @@ import { Section } from "@/components/Section"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { AddReviewModal } from "@/components/review/AddReviewModal"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner" // <--- import your toaster
 
 import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
@@ -49,6 +50,7 @@ export default function SingleBlog() {
                 setPost(data)
             } catch (err) {
                 console.error("Failed to fetch blog post:", err)
+                toast.error("Failed to load blog post")
                 setPost(null)
             } finally {
                 setLoading(false)
@@ -68,6 +70,7 @@ export default function SingleBlog() {
             setReviews(data.results)
         } catch (err) {
             console.error("Failed to fetch reviews:", err)
+            toast.error("Failed to load reviews")
         }
     }, [slug])
 
@@ -172,18 +175,14 @@ export default function SingleBlog() {
                                     </Badge>
                                 </div>
 
-                                <h3 className="font-medium">
-                                    {review.title}
-                                </h3>
+                                <h3 className="font-medium">{review.title}</h3>
 
                                 <p className="text-sm text-muted-foreground">
                                     {review.body}
                                 </p>
 
                                 <div className="text-xs text-muted-foreground">
-                                    {new Date(
-                                        review.created_at
-                                    ).toLocaleDateString()}
+                                    {new Date(review.created_at).toLocaleDateString()}
                                 </div>
                             </div>
                         ))}
@@ -197,6 +196,7 @@ export default function SingleBlog() {
                     slug={slug}
                     onClose={() => setOpenModal(false)}
                     onSuccess={() => {
+                        toast.success("Review submitted! Pending approval") // ✅ toast
                         loadReviews()
                         setOpenModal(false)
                     }}

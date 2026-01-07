@@ -1,15 +1,12 @@
 "use client"
 
-import { use, useEffect, useState } from "react"
-
-import {
-    getCompanyAccountBySlug,
-    updateCompanyAccountCache,
-} from "@/services/CompanyAccount"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useParams } from "next/navigation"
+import Image from "next/image"
 
 import api from "@/lib/axios"
-
 import { CompanyAccount } from "@/types/company"
+import { CompanyReview } from "@/types/review"
 
 import {
     Card,
@@ -17,17 +14,56 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Section } from "@/components/Section"
-import Image from "next/image"
+
 import { DataTable } from "@/components/data-table/DataTable"
 import { reviewColumns } from "@/components/data-table/review-columns"
 
-/* ------------------------------------------------------------------ */
-/* Logo upload helper */
-/* ------------------------------------------------------------------ */
+/* ============================================================
+   TYPES
+============================================================ */
+
+type PaginatedReviewsResponse = {
+    count: number
+    results: CompanyReview[]
+}
+
+/* ============================================================
+   API helpers
+============================================================ */
+
+async function fetchCompany(slug: string): Promise<CompanyAccount> {
+    const res = await api.get(`/api/company/${slug}/account/`)
+    return {
+        ...res.data,
+        rating_average: Number(
+            Number(res.data.rating_average).toFixed(1)
+        ),
+        rating_count: Number(res.data.rating_count),
+    }
+}
+
+async function fetchReviews(
+    slug: string,
+    page: number,
+    pageSize: number,
+    search?: string
+): Promise<PaginatedReviewsResponse> {
+    const res = await api.get(
+        `/api/company/${slug}/dashboard/reviews/`,
+        {
+            params: {
+                page,
+                page_size: pageSize,
+                search,
+            },
+        }
+    )
+    return res.data
+}
+
 async function updateCompanyLogo(
     slug: string,
     file: File
@@ -48,120 +84,140 @@ async function updateCompanyLogo(
     return res.data.logo
 }
 
-/* ------------------------------------------------------------------ */
+/* ============================================================
+   PAGE
+============================================================ */
 
-export default function CompanyAccountPage({
-    params,
-}: {
-    params: Promise<{ slug: string }>
-}) {
-    const { slug } = use(params)
+export default function CompanyAccountPage() {
+    const { slug } = useParams<{ slug: string }>()
+
+    /* ---------------- State ---------------- */
 
     const [company, setCompany] =
         useState<CompanyAccount | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [uploading, setUploading] = useState(false)
 
-    /* ---------------- Fetch company account ---------------- */
+    const [reviews, setReviews] =
+        useState<CompanyReview[]>([])
+    const [total, setTotal] = useState(0)
+
+    const [page, setPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
+
+    const [search, setSearch] = useState("")
+    const [debouncedSearch, setDebouncedSearch] =
+        useState("")
+
+    const [loadingCompany, setLoadingCompany] =
+        useState(true)
+    const [loadingReviews, setLoadingReviews] =
+        useState(true)
+
+    const [uploading, setUploading] =
+        useState(false)
+
+    const [logoError, setLogoError] =
+        useState<string | null>(null)
+
+    /* ---------------- Fetch company ---------------- */
+
     useEffect(() => {
         let alive = true
 
-            ; (async () => {
-                setLoading(true)
-                try {
-                    const account =
-                        await getCompanyAccountBySlug(slug)
-                    if (alive) setCompany(account)
-                } finally {
-                    setLoading(false)
-                }
-            })()
+        ;(async () => {
+            setLoadingCompany(true)
+            try {
+                const data = await fetchCompany(slug)
+                if (alive) setCompany(data)
+            } finally {
+                if (alive) setLoadingCompany(false)
+            }
+        })()
 
         return () => {
             alive = false
         }
     }, [slug])
 
-    /* ---------------- Logo update ---------------- */
+    /* ---------------- Debounce search ---------------- */
+
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedSearch(search)
+            setPage(1)
+        }, 400)
+
+        return () => clearTimeout(t)
+    }, [search])
+
+    /* ---------------- Fetch reviews ---------------- */
+
+    const refetchReviews = useCallback(async () => {
+        setLoadingReviews(true)
+        try {
+            const res = await fetchReviews(
+                slug,
+                page,
+                pageSize,
+                debouncedSearch
+            )
+            setReviews(res.results)
+            setTotal(res.count)
+        } finally {
+            setLoadingReviews(false)
+        }
+    }, [slug, page, pageSize, debouncedSearch])
+
+    useEffect(() => {
+        refetchReviews()
+    }, [refetchReviews])
+
+    /* ---------------- Logo update (2MB enforced) ---------------- */
+
     async function onLogoChange(
         e: React.ChangeEvent<HTMLInputElement>
     ) {
-        if (!e.target.files || !company) return
+        if (!e.target.files?.[0] || !company) return
 
         const file = e.target.files[0]
-        if (!file) return
+        const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 
-        /* optimistic preview */
+        if (file.size > MAX_SIZE) {
+            setLogoError("Logo must be less than 2 MB")
+            e.target.value = ""
+            return
+        }
+
+        setLogoError(null)
+
         const previewUrl = URL.createObjectURL(file)
-
-        setCompany({
-            ...company,
-            logo: previewUrl,
-        })
+        setCompany({ ...company, logo: previewUrl })
 
         try {
             setUploading(true)
-            const logoUrl = await updateCompanyLogo(
-                slug,
-                file
-            )
-
+            const logoUrl = await updateCompanyLogo(slug, file)
             setCompany(prev =>
-                prev
-                    ? {
-                        ...prev,
-                        logo: logoUrl,
-                    }
-                    : prev
+                prev ? { ...prev, logo: logoUrl } : prev
             )
-        } catch (err) {
-            console.error("Logo update failed", err)
         } finally {
             setUploading(false)
         }
     }
 
-    /* ---------------- BULK ACTION (approve / reject) ---------------- */
-    async function bulkAction(
-        ids: number[],
-        action: "approve" | "reject"
-    ) {
-        if (!ids.length || !company) return
+    /* ---------------- Table columns ---------------- */
 
-        /* ---------- optimistic UI ---------- */
-        const optimisticUpdates = ids.map(id => ({
-            id,
-            is_approved: action === "approve",
-            rating:
-                company.reviews.find(r => r.id === id)
-                    ?.rating ?? 0,
-        }))
-
-        const optimisticCompany =
-            updateCompanyAccountCache(
-                slug,
-                optimisticUpdates
-            ) ?? null
-
-        setCompany(optimisticCompany)
-
-        /* ---------- backend request ---------- */
-        try {
-            await api.post("/api/review/bulk-action/", {
-                ids,
-                action,
-            })
-        } catch (err) {
-            console.error("Bulk action failed", err)
-        }
-    }
+    const columns = useMemo(
+        () => reviewColumns(refetchReviews),
+        [refetchReviews]
+    )
 
     /* ---------------- Loading ---------------- */
-    if (loading || !company) {
+
+    if (loadingCompany || !company) {
         return <Skeleton className="h-64 w-full" />
     }
 
     /* ---------------- UI ---------------- */
+
     return (
         <Section>
             {/* ---------- Company Header ---------- */}
@@ -170,20 +226,19 @@ export default function CompanyAccountPage({
                     {/* Logo */}
                     <div className="relative">
                         {company.logo ? (
-                        <Image
-                            key={company.logo}
-                            src={`${company.logo}`}
-                            alt={company.name}
-                            width={64}
-                            height={64}
-                            className="object-contain"
-                            unoptimized
-                        />
-
+                            <Image
+                                key={company.logo}
+                                src={company.logo}
+                                alt={company.name}
+                                width={64}
+                                height={64}
+                                className="object-contain"
+                                unoptimized
+                            />
                         ) : (
-                        <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                            No logo
-                        </div>
+                            <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                No logo
+                            </div>
                         )}
                     </div>
 
@@ -193,7 +248,6 @@ export default function CompanyAccountPage({
                             <CardTitle>
                                 {company.name}
                             </CardTitle>
-
                             {company.is_verified && (
                                 <Badge variant="secondary">
                                     Verified
@@ -208,23 +262,27 @@ export default function CompanyAccountPage({
                     </div>
 
                     {/* Upload */}
-                    <div>
-                        <label className="cursor-pointer">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={onLogoChange}
-                                disabled={uploading}
-                            />
-                            <Badge variant="outline">
-                                {uploading
-                                    ? "Uploading..."
-                                    : "Change logo"}
-                            </Badge>
-                        </label>
-                    </div>
+                    <label className="cursor-pointer">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={onLogoChange}
+                            disabled={uploading}
+                        />
+                        <Badge variant="outline">
+                            {uploading
+                                ? "Uploading..."
+                                : "Change logo"}
+                        </Badge>
+                    </label>
                 </CardHeader>
+
+                {logoError && (
+                    <div className="px-6 pb-4 text-sm text-red-500">
+                        {logoError}
+                    </div>
+                )}
             </Card>
 
             {/* ---------- Reviews Table ---------- */}
@@ -237,23 +295,18 @@ export default function CompanyAccountPage({
 
                 <CardContent>
                     <DataTable
-                        data={company.reviews}
-                        columns={reviewColumns(
-                            (id, approved) => {
-                                bulkAction(
-                                    [id],
-                                    approved
-                                        ? "approve"
-                                        : "reject"
-                                )
-                            }
-                        )}
-                        onBulkApprove={ids =>
-                            bulkAction(ids, "approve")
-                        }
-                        onBulkReject={ids =>
-                            bulkAction(ids, "reject")
-                        }
+                        data={reviews}
+                        columns={columns}
+                        page={page}
+                        pageSize={pageSize}
+                        total={total}
+                        loading={loadingReviews}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            setPageSize(size)
+                            setPage(1)
+                        }}
+                        onSearch={setSearch}
                     />
                 </CardContent>
             </Card>

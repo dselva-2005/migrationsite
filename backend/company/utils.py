@@ -1,5 +1,6 @@
 from django.db.models import Avg, Count
 from django.contrib.contenttypes.models import ContentType
+
 from review.models import Review
 from company.models import Company
 
@@ -10,7 +11,7 @@ def recalculate_company_rating(company):
     stats = Review.objects.filter(
         content_type=ct,
         object_id=company.id,
-        is_approved=True,
+        moderation_status=Review.ModerationStatus.APPROVED,
     ).aggregate(
         avg=Avg("rating"),
         count=Count("id"),

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { usePageContent } from "@/providers/PageContentProvider"
 
+/* ───────────────────────── TYPES ───────────────────────── */
 
 type AboutImage = {
     src: string
@@ -38,7 +39,10 @@ type AboutCTA = {
 /* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function AboutSection() {
-    const content = usePageContent()
+    const { content, loading } = usePageContent()
+
+    // ⛔ gate on provider state
+    if (loading || !content) return null
 
     const images = content["about.images"] as AboutImage[] | undefined
     const experience = content["about.experience"] as AboutExperience | undefined
@@ -47,8 +51,7 @@ export default function AboutSection() {
     const description = content["about.description"] as string | undefined
     const cta = content["about.cta"] as AboutCTA | undefined
 
-    /* ───────────── Graceful failure ───────────── */
-
+    /* ───────────── Graceful CMS failure ───────────── */
     if (
         !images ||
         images.length < 3 ||

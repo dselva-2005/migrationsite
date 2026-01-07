@@ -24,19 +24,25 @@ type Feature = {
 /* ---------------- Component ---------------- */
 
 export default function WhyChooseUsSection() {
-    const content = usePageContent()
+    const { content, loading } = usePageContent()
 
-    const header = content["why_choose.header"] as WhyChooseHeader | undefined
-    const items = content["why_choose.items"] as Feature[] | undefined
+    // ✅ hook-safe early exit
+    if (loading || !content) return null
+
+    const header =
+        content["why_choose.header"] as WhyChooseHeader | undefined
+
+    const items =
+        content["why_choose.items"] as Feature[] | undefined
 
     /* Graceful CMS failure */
-    if (!header || !items?.length) return null
+    if (!header || !items || items.length === 0) return null
 
     return (
         <section className="py-2">
             <div className="mx-auto max-w-7xl px-4">
 
-                {/* Header (CMS-controlled) */}
+                {/* Header */}
                 <div className="mb-14 text-center">
                     <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary/80">
                         {header.eyebrow}
@@ -50,7 +56,7 @@ export default function WhyChooseUsSection() {
                     </h2>
                 </div>
 
-                {/* Cards (CMS-driven) */}
+                {/* Cards */}
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     {items.map((item) => (
                         <Card
@@ -90,6 +96,7 @@ export default function WhyChooseUsSection() {
                         </Card>
                     ))}
                 </div>
+
             </div>
         </section>
     )

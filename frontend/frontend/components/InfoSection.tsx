@@ -32,23 +32,25 @@ const ICONS = [
 /* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function InfoSection() {
-    const content = usePageContent()
+    const { content, loading } = usePageContent()
+
+    if (loading || !content) return null
 
     const header = content["info.header"] as InfoHeader | undefined
     const cards = content["info.cards"] as InfoCardCMS[] | undefined
 
     // graceful CMS failure
-    if (!header || !cards || cards.length === 0) return null
+    if (!header || !cards?.length) return null
 
     return (
-        <div className="py-4">
+        <div>
             {/* Header */}
-            <div className="mb-12 text-center">
+            <div className="text-center p-4">
                 <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary/80">
                     {header.eyebrow}
                 </p>
 
-                <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+                <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-3xl">
                     {header.title}{" "}
                     <span className="text-primary">{header.highlight}</span>
                 </h2>

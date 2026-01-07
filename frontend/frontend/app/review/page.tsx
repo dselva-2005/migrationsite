@@ -10,57 +10,79 @@ import { PageContentProvider } from "@/providers/PageContentProvider"
 import { getCompanies } from "@/services/company"
 import { Company } from "@/types/company"
 
-export default function Review() {
+function ReviewPageContent() {
     const [companies, setCompanies] = useState<Company[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(1)
+    const [loading, setLoading] = useState(true)
 
     const pageSize = 8
 
     useEffect(() => {
         let cancelled = false
 
-        getCompanies(page, pageSize).then((data) => {
-            if (cancelled) return
-            setCompanies(data.results)
-            setTotal(data.count)
-        })
+        getCompanies(page, pageSize)
+            .then((data) => {
+                if (cancelled) return
+                setCompanies(data.results)
+                setTotal(data.count)
+            })
+            .catch((err) => {
+                if (!cancelled) console.error(err)
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
 
         return () => {
             cancelled = true
         }
     }, [page, pageSize])
 
+    if (loading) {
+        return (
+            <>
+            </>
+        )
+    }
+
     return (
-        <PageContentProvider page="review">
+        <>
             <ReviewHero />
 
             <Section>
-                {companies.length === 0 ? (
-                    <div className="py-20 text-center text-muted-foreground">
-                        Loading companies…
-                    </div>
-                ) : (
-                    <CompanyReviewGrid
-                        companies={companies.map((c) => ({
-                            id: String(c.id),
-                            name: c.name,
-                            slug: c.slug,
-                            domain: c.slug,
-                            imageUrl: c.logo ?? "/placeholder.png",
-                            rating: Number(c.rating_average),
-                            reviewCount: c.rating_count,
-                        }))}
-                    />
-                )}
+                <CompanyReviewGrid
+                    companies={companies.map((c) => ({
+                        id: String(c.id),
+                        name: c.name,
+                        slug: c.slug,
+                        domain: c.slug,
+                        imageUrl: c.logo ?? "/placeholder.png",
+                        rating: Number(c.rating_average),
+                        reviewCount: c.rating_count,
+                    }))}
+                />
 
                 <ReviewPagination
                     page={page}
                     pageSize={pageSize}
                     total={total}
-                    onPageChange={setPage}
+                    onPageChange={(p) => {
+                        setLoading(true)
+                        setPage(p)
+                    }}
                 />
             </Section>
+        </>
+    )
+}
+
+export default function Review() {
+    return (
+        <PageContentProvider page="review">
+            <>
+                <ReviewPageContent />
+            </>
         </PageContentProvider>
     )
 }

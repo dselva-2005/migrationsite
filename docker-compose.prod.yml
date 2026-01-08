@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -16,7 +14,8 @@ services:
       - postgres
       - redis
     restart: always
-    # ❌ no ports in prod (nginx only)
+    ports:
+      - "127.0.0.1:8000:8000"   # ✅ Apache → Gunicorn
 
   celery:
     build:
@@ -39,7 +38,8 @@ services:
     env_file:
       - ./.env.prod
     restart: always
-    # ❌ no ports in prod (nginx only)
+    ports:
+      - "127.0.0.1:3000:3000"   # ✅ Apache → Frontend
 
   postgres:
     image: postgres:16
@@ -49,44 +49,15 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     restart: always
-    # ❌ no ports in prod
+    # no ports (internal only)
 
   redis:
     image: redis:7
     container_name: redis
     restart: always
-    # ❌ no ports in prod
-
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - media:/media
-      - static:/staticfiles
-      - certbot-www:/var/www/certbot
-      - letsencrypt:/etc/letsencrypt
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - backend
-      - frontend
-    restart: always
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-www:/var/www/certbot
-      - letsencrypt:/etc/letsencrypt
-    entrypoint: >
-      sh -c "certbot renew --webroot -w /var/www/certbot --quiet"
-    restart: unless-stopped
+    # no ports (internal only)
 
 volumes:
   postgres:
   media:
   static:
-  certbot-www:
-  letsencrypt:

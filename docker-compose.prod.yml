@@ -8,14 +8,15 @@ services:
     env_file:
       - ./.env.prod
     volumes:
-      - media:/app/media
+      - ./backend/media:/app/media   # Host path : Container path
       - static:/app/staticfiles
     depends_on:
       - postgres
       - redis
     restart: always
     ports:
-      - "127.0.0.1:8000:8000"   # ✅ Apache → Gunicorn
+      - "127.0.0.1:8000:8000"
+
 
   celery:
     build:

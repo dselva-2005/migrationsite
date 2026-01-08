@@ -6,7 +6,7 @@ Shared between dev & prod.
 from pathlib import Path
 import os
 from datetime import timedelta
-
+os.umask(0o002)  # new files: 664, new dirs: 775
 # --------------------------------------------------
 # Base directory
 # --------------------------------------------------

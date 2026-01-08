@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, FormEvent, startTransition, JSX } from "react"
-import { useActionState } from "react"
-import { registerAction, RegisterState } from "@/app/(auth)/register/actions"
+import { useState, FormEvent, JSX } from "react"
+import axios, { AxiosError } from "axios"
+import publicApi from "@/lib/publicApi"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,79 +14,117 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 
-const initialState: RegisterState = {
-    error: null,
-    success: false,
+/* ---------------- Types ---------------- */
+
+type RegisterFormState = {
+    username: string
+    email: string
+    password: string
+    confirmPassword: string
 }
 
+type FieldErrors = Partial<
+    Record<"username" | "email" | "password" | "confirm", string>
+>
+
+type ApiErrorResponse = {
+    detail?: string
+    username?: string[]
+    email?: string[]
+}
+
+/* -------------- Component -------------- */
+
 export default function RegisterForm(): JSX.Element {
-    const [state, formAction] = useActionState<RegisterState, FormData>(
-        registerAction,
-        initialState
-    )
+    const [form, setForm] = useState<RegisterFormState>({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    })
 
-    const [username, setUsername] = useState("")
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+    const [errors, setErrors] = useState<FieldErrors>({})
+    const [serverError, setServerError] = useState<string | null>(null)
+    const [success, setSuccess] = useState(false)
+    const [loading, setLoading] = useState(false)
 
-    const [usernameError, setUsernameError] = useState<string | null>(null)
-    const [emailError, setEmailError] = useState<string | null>(null)
-    const [passwordError, setPasswordError] = useState<string | null>(null)
-    const [confirmError, setConfirmError] = useState<string | null>(null)
+    /* ------------ Validation ------------ */
 
     const validate = (): boolean => {
-        let valid = true
+        const nextErrors: FieldErrors = {}
 
-        setUsernameError(null)
-        setEmailError(null)
-        setPasswordError(null)
-        setConfirmError(null)
-
-        if (!username.trim()) {
-            setUsernameError("Username is required")
-            valid = false
-        } else if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
-            setUsernameError(
+        if (!form.username.trim()) {
+            nextErrors.username = "Username is required"
+        } else if (!/^[a-zA-Z0-9_]{3,30}$/.test(form.username)) {
+            nextErrors.username =
                 "Username must be 3–30 characters and contain only letters, numbers, or underscores"
-            )
-            valid = false
         }
 
-        if (!email.trim()) {
-            setEmailError("Email is required")
-            valid = false
-        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-            setEmailError("Enter a valid email address")
-            valid = false
+        if (!form.email.trim()) {
+            nextErrors.email = "Email is required"
+        } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+            nextErrors.email = "Enter a valid email address"
         }
 
-        if (!password) {
-            setPasswordError("Password is required")
-            valid = false
-        } else if (password.length < 8) {
-            setPasswordError("Password must be at least 8 characters")
-            valid = false
+        if (!form.password) {
+            nextErrors.password = "Password is required"
+        } else if (form.password.length < 8) {
+            nextErrors.password = "Password must be at least 8 characters"
         }
 
-        if (confirmPassword !== password) {
-            setConfirmError("Passwords do not match")
-            valid = false
+        if (form.confirmPassword !== form.password) {
+            nextErrors.confirm = "Passwords do not match"
         }
 
-        return valid
+        setErrors(nextErrors)
+        return Object.keys(nextErrors).length === 0
     }
 
-    const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    /* -------------- Submit -------------- */
+
+    const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+
+        setServerError(null)
+        setSuccess(false)
+
         if (!validate()) return
 
-        const formData = new FormData(e.currentTarget)
+        setLoading(true)
 
-        startTransition(() => {
-            formAction(formData)
-        })
+        try {
+            await publicApi.post("/api/auth/register/", {
+                username: form.username,
+                email: form.email,
+                password: form.password,
+            })
+
+            setSuccess(true)
+            setForm({
+                username: "",
+                email: "",
+                password: "",
+                confirmPassword: "",
+            })
+        } catch (error: unknown) {
+            if (axios.isAxiosError<ApiErrorResponse>(error)) {
+                const data = error.response?.data
+
+                setServerError(
+                    data?.detail ??
+                    data?.username?.[0] ??
+                    data?.email?.[0] ??
+                    "Registration failed"
+                )
+            } else {
+                setServerError("Registration failed")
+            }
+        } finally {
+            setLoading(false)
+        }
     }
+
+    /* -------------- Render -------------- */
 
     return (
         <Card className="w-full max-w-xl sm:max-w-2xl mx-auto">
@@ -101,15 +139,18 @@ export default function RegisterForm(): JSX.Element {
                         <Label htmlFor="username">Username</Label>
                         <Input
                             id="username"
-                            name="username"
-                            autoComplete="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className={usernameError ? "border-red-500" : ""}
+                            value={form.username}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    username: e.target.value,
+                                })
+                            }
+                            className={errors.username ? "border-red-500" : ""}
                         />
-                        {usernameError && (
+                        {errors.username && (
                             <p className="text-sm text-red-500">
-                                {usernameError}
+                                {errors.username}
                             </p>
                         )}
                     </div>
@@ -119,16 +160,16 @@ export default function RegisterForm(): JSX.Element {
                         <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
-                            name="email"
                             type="email"
-                            autoComplete="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className={emailError ? "border-red-500" : ""}
+                            value={form.email}
+                            onChange={(e) =>
+                                setForm({ ...form, email: e.target.value })
+                            }
+                            className={errors.email ? "border-red-500" : ""}
                         />
-                        {emailError && (
+                        {errors.email && (
                             <p className="text-sm text-red-500">
-                                {emailError}
+                                {errors.email}
                             </p>
                         )}
                     </div>
@@ -139,59 +180,61 @@ export default function RegisterForm(): JSX.Element {
                         <Input
                             id="password"
                             type="password"
-                            name="password"
-                            autoComplete="new-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className={passwordError ? "border-red-500" : ""}
+                            value={form.password}
+                            onChange={(e) =>
+                                setForm({ ...form, password: e.target.value })
+                            }
+                            className={errors.password ? "border-red-500" : ""}
                         />
-                        {passwordError && (
+                        {errors.password && (
                             <p className="text-sm text-red-500">
-                                {passwordError}
+                                {errors.password}
                             </p>
                         )}
                     </div>
 
                     {/* Confirm Password */}
                     <div className="space-y-1">
-                        <Label htmlFor="confirmPassword">
-                            Confirm Password
-                        </Label>
+                        <Label htmlFor="confirm">Confirm Password</Label>
                         <Input
-                            id="confirmPassword"
+                            id="confirm"
                             type="password"
-                            autoComplete="new-password"
-                            value={confirmPassword}
+                            value={form.confirmPassword}
                             onChange={(e) =>
-                                setConfirmPassword(e.target.value)
+                                setForm({
+                                    ...form,
+                                    confirmPassword: e.target.value,
+                                })
                             }
-                            className={confirmError ? "border-red-500" : ""}
+                            className={errors.confirm ? "border-red-500" : ""}
                         />
-                        {confirmError && (
+                        {errors.confirm && (
                             <p className="text-sm text-red-500">
-                                {confirmError}
+                                {errors.confirm}
                             </p>
                         )}
                     </div>
 
-                    {/* Server error */}
-                    {state.error && (
+                    {serverError && (
                         <div className="rounded-md bg-red-50 p-3">
                             <p className="text-sm text-red-600">
-                                {state.error}
+                                {serverError}
                             </p>
                         </div>
                     )}
 
-                    {/* Success */}
-                    {state.success && (
+                    {success && (
                         <p className="text-sm text-green-600">
                             Account created successfully. You can now log in.
                         </p>
                     )}
 
-                    <Button type="submit" className="w-full">
-                        Register
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={loading}
+                    >
+                        {loading ? "Creating account…" : "Register"}
                     </Button>
                 </form>
             </CardContent>

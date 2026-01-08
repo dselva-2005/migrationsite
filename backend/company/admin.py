@@ -83,12 +83,14 @@ class ReviewInline(GenericTabularInline):
 # Company Admin
 # ======================================================
 
-
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "category",
+        "city",
+        "state",
+        "country",
         "rating_average",
         "rating_count",
         "is_verified",
@@ -100,6 +102,9 @@ class CompanyAdmin(admin.ModelAdmin):
         "is_verified",
         "is_active",
         "category",
+        "country",
+        "state",
+        "city",
         "created_at",
     )
 
@@ -107,6 +112,12 @@ class CompanyAdmin(admin.ModelAdmin):
         "name",
         "slug",
         "description",
+        "tagline",
+        "city",
+        "state",
+        "country",
+        "email",
+        "phone",
     )
 
     prepopulated_fields = {"slug": ("name",)}
@@ -116,33 +127,91 @@ class CompanyAdmin(admin.ModelAdmin):
         "rating_count",
         "created_at",
         "updated_at",
+        "search_vector",
     )
 
     fieldsets = (
         (
-            "Basic Info",
+            "Core Identity",
             {
                 "fields": (
+                    "owner",
                     "name",
                     "slug",
                     "tagline",
                     "description",
                     "category",
+                )
+            },
+        ),
+        (
+            "Contact Information",
+            {
+                "fields": (
+                    "phone",
+                    "email",
+                    "website",
+                )
+            },
+        ),
+        (
+            "Address",
+            {
+                "fields": (
+                    "address_line_1",
+                    "address_line_2",
+                    "city",
+                    "state",
+                    "postal_code",
+                    "country",
+                )
+            },
+        ),
+        (
+            "Branding",
+            {
+                "fields": (
+                    "logo",
+                    "cover_image",
+                )
+            },
+        ),
+        (
+            "Trust & Visibility",
+            {
+                "fields": (
+                    "is_verified",
+                    "is_active",
+                )
+            },
+        ),
+        (
+            "SEO",
+            {
+                "fields": (
+                    "meta_title",
+                    "meta_description",
                     "search_vector",
                 )
             },
         ),
-        ("Branding", {"fields": ("logo", "cover_image", "website")}),
-        ("Trust & Visibility", {"fields": ("is_verified", "is_active")}),
-        ("SEO", {"fields": ("meta_title", "meta_description")}),
         (
             "System",
-            {"fields": ("rating_average", "rating_count", "created_at", "updated_at")},
+            {
+                "fields": (
+                    "rating_average",
+                    "rating_count",
+                    "created_at",
+                    "updated_at",
+                )
+            },
         ),
     )
 
     ordering = ("-rating_average", "-rating_count")
+    autocomplete_fields = ("owner", "category")
     inlines = [ReviewInline]
+
 
 
 # ======================================================

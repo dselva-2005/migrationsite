@@ -27,3 +27,7 @@ CSRF_COOKIE_SECURE = True
 REST_FRAMEWORK.update({"DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
     )})
+
+# Ensure uploaded files are writable by the shared group
+FILE_UPLOAD_PERMISSIONS = 0o664
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775

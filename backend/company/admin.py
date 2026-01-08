@@ -209,7 +209,6 @@ class CompanyAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-rating_average", "-rating_count")
-    autocomplete_fields = ("owner", "category")
     inlines = [ReviewInline]
 
 

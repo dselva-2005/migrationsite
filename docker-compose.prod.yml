@@ -9,7 +9,7 @@ services:
       - ./.env.prod
     volumes:
       - ./backend/media:/app/media   # Host path : Container path
-      - ./backend/static:/app/staticfiles
+      - ./backend/static:/app/static
     depends_on:
       - postgres
       - redis

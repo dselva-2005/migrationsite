@@ -6,7 +6,7 @@ DEBUG = False
 DOMAIN = os.environ.get("DOMAIN")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
-
+STATIC_ROOT = BASE_DIR / "static"
 CSRF_TRUSTED_ORIGINS += [
     f"https://{DOMAIN}",
     f"https://www.{DOMAIN}",

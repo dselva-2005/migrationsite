@@ -48,6 +48,13 @@ type AuthContextType = {
     loading: boolean
     refreshAuth: () => Promise<void>
     logout: () => Promise<void>
+
+    /* 🔔 Toast flags */
+    justLoggedIn: boolean
+    consumeJustLoggedIn: () => void
+
+    justLoggedOut: boolean
+    consumeJustLoggedOut: () => void
 }
 
 /* ---------------- Context ---------------- */
@@ -58,7 +65,10 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null)
-    const [loading, setLoading] = useState<boolean>(true)
+    const [loading, setLoading] = useState(true)
+
+    const [justLoggedIn, setJustLoggedIn] = useState(false)
+    const [justLoggedOut, setJustLoggedOut] = useState(false)
 
     const refreshAuth = useCallback(async (): Promise<void> => {
         setLoading(true)
@@ -68,39 +78,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = res.data
 
             if (!data) {
-                setUser(null)
+                setUser(prev => {
+                    if (prev) {
+                        setJustLoggedOut(true)
+                    }
+                    return null
+                })
                 return
             }
 
-            const companies: CompanyMembership[] = data.companies.map(
-                (c): CompanyMembership => ({
-                    companyId: c.company_id,
-                    companySlug: c.company_slug,
-                    companyName: c.company_name,
-                    role: c.role,
-                })
-            )
+            const companies: CompanyMembership[] = data.companies.map(c => ({
+                companyId: c.company_id,
+                companySlug: c.company_slug,
+                companyName: c.company_name,
+                role: c.role,
+            }))
 
-            setUser({
-                id: data.id,
-                username: data.username,
-                email: data.email,
-                isBusiness: companies.length > 0,
-                companies,
+            setUser(prev => {
+                if (!prev) {
+                    setJustLoggedIn(true)
+                }
+
+                return {
+                    id: data.id,
+                    username: data.username,
+                    email: data.email,
+                    isBusiness: companies.length > 0,
+                    companies,
+                }
             })
         } finally {
             setLoading(false)
         }
     }, [])
 
-
     const logout = async (): Promise<void> => {
         try {
             await api.post("/api/auth/logout/")
         } finally {
-            setUser(null)
+            setUser(prev => {
+                if (prev) {
+                    setJustLoggedOut(true)
+                }
+                return null
+            })
         }
     }
+
+    const consumeJustLoggedIn = () => setJustLoggedIn(false)
+    const consumeJustLoggedOut = () => setJustLoggedOut(false)
 
     useEffect(() => {
         refreshAuth()
@@ -114,6 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 loading,
                 refreshAuth,
                 logout,
+
+                justLoggedIn,
+                consumeJustLoggedIn,
+
+                justLoggedOut,
+                consumeJustLoggedOut,
             }}
         >
             {children}

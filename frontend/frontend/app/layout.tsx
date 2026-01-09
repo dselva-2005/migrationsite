@@ -8,6 +8,7 @@ import { ScrollProgressCircle } from "@/components/ScrollProgress"
 import Breadcrumbs from "@/components/header/Breadcrumbs";
 import { GlobalPrefetch } from "@/components/GlobalPrefetch";
 import ToasterClient from "@/components/data-table/ToasterClient";
+import AuthToasts from "@/components/AuthToast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <Breadcrumbs/>
           <GlobalPrefetch />
           {children}
+          <AuthToasts />
           <ToasterClient />
           <ScrollProgressCircle />
           <Footer />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams } from "next/navigation"
 
 import { getCompanyBySlug } from "@/services/company"
@@ -17,8 +17,17 @@ import { RatingSummary } from "@/components/company/RatingSummary"
 import { ReviewSection } from "@/components/company/ReviewSection"
 import { Section } from "@/components/Section"
 
+import { useAuth } from "@/providers/AuthProvider"
+
+type Params = {
+    slug: string
+}
+
 export default function CompanyReviewPage() {
-    const { slug } = useParams<{ slug: string }>()
+    const { slug } = useParams<Params>()
+    const { isLoggedIn, loading: authLoading } = useAuth()
+
+    const mountedRef = useRef(true)
 
     const [company, setCompany] = useState<Company | null>(null)
     const [reviews, setReviews] = useState<Review[]>([])
@@ -28,44 +37,67 @@ export default function CompanyReviewPage() {
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        let alive = true
+    /* ---------------- Initial load (PUBLIC) ---------------- */
 
-        ;(async () => {
+    useEffect(() => {
+        mountedRef.current = true
+
+        const loadPublicData = async () => {
             setLoading(true)
 
             try {
-                const [
-                    companyData,
-                    reviewData,
-                    myReviewData,
-                ] = await Promise.all([
-                    getCompanyBySlug(slug),
-                    getCompanyReviews(slug, 1),
-                    getMyCompanyReview(slug),
-                ])
+                const companyData = await getCompanyBySlug(slug)
+                const reviewData = await getCompanyReviews(slug, 1)
 
-                if (!alive) return
+                if (!mountedRef.current) return
 
                 setCompany(companyData)
                 setReviews(reviewData.results)
-                setMyReview(myReviewData)
-
                 setPage(1)
                 setHasMore(
                     reviewData.results.length < reviewData.count
                 )
-            } catch (error) {
-                console.error("Failed to load company page", error)
+            } catch (err) {
+                console.error("Failed to load company page", err)
             } finally {
-                if (alive) setLoading(false)
+                if (mountedRef.current) {
+                    setLoading(false)
+                }
             }
-        })()
+        }
+
+        loadPublicData()
 
         return () => {
-            alive = false
+            mountedRef.current = false
         }
     }, [slug])
+
+    /* ---------------- Auth-only data ---------------- */
+
+    useEffect(() => {
+        if (authLoading || !isLoggedIn) {
+            setMyReview(null)
+            return
+        }
+
+        const loadMyReview = async () => {
+            try {
+                const data = await getMyCompanyReview(slug)
+                if (mountedRef.current) {
+                    setMyReview(data)
+                }
+            } catch {
+                if (mountedRef.current) {
+                    setMyReview(null)
+                }
+            }
+        }
+
+        loadMyReview()
+    }, [slug, isLoggedIn, authLoading])
+
+    /* ---------------- Pagination ---------------- */
 
     const loadMoreReviews = async () => {
         if (!hasMore) return
@@ -73,12 +105,14 @@ export default function CompanyReviewPage() {
         const nextPage = page + 1
         const data = await getCompanyReviews(slug, nextPage)
 
-        setReviews(prev => [...prev, ...data.results])
+        setReviews((prev) => [...prev, ...data.results])
         setPage(nextPage)
         setHasMore(
             reviews.length + data.results.length < data.count
         )
     }
+
+    /* ---------------- Render ---------------- */
 
     if (loading) return <div>Loading...</div>
     if (!company) return <div>Company not found</div>

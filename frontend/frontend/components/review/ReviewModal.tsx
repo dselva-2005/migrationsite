@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Image from "next/image"
 import clsx from "clsx"
 import { Star, X } from "lucide-react"
@@ -17,7 +17,6 @@ import { toast } from "sonner"
 
 import { Company } from "@/types/company"
 import { Review, ReviewMedia } from "@/types/review"
-import { useAuth } from "@/providers/AuthProvider"
 import {
     createCompanyReview,
     updateCompanyReview,
@@ -39,24 +38,17 @@ export function ReviewModal({
     company,
     review,
 }: Props) {
-    const { isLoggedIn, loading } = useAuth()
-
     const isEditMode = review !== null
 
-    const [rating, setRating] = useState<number>(0)
-    const [body, setBody] = useState<string>("")
+    const [rating, setRating] = useState(0)
+    const [body, setBody] = useState("")
 
-    // 🔹 existing media from backend
     const [existingMedia, setExistingMedia] = useState<
         ReviewMedia[]
     >([])
-
-    // 🔹 ids to delete
     const [deleteMediaIds, setDeleteMediaIds] = useState<
         number[]
     >([])
-
-    // 🔹 newly added files
     const [newMedia, setNewMedia] = useState<File[]>([])
 
     const [submitting, setSubmitting] = useState(false)
@@ -82,47 +74,44 @@ export function ReviewModal({
 
     /* ---------------- Media handlers ---------------- */
 
-    const onMediaChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const files = Array.from(e.target.files ?? [])
+    const onMediaChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const files = Array.from(e.target.files ?? [])
 
-        const totalCount =
-            existingMedia.length +
-            newMedia.length +
-            files.length
+            const totalCount =
+                existingMedia.length +
+                newMedia.length +
+                files.length
 
-        if (totalCount > MAX_MEDIA) {
-            toast.warning("Media limit reached", {
-                description: "You can upload up to 5 files only.",
-            })
-            return
-        }
+            if (totalCount > MAX_MEDIA) {
+                toast.warning("Media limit reached", {
+                    description:
+                        "You can upload up to 5 files only.",
+                })
+                return
+            }
 
-        setNewMedia((prev) => [...prev, ...files])
-    }
+            setNewMedia((prev) => [...prev, ...files])
+        },
+        [existingMedia.length, newMedia.length]
+    )
 
-    const removeExistingMedia = (mediaId: number) => {
+    const removeExistingMedia = useCallback((mediaId: number) => {
         setExistingMedia((prev) =>
             prev.filter((m) => m.id !== mediaId)
         )
         setDeleteMediaIds((prev) => [...prev, mediaId])
-    }
+    }, [])
 
-    const removeNewMedia = (index: number) => {
+    const removeNewMedia = useCallback((index: number) => {
         setNewMedia((prev) =>
             prev.filter((_, i) => i !== index)
         )
-    }
+    }, [])
 
     /* ---------------- Submit ---------------- */
 
-    const submitReview = async () => {
-        if (!isLoggedIn) {
-            window.location.href = "/login"
-            return
-        }
-
+    const submitReview = useCallback(async () => {
         try {
             setSubmitting(true)
 
@@ -130,26 +119,23 @@ export function ReviewModal({
             formData.append("rating", rating.toString())
             formData.append("body", body)
 
-            // 🔹 send delete ids
             deleteMediaIds.forEach((id) =>
-                formData.append("delete_media_ids", id.toString())
+                formData.append(
+                    "delete_media_ids",
+                    id.toString()
+                )
             )
 
-            let savedReview: Review
+            const savedReview = isEditMode
+                ? await updateCompanyReview(
+                      company.slug,
+                      formData
+                  )
+                : await createCompanyReview(
+                      company.slug,
+                      formData
+                  )
 
-            if (isEditMode) {
-                savedReview = await updateCompanyReview(
-                    company.slug,
-                    formData
-                )
-            } else {
-                savedReview = await createCompanyReview(
-                    company.slug,
-                    formData
-                )
-            }
-
-            // 🔹 upload new media
             for (const file of newMedia) {
                 await uploadReviewMedia(savedReview.id, file)
             }
@@ -170,9 +156,15 @@ export function ReviewModal({
         } finally {
             setSubmitting(false)
         }
-    }
-
-    if (loading) return null
+    }, [
+        rating,
+        body,
+        deleteMediaIds,
+        newMedia,
+        isEditMode,
+        company.slug,
+        onClose,
+    ])
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -207,7 +199,9 @@ export function ReviewModal({
                         <Star
                             key={i}
                             size={30}
-                            onClick={() => setRating(i + 1)}
+                            onClick={() =>
+                                setRating(i + 1)
+                            }
                             className={clsx(
                                 "cursor-pointer",
                                 i < rating
@@ -276,7 +270,10 @@ export function ReviewModal({
                 {newMedia.length > 0 && (
                     <div className="grid grid-cols-5 gap-2">
                         {newMedia.map((file, i) => (
-                            <div key={i} className="relative">
+                            <div
+                                key={i}
+                                className="relative"
+                            >
                                 {file.type.startsWith(
                                     "image"
                                 ) ? (

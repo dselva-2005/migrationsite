@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,23 +21,22 @@ type Props = {
 
 export function CompanyHeader({ company, myReview }: Props) {
     const [open, setOpen] = useState(false)
-    const { isLoggedIn, loading } = useAuth()
+    const { isLoggedIn } = useAuth()
     const router = useRouter()
 
-    const handleReviewAction = () => {
-        if (loading) return
+    const reviewButtonLabel = useMemo(
+        () => (myReview ? "Edit your review" : "Write a review"),
+        [myReview]
+    )
 
+    const handleReviewAction = useCallback(() => {
         if (!isLoggedIn) {
             router.push("/login")
             return
         }
 
         setOpen(true)
-    }
-
-    const reviewButtonLabel = myReview
-        ? "Edit your review"
-        : "Write a review"
+    }, [isLoggedIn, router])
 
     return (
         <>

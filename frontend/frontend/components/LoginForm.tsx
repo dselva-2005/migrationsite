@@ -16,6 +16,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import { toast } from "sonner"
 
 interface LoginFormProps {
     redirectPath?: string
@@ -85,6 +86,7 @@ export default function LoginForm({
             })
 
             await refreshAuth()
+            toast.success("Login successful")
             router.replace(redirectPath)
         } catch (err) {
             if (axios.isAxiosError<ErrorResponse>(err)) {

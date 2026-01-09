@@ -74,9 +74,9 @@ export function Footer() {
             {/* Bottom area */}
             <div className="border-t border-border">
                 <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-                    © 2025 revieweb. All Rights Reserved by{" "}
+                    © 2026 Themigration. All Rights Reserved by{" "}
                     <Link href="#" className="underline">
-                        RadiusTheme
+                        Themigration
                     </Link>
                 </div>
             </div>

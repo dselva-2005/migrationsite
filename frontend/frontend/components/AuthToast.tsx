@@ -6,18 +6,10 @@ import { useAuth } from "@/providers/AuthProvider"
 
 export default function AuthToasts() {
     const {
-        justLoggedIn,
-        consumeJustLoggedIn,
         justLoggedOut,
         consumeJustLoggedOut,
     } = useAuth()
 
-    useEffect(() => {
-        if (justLoggedIn) {
-            toast.success("Logged in successfully")
-            consumeJustLoggedIn()
-        }
-    }, [justLoggedIn, consumeJustLoggedIn])
 
     useEffect(() => {
         if (justLoggedOut) {

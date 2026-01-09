@@ -77,8 +77,15 @@ class Review(models.Model):
     
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "content_type", "object_id"],
+                name="unique_review_per_user_per_object",
+                condition=models.Q(user__isnull=False),
+            )
+        ]
         indexes = [
-            GinIndex(fields=["search_vector"]),  # full-text search index
+            GinIndex(fields=["search_vector"]),
             models.Index(fields=["content_type", "object_id"]),
             models.Index(fields=["rating"]),
             models.Index(fields=["moderation_status"]),

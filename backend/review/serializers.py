@@ -258,3 +258,22 @@ class ReviewMediaUploadSerializer(serializers.ModelSerializer):
             file=file,
             media_type=self.media_type,
         )
+    
+
+# serializers.py
+
+class ReviewUpdateSerializer(serializers.ModelSerializer):
+    delete_media_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        write_only=True,
+    )
+
+    class Meta:
+        model = Review
+        fields = (
+            "rating",
+            "title",
+            "body",
+            "delete_media_ids",
+        )

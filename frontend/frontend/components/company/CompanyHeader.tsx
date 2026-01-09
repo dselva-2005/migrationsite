@@ -3,32 +3,41 @@
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Company } from "@/types/company"
+import { Review } from "@/types/review"
+
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { TrustpilotRating } from "../TrustpilotRating"
 import { ReviewModal } from "@/components/review/ReviewModal"
 import { useAuth } from "@/providers/AuthProvider"
-import { useRouter } from "next/navigation"
 
 type Props = {
     company: Company
+    myReview: Review | null
 }
 
-export function CompanyHeader({ company }: Props) {
+export function CompanyHeader({ company, myReview }: Props) {
     const [open, setOpen] = useState(false)
     const { isLoggedIn, loading } = useAuth()
     const router = useRouter()
 
-    const handleWriteReview = () => {
+    const handleReviewAction = () => {
         if (loading) return
+
         if (!isLoggedIn) {
             router.push("/login")
             return
         }
+
         setOpen(true)
     }
+
+    const reviewButtonLabel = myReview
+        ? "Edit your review"
+        : "Write a review"
 
     return (
         <>
@@ -77,12 +86,15 @@ export function CompanyHeader({ company }: Props) {
 
                     {/* Actions */}
                     <div className="hidden md:flex gap-3">
-                        <Button onClick={handleWriteReview}>
-                            Write a review
+                        <Button onClick={handleReviewAction}>
+                            {reviewButtonLabel}
                         </Button>
 
                         <Button variant="outline" asChild>
-                            <Link href={company.website} target="_blank">
+                            <Link
+                                href={company.website}
+                                target="_blank"
+                            >
                                 Visit website
                             </Link>
                         </Button>
@@ -96,6 +108,7 @@ export function CompanyHeader({ company }: Props) {
                 open={open}
                 onClose={() => setOpen(false)}
                 company={company}
+                review={myReview}
             />
         </>
     )

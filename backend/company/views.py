@@ -24,11 +24,11 @@ from django.contrib.postgres.search import (
     SearchRank,
 )
 from company.permissions import user_can_manage_company
-
+from django.db import IntegrityError, transaction
 from review.serializers import ReviewSerializer, ReviewCreateSerializer,ReviewDashboardSerializer
 from review.services import get_reviews_for_object
 from review.models import Review
-
+from review.views import CompanyReviewUpdateAPIView
 
 # ------------------------------------
 # Company List
@@ -84,7 +84,7 @@ class CompanyReviewAPIView(APIView):
             page_size=page_size,
         )
 
-        serializer = ReviewSerializer(
+        reviews_serializer = ReviewSerializer(
             data["results"],
             many=True,
             context={"request": request},
@@ -93,12 +93,18 @@ class CompanyReviewAPIView(APIView):
         return Response(
             {
                 "count": data["count"],
-                "results": serializer.data,
+                "results": reviews_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
-
+    
     def post(self, request, slug):
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required to submit a review"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         company = get_object_or_404(
             Company,
             slug=slug,
@@ -108,18 +114,27 @@ class CompanyReviewAPIView(APIView):
         serializer = ReviewCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # ✅ CREATE REVIEW (PENDING BY DEFAULT)
-        review = serializer.save(
-            content_type=ContentType.objects.get_for_model(Company),
-            object_id=company.id,
-            author_name=request.user.username,
-            author_email=request.user.email,
-            user=request.user,
-            is_verified=True,
-            moderation_status=Review.ModerationStatus.PENDING,
-            ip_address=request.META.get("REMOTE_ADDR"),
-            user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        )
+        content_type = ContentType.objects.get_for_model(Company)
+
+        try:
+            with transaction.atomic():
+                review = serializer.save(
+                    content_type=content_type,
+                    object_id=company.id,
+                    author_name=request.user.username,
+                    author_email=request.user.email,
+                    user=request.user,
+                    is_verified=True,
+                    moderation_status=Review.ModerationStatus.PENDING,
+                    ip_address=request.META.get("REMOTE_ADDR"),
+                    user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                )
+
+        except IntegrityError:
+            return Response(
+                {"detail": "You have already reviewed this company"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             {
@@ -128,8 +143,7 @@ class CompanyReviewAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
+    
 # ------------------------------------
 # Business Onboarding
 # ------------------------------------
@@ -225,6 +239,7 @@ class CompanyLogoUpdateView(APIView):
 
 
 class CompanyDashboardReviewAPIView(ListAPIView):
+
     """
     Dashboard-only review listing with:
     - pagination
@@ -276,3 +291,40 @@ class CompanyDashboardReviewAPIView(ListAPIView):
             qs = qs.order_by("-created_at")
 
         return qs
+
+class CompanyMyReviewAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug):
+        company = get_object_or_404(
+            Company,
+            slug=slug,
+            is_active=True,
+        )
+
+        content_type = ContentType.objects.get_for_model(Company)
+
+        review = Review.objects.filter(
+            content_type=content_type,
+            object_id=company.id,
+            user=request.user,
+        ).first()
+
+        if not review:
+            return Response(
+                {"detail": "No review found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = ReviewSerializer(
+            review,
+            context={"request": request},
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request, slug):
+        return CompanyReviewUpdateAPIView().patch(request, slug)

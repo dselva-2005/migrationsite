@@ -8,10 +8,16 @@ from .views import (
     CompanyDashboardView,
     CompanyLogoUpdateView,
     CompanyDashboardReviewAPIView,
+    CompanyMyReviewAPIView,
 )
 
 urlpatterns = [
     path("list/", CompanyList.as_view()),
+    path(
+        "<slug:slug>/reviews/my/",
+        CompanyMyReviewAPIView.as_view(),
+        name="company-my-review",
+    ),
     path("business-login/", BusinessOnboardingView.as_view()),
     path("<slug:slug>/reviews/", CompanyReviewAPIView.as_view()),
     path("<slug:slug>/", CompanyDetailView.as_view()),

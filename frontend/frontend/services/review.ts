@@ -1,6 +1,7 @@
 import { Review } from "@/types/review"
 import api from "@/lib/axios"
 import publicApi from "@/lib/publicApi"
+import { AxiosError } from "axios"
 
 /* ---------------- Types ---------------- */
 
@@ -54,7 +55,6 @@ export async function createCompanyReview(
         data
     )
 
-    // 🔥 Optional: invalidate company review cache
     reviewCache.delete(`company:${slug}`)
 
     return res.data
@@ -144,3 +144,58 @@ export async function replyToReview(
 
     return res.data
 }
+
+
+const myReviewCache = new Map<string, Review | null>()
+
+export async function getMyCompanyReview(
+    companySlug: string
+): Promise<Review | null> {
+    const cacheKey = `my-review:${companySlug}`
+
+    if (myReviewCache.has(cacheKey)) {
+        return myReviewCache.get(cacheKey) ?? null
+    }
+
+    try {
+        const res = await api.get<Review>(
+            `/api/company/${companySlug}/reviews/my/`
+        )
+        myReviewCache.set(cacheKey, res.data)
+        return res.data
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            if (error.response?.status === 404) {
+                myReviewCache.set(cacheKey, null)
+                return null
+            }
+        }
+        throw error
+    }
+}
+
+export async function updateCompanyReview(
+    companySlug: string,
+    data: FormData
+): Promise<Review> {
+    try {
+        const res = await api.patch<{
+            detail: string
+            review: Review
+        }>(
+            `/api/company/${companySlug}/reviews/my/`,
+            data
+        )
+
+        reviewCache.delete(`company:${companySlug}`)
+        myReviewCache.delete(`my-review:${companySlug}`)
+
+        return res.data.review
+    } catch (error) {
+        if (error instanceof AxiosError) {
+            throw error
+        }
+        throw error
+    }
+}
+

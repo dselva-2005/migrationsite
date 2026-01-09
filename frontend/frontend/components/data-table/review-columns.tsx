@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { useState } from "react"
 
 import {
     CompanyReview,
@@ -13,7 +14,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/axios"
 import { MediaCell } from "./mediaCell"
-import { useState } from "react"
 
 /* ============================================================
    Helpers
@@ -42,7 +42,19 @@ function statusLabel(status: ReviewModerationStatus) {
 }
 
 /* ============================================================
-   Reply Cell (controlled + stateless mutation)
+   Rating Cell
+============================================================ */
+
+function RatingCell({ rating }: { rating: number }) {
+    return (
+        <div className="font-medium text-sm">
+            {rating} / 5
+        </div>
+    )
+}
+
+/* ============================================================
+   Reply Cell
 ============================================================ */
 
 function ReplyCell({
@@ -52,7 +64,9 @@ function ReplyCell({
     review: CompanyReview
     onUpdated: () => void
 }) {
-    const [body, setBody] = useState(review.reply?.body ?? "")
+    const [body, setBody] = useState(
+        review.reply?.body ?? ""
+    )
     const [loading, setLoading] = useState(false)
 
     async function onSave() {
@@ -60,9 +74,10 @@ function ReplyCell({
 
         setLoading(true)
         try {
-            await api.post(`/api/review/${review.id}/reply/`, {
-                body,
-            })
+            await api.post(
+                `/api/review/${review.id}/reply/`,
+                { body }
+            )
             toast.success("Reply saved")
             onUpdated()
         } catch {
@@ -93,7 +108,7 @@ function ReplyCell({
 }
 
 /* ============================================================
-   Actions Cell (no local truth)
+   Actions Cell
 ============================================================ */
 
 function ReviewActions({
@@ -106,17 +121,17 @@ function ReviewActions({
     const [loading, setLoading] = useState(false)
 
     async function mutate(
-        status: "approve" | "reject"
+        action: "approve" | "reject"
     ) {
         if (loading) return
 
         setLoading(true)
         try {
             await api.patch(
-                `/api/review/${review.id}/${status}/`
+                `/api/review/${review.id}/${action}/`
             )
             toast.success(
-                status === "approve"
+                action === "approve"
                     ? "Review approved"
                     : "Review rejected"
             )
@@ -176,6 +191,18 @@ export function reviewColumns(
                 </div>
             ),
         },
+
+        // ⭐ RATING (FIXED)
+        {
+            accessorKey: "rating",
+            header: "Rating",
+            cell: ({ row }) => (
+                <RatingCell
+                    rating={row.original.rating}
+                />
+            ),
+        },
+
         {
             accessorKey: "body",
             header: "Review",
@@ -185,13 +212,17 @@ export function reviewColumns(
                 </div>
             ),
         },
+
         {
             id: "media",
             header: "Media",
             cell: ({ row }) => (
-                <MediaCell media={row.original.media} />
+                <MediaCell
+                    media={row.original.media}
+                />
             ),
         },
+
         {
             accessorKey: "moderation_status",
             header: "Status",
@@ -207,6 +238,7 @@ export function reviewColumns(
                 </Badge>
             ),
         },
+
         {
             accessorKey: "created_at",
             header: "Date",
@@ -215,6 +247,7 @@ export function reviewColumns(
                     row.original.created_at
                 ).toLocaleDateString(),
         },
+
         {
             id: "reply",
             header: "Reply",
@@ -225,6 +258,7 @@ export function reviewColumns(
                 />
             ),
         },
+
         {
             id: "actions",
             header: "Actions",

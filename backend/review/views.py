@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 
 from django.db import transaction
-
+from django.utils import timezone
 from review.models import Review, ReviewReply
 from review.permissions import can_moderate_review
 from review.utils import get_company_from_review
@@ -16,13 +16,16 @@ from .serializers import (
     ReviewReplySerializer,
     ReviewReplyCreateSerializer,
     ReviewMediaUploadSerializer,
+    ReviewUpdateSerializer,
+    ReviewSerializer,
 )
 from .tasks import (
     send_review_approved_email,
     send_review_rejected_email,
 )
-
-
+from django.contrib.contenttypes.models import ContentType
+from review.models import ReviewMedia
+from django.shortcuts import get_object_or_404
 # ------------------------------------
 # Approve Review
 # ------------------------------------
@@ -178,3 +181,63 @@ class ReviewMediaUploadView(generics.CreateAPIView):
             raise PermissionDenied("Not allowed")
 
         serializer.save()
+
+
+
+
+class CompanyReviewUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, slug):
+        company = get_object_or_404(
+            Company,
+            slug=slug,
+            is_active=True,
+        )
+
+        content_type = ContentType.objects.get_for_model(Company)
+
+        review = get_object_or_404(
+            Review,
+            content_type=content_type,
+            object_id=company.id,
+            user=request.user,
+        )
+
+        serializer = ReviewUpdateSerializer(
+            review,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+
+        delete_media_ids = serializer.validated_data.pop(
+            "delete_media_ids",
+            []
+        )
+
+        with transaction.atomic():
+            # 🔁 Update review content
+            serializer.save(
+                moderation_status=Review.ModerationStatus.PENDING,
+                updated_at=timezone.now(),
+            )
+
+            # 🗑️ Delete selected media (ownership enforced)
+            if delete_media_ids:
+                ReviewMedia.objects.filter(
+                    id__in=delete_media_ids,
+                    review=review,
+                ).delete()
+
+        return Response(
+            {
+                "detail": "Review updated and sent for re-moderation",
+                "review": ReviewSerializer(
+                    review,
+                    context={"request": request},
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )

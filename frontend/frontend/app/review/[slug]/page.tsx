@@ -4,7 +4,10 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
 import { getCompanyBySlug } from "@/services/company"
-import { getCompanyReviews } from "@/services/review"
+import {
+    getCompanyReviews,
+    getMyCompanyReview,
+} from "@/services/review"
 
 import { Company } from "@/types/company"
 import { Review } from "@/types/review"
@@ -19,11 +22,12 @@ export default function CompanyReviewPage() {
 
     const [company, setCompany] = useState<Company | null>(null)
     const [reviews, setReviews] = useState<Review[]>([])
+    const [myReview, setMyReview] = useState<Review | null>(null)
+
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(true)
 
-    // ✅ NO helper function that mutates state
     useEffect(() => {
         let alive = true
 
@@ -31,16 +35,28 @@ export default function CompanyReviewPage() {
             setLoading(true)
 
             try {
-                const companyData = await getCompanyBySlug(slug)
-                if (!alive) return
+                const [
+                    companyData,
+                    reviewData,
+                    myReviewData,
+                ] = await Promise.all([
+                    getCompanyBySlug(slug),
+                    getCompanyReviews(slug, 1),
+                    getMyCompanyReview(slug),
+                ])
 
-                const reviewData = await getCompanyReviews(slug, 1)
                 if (!alive) return
 
                 setCompany(companyData)
                 setReviews(reviewData.results)
+                setMyReview(myReviewData)
+
                 setPage(1)
-                setHasMore(reviewData.results.length < reviewData.count)
+                setHasMore(
+                    reviewData.results.length < reviewData.count
+                )
+            } catch (error) {
+                console.error("Failed to load company page", error)
             } finally {
                 if (alive) setLoading(false)
             }
@@ -59,7 +75,9 @@ export default function CompanyReviewPage() {
 
         setReviews(prev => [...prev, ...data.results])
         setPage(nextPage)
-        setHasMore(reviews.length + data.results.length < data.count)
+        setHasMore(
+            reviews.length + data.results.length < data.count
+        )
     }
 
     if (loading) return <div>Loading...</div>
@@ -69,7 +87,10 @@ export default function CompanyReviewPage() {
         <Section>
             <div className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                    <CompanyHeader company={company} />
+                    <CompanyHeader
+                        company={company}
+                        myReview={myReview}
+                    />
 
                     <ReviewSection
                         reviews={reviews}

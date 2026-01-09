@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import clsx from "clsx"
 import { Star, X } from "lucide-react"
@@ -16,9 +16,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
 import { Company } from "@/types/company"
+import { Review, ReviewMedia } from "@/types/review"
 import { useAuth } from "@/providers/AuthProvider"
 import {
     createCompanyReview,
+    updateCompanyReview,
     uploadReviewMedia,
 } from "@/services/review"
 
@@ -26,34 +28,94 @@ type Props = {
     open: boolean
     onClose: () => void
     company: Company
+    review: Review | null
 }
 
 const MAX_MEDIA = 5
 
-export function ReviewModal({ open, onClose, company }: Props) {
+export function ReviewModal({
+    open,
+    onClose,
+    company,
+    review,
+}: Props) {
     const { isLoggedIn, loading } = useAuth()
 
-    const [rating, setRating] = useState(0)
-    const [body, setBody] = useState("")
-    const [media, setMedia] = useState<File[]>([])
+    const isEditMode = review !== null
+
+    const [rating, setRating] = useState<number>(0)
+    const [body, setBody] = useState<string>("")
+
+    // 🔹 existing media from backend
+    const [existingMedia, setExistingMedia] = useState<
+        ReviewMedia[]
+    >([])
+
+    // 🔹 ids to delete
+    const [deleteMediaIds, setDeleteMediaIds] = useState<
+        number[]
+    >([])
+
+    // 🔹 newly added files
+    const [newMedia, setNewMedia] = useState<File[]>([])
+
     const [submitting, setSubmitting] = useState(false)
 
-    const onMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || [])
+    /* ---------------- Prefill ---------------- */
 
-        if (media.length + files.length > MAX_MEDIA) {
+    useEffect(() => {
+        if (!open) return
+
+        if (review) {
+            setRating(review.rating)
+            setBody(review.body)
+            setExistingMedia(review.media ?? [])
+        } else {
+            setRating(0)
+            setBody("")
+            setExistingMedia([])
+        }
+
+        setDeleteMediaIds([])
+        setNewMedia([])
+    }, [open, review])
+
+    /* ---------------- Media handlers ---------------- */
+
+    const onMediaChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const files = Array.from(e.target.files ?? [])
+
+        const totalCount =
+            existingMedia.length +
+            newMedia.length +
+            files.length
+
+        if (totalCount > MAX_MEDIA) {
             toast.warning("Media limit reached", {
                 description: "You can upload up to 5 files only.",
             })
             return
         }
 
-        setMedia((prev) => [...prev, ...files])
+        setNewMedia((prev) => [...prev, ...files])
     }
 
-    const removeMedia = (index: number) => {
-        setMedia((prev) => prev.filter((_, i) => i !== index))
+    const removeExistingMedia = (mediaId: number) => {
+        setExistingMedia((prev) =>
+            prev.filter((m) => m.id !== mediaId)
+        )
+        setDeleteMediaIds((prev) => [...prev, mediaId])
     }
+
+    const removeNewMedia = (index: number) => {
+        setNewMedia((prev) =>
+            prev.filter((_, i) => i !== index)
+        )
+    }
+
+    /* ---------------- Submit ---------------- */
 
     const submitReview = async () => {
         if (!isLoggedIn) {
@@ -64,38 +126,51 @@ export function ReviewModal({ open, onClose, company }: Props) {
         try {
             setSubmitting(true)
 
-            const reviewData = new FormData()
-            reviewData.append("rating", rating.toString())
-            reviewData.append("body", body)
+            const formData = new FormData()
+            formData.append("rating", rating.toString())
+            formData.append("body", body)
 
-            const review = await createCompanyReview(
-                company.slug,
-                reviewData
+            // 🔹 send delete ids
+            deleteMediaIds.forEach((id) =>
+                formData.append("delete_media_ids", id.toString())
             )
 
-            for (const file of media) {
-                await uploadReviewMedia(review.id, file)
+            let savedReview: Review
+
+            if (isEditMode) {
+                savedReview = await updateCompanyReview(
+                    company.slug,
+                    formData
+                )
+            } else {
+                savedReview = await createCompanyReview(
+                    company.slug,
+                    formData
+                )
             }
 
-            toast.success("Review submitted 🎉", {
-                description: "Thank you for sharing your experience.",
-            })
+            // 🔹 upload new media
+            for (const file of newMedia) {
+                await uploadReviewMedia(savedReview.id, file)
+            }
 
-            setRating(0)
-            setBody("")
-            setMedia([])
+            toast.success(
+                isEditMode
+                    ? "Review updated ✨"
+                    : "Review submitted 🎉"
+            )
+
             onClose()
         } catch (err) {
             console.error(err)
-
             toast.error("Submission failed", {
-                description: "Something went wrong. Please try again.",
+                description:
+                    "Something went wrong. Please try again.",
             })
         } finally {
             setSubmitting(false)
         }
     }
-
 
     if (loading) return null
 
@@ -118,7 +193,11 @@ export function ReviewModal({ open, onClose, company }: Props) {
                                 Logo
                             </div>
                         )}
-                        <span>Review {company.name}</span>
+                        <span>
+                            {isEditMode
+                                ? "Edit your review"
+                                : `Review ${company.name}`}
+                        </span>
                     </DialogTitle>
                 </DialogHeader>
 
@@ -143,36 +222,83 @@ export function ReviewModal({ open, onClose, company }: Props) {
                 <Textarea
                     placeholder="Share your experience..."
                     value={body}
-                    onChange={(e) => setBody(e.target.value)}
+                    onChange={(e) =>
+                        setBody(e.target.value)
+                    }
                     className="min-h-[120px]"
                 />
 
-                {/* Media */}
+                {/* Media input */}
                 <input
                     type="file"
                     multiple
                     accept="image/*,video/*"
                     onChange={onMediaChange}
-                    disabled={media.length >= MAX_MEDIA}
                 />
 
-                {media.length > 0 && (
+                {/* Existing media */}
+                {existingMedia.length > 0 && (
                     <div className="grid grid-cols-5 gap-2">
-                        {media.map((file, i) => (
-                            <div key={i} className="relative">
-                                {file.type.startsWith("image") ? (
+                        {existingMedia.map((m) => (
+                            <div
+                                key={m.id}
+                                className="relative"
+                            >
+                                {m.media_type ===
+                                "image" ? (
                                     <img
-                                        src={URL.createObjectURL(file)}
+                                        src={m.url}
                                         className="h-16 w-full object-cover rounded"
                                     />
                                 ) : (
                                     <video
-                                        src={URL.createObjectURL(file)}
+                                        src={m.url}
                                         className="h-16 w-full object-cover rounded"
                                     />
                                 )}
                                 <button
-                                    onClick={() => removeMedia(i)}
+                                    type="button"
+                                    onClick={() =>
+                                        removeExistingMedia(
+                                            m.id
+                                        )
+                                    }
+                                    className="absolute -top-2 -right-2 bg-black text-white rounded-full p-1"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* New media */}
+                {newMedia.length > 0 && (
+                    <div className="grid grid-cols-5 gap-2">
+                        {newMedia.map((file, i) => (
+                            <div key={i} className="relative">
+                                {file.type.startsWith(
+                                    "image"
+                                ) ? (
+                                    <img
+                                        src={URL.createObjectURL(
+                                            file
+                                        )}
+                                        className="h-16 w-full object-cover rounded"
+                                    />
+                                ) : (
+                                    <video
+                                        src={URL.createObjectURL(
+                                            file
+                                        )}
+                                        className="h-16 w-full object-cover rounded"
+                                    />
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        removeNewMedia(i)
+                                    }
                                     className="absolute -top-2 -right-2 bg-black text-white rounded-full p-1"
                                 >
                                     <X size={12} />
@@ -191,7 +317,11 @@ export function ReviewModal({ open, onClose, company }: Props) {
                     }
                     className="w-full"
                 >
-                    {submitting ? "Submitting..." : "Submit review"}
+                    {submitting
+                        ? "Saving..."
+                        : isEditMode
+                        ? "Update review"
+                        : "Submit review"}
                 </Button>
             </DialogContent>
         </Dialog>

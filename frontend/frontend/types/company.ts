@@ -8,9 +8,10 @@ export interface Company {
     id: number
     name: string
     slug: string
-    tagline: string
-    description: string
-    website: string
+    tagline: string | ""
+    description: string | ""
+    website: string | ""
+
 
     logo: string | null
     cover_image: string | null
@@ -30,6 +31,12 @@ export interface Company {
     is_verified: boolean
     category: string | null
     created_at?: string
+
+    // ⭐ optional future-proof
+    rating_breakdown?: {
+        rating: number
+        count: number
+    }[]
 }
 
 /* =====================================================

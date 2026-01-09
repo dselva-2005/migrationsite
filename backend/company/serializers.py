@@ -1,6 +1,9 @@
 # companies/serializers.py
 from rest_framework import serializers
 from .models import Company, CompanyOnboardingRequest
+from django.db.models import Count
+from review.models import Review
+from django.contrib.contenttypes.models import ContentType
 
 
 class CompanyListSerializer(serializers.ModelSerializer):
@@ -25,23 +28,19 @@ class CompanyListSerializer(serializers.ModelSerializer):
 
 class CompanyDetailSerializer(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
+    rating_breakdown = serializers.SerializerMethodField()
 
     class Meta:
         model = Company
         fields = [
-            # Core
             "id",
             "name",
             "slug",
             "tagline",
             "description",
             "website",
-
-            # Branding
             "logo",
             "cover_image",
-
-            # Address & contact
             "address_line_1",
             "address_line_2",
             "city",
@@ -50,14 +49,38 @@ class CompanyDetailSerializer(serializers.ModelSerializer):
             "country",
             "phone",
             "email",
-
-            # Meta
             "rating_average",
             "rating_count",
             "is_verified",
             "category",
             "created_at",
+
+            # ⭐ NEW
+            "rating_breakdown",
         ]
+    def get_rating_breakdown(self, company):
+
+        company_ct = ContentType.objects.get_for_model(company)
+
+        qs = (
+            Review.objects
+            .filter(
+                content_type=company_ct,
+                object_id=company.id,
+                moderation_status=Review.ModerationStatus.APPROVED,
+            )
+            .values("rating")
+            .annotate(count=Count("id"))
+        )
+
+        # Normalize to always return 1–5
+        rating_map = {row["rating"]: row["count"] for row in qs}
+
+        return [
+            {"rating": rating, "count": rating_map.get(rating, 0)}
+            for rating in range(5, 0, -1)
+        ]
+
 
 
 class CompanyPayloadSerializer(serializers.Serializer):

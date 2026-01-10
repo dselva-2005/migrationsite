@@ -18,6 +18,7 @@ import { ReviewSection } from "@/components/company/ReviewSection"
 import { Section } from "@/components/Section"
 
 import { useAuth } from "@/providers/AuthProvider"
+import CompanyDetails from "@/components/company/CompanyDetails"
 
 type Params = {
     slug: string
@@ -29,6 +30,10 @@ export default function CompanyReviewPage() {
 
     const mountedRef = useRef(true)
 
+    // 🔹 Separate refs for mobile & desktop
+    const mobileDetailsRef = useRef<HTMLDivElement | null>(null)
+    const desktopDetailsRef = useRef<HTMLDivElement | null>(null)
+
     const [company, setCompany] = useState<Company | null>(null)
     const [reviews, setReviews] = useState<Review[]>([])
     const [myReview, setMyReview] = useState<Review | null>(null)
@@ -37,14 +42,30 @@ export default function CompanyReviewPage() {
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(true)
 
-    /* ---------------- Initial load (PUBLIC) ---------------- */
+    /* ---------------- Scroll handler ---------------- */
+
+    const scrollToCompanyDetails = () => {
+        const isMobile =
+            typeof window !== "undefined" &&
+            window.matchMedia("(max-width: 1023px)").matches
+
+        const target = isMobile
+            ? mobileDetailsRef.current
+            : desktopDetailsRef.current
+
+        target?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        })
+    }
+
+    /* ---------------- Initial load ---------------- */
 
     useEffect(() => {
         mountedRef.current = true
 
-        const loadPublicData = async () => {
+        const load = async () => {
             setLoading(true)
-
             try {
                 const companyData = await getCompanyBySlug(slug)
                 const reviewData = await getCompanyReviews(slug, 1)
@@ -53,21 +74,15 @@ export default function CompanyReviewPage() {
 
                 setCompany(companyData)
                 setReviews(reviewData.results)
-                setPage(1)
-                setHasMore(
-                    reviewData.results.length < reviewData.count
-                )
+                setHasMore(reviewData.results.length < reviewData.count)
             } catch (err) {
                 console.error("Failed to load company page", err)
             } finally {
-                if (mountedRef.current) {
-                    setLoading(false)
-                }
+                if (mountedRef.current) setLoading(false)
             }
         }
 
-        loadPublicData()
-
+        load()
         return () => {
             mountedRef.current = false
         }
@@ -76,25 +91,14 @@ export default function CompanyReviewPage() {
     /* ---------------- Auth-only data ---------------- */
 
     useEffect(() => {
-        if (authLoading || !isLoggedIn) {
+        if (!isLoggedIn || authLoading) {
             setMyReview(null)
             return
         }
 
-        const loadMyReview = async () => {
-            try {
-                const data = await getMyCompanyReview(slug)
-                if (mountedRef.current) {
-                    setMyReview(data)
-                }
-            } catch {
-                if (mountedRef.current) {
-                    setMyReview(null)
-                }
-            }
-        }
-
-        loadMyReview()
+        getMyCompanyReview(slug)
+            .then(setMyReview)
+            .catch(() => setMyReview(null))
     }, [slug, isLoggedIn, authLoading])
 
     /* ---------------- Pagination ---------------- */
@@ -105,11 +109,9 @@ export default function CompanyReviewPage() {
         const nextPage = page + 1
         const data = await getCompanyReviews(slug, nextPage)
 
-        setReviews((prev) => [...prev, ...data.results])
+        setReviews(prev => [...prev, ...data.results])
         setPage(nextPage)
-        setHasMore(
-            reviews.length + data.results.length < data.count
-        )
+        setHasMore(reviews.length + data.results.length < data.count)
     }
 
     /* ---------------- Render ---------------- */
@@ -119,21 +121,60 @@ export default function CompanyReviewPage() {
 
     return (
         <Section>
-            <div className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
+            {/* ================= MOBILE LAYOUT ================= */}
+            <div className="lg:hidden max-w-7xl mx-auto px-4 py-8 space-y-6">
+                <CompanyHeader
+                    company={company}
+                    myReview={myReview}
+                    onAboutClick={scrollToCompanyDetails}
+                />
+
+                {/* Summary BEFORE reviews on mobile */}
+                <RatingSummary company={company} />
+
+                <ReviewSection
+                    reviews={reviews}
+                    loadMore={loadMoreReviews}
+                />
+
+                {/* Scroll target (mobile) */}
+                <div
+                    ref={mobileDetailsRef}
+                    className="scroll-mt-[120px]"
+                >
+                    <CompanyDetails company={company} />
+                </div>
+            </div>
+
+            {/* ================= DESKTOP LAYOUT ================= */}
+            <div className="hidden lg:grid max-w-7xl mx-auto px-4 py-8 grid-cols-3 gap-8">
+                {/* LEFT COLUMN */}
+                <div className="col-span-2 space-y-6">
                     <CompanyHeader
                         company={company}
                         myReview={myReview}
+                        onAboutClick={scrollToCompanyDetails}
                     />
 
                     <ReviewSection
                         reviews={reviews}
                         loadMore={loadMoreReviews}
                     />
+
+                    {/* Scroll target (desktop) */}
+                    <div
+                        ref={desktopDetailsRef}
+                        className="scroll-mt-[120px]"
+                    >
+                        <CompanyDetails company={company} />
+                    </div>
                 </div>
 
-                <div className="lg:col-span-1">
-                    <RatingSummary company={company} />
+                {/* RIGHT COLUMN (sticky summary) */}
+                <div className="col-span-1">
+                    <div className="sticky top-[120px]">
+                        <RatingSummary company={company} />
+                    </div>
                 </div>
             </div>
         </Section>

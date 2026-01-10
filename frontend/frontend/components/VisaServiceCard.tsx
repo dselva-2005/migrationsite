@@ -12,6 +12,7 @@ interface VisaServiceCardProps {
     image: string
     items: string[]
     href: string
+    cta?:string
 
     /** Controlled by parent */
     imageClassName?: string
@@ -27,6 +28,7 @@ export function VisaServiceCard({
     href,
     imageClassName,
     cardClassName,
+    cta
 }: VisaServiceCardProps) {
     return (
         <Card
@@ -92,7 +94,7 @@ export function VisaServiceCard({
                             transition-colors hover:text-primary/80
                         "
                     >
-                        Read More →
+                        {cta}
                     </Link>
                 </div>
             </CardContent>

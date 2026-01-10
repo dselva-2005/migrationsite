@@ -22,6 +22,7 @@ type Country = {
     image: string
     flag: string
     link: string
+    cta?: string
 }
 
 function CarouselDots({
@@ -144,7 +145,7 @@ export function CountriesCarousel({ items }: { items: Country[] }) {
                                             href={item.link}
                                             className="text-sm font-medium text-primary hover:underline"
                                         >
-                                            Read More →
+                                            {item.cta}
                                         </Link>
                                     </div>
                                 </CardContent>

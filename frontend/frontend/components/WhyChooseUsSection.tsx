@@ -19,6 +19,7 @@ type Feature = {
     description: string
     icon: string
     href: string
+    cta?:string
 }
 
 /* ---------------- Component ---------------- */
@@ -88,7 +89,7 @@ export default function WhyChooseUsSection() {
                                         href={item.href}
                                         className="text-sm font-medium text-primary hover:underline"
                                     >
-                                        Read More →
+                                        {item.cta}
                                     </Link>
                                 </div>
 

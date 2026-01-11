@@ -122,8 +122,8 @@ class ReviewReply(models.Model):
 
     body = models.TextField()
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["created_at"]
@@ -163,7 +163,7 @@ class ReviewMedia(models.Model):
         choices=MEDIA_TYPE_CHOICES,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["created_at"]
@@ -189,7 +189,7 @@ class EmailTemplate(models.Model):
 
     is_active = models.BooleanField(default=True)
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.key

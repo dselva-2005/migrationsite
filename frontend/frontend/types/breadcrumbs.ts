@@ -13,6 +13,9 @@ export const BREADCRUMB_ROUTES: Record<string, BreadcrumbConfig> = {
     "/": { label: "Home", clickable: true },
 
     "/blog": { label: "Blog", clickable: true },
+    "/countries/[slug]": { label: "countries", clickable: false },
+    "/visa/[slug]": { label: "visa", clickable: false },
+    "/visa-overview": { label: "visa-overview", clickable: false },
     "/blog/[slug]": { clickable: false },
 
     "/review": { label: "Reviews", clickable: true },

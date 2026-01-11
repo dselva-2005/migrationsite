@@ -9,7 +9,7 @@ from django.contrib.postgres.search import SearchVectorField
 class BlogCategory(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
@@ -18,7 +18,7 @@ class BlogCategory(models.Model):
 class BlogTag(models.Model):
     name = models.CharField(max_length=50)
     slug = models.SlugField(unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
@@ -80,8 +80,8 @@ class BlogPost(models.Model):
 
     # System
     view_count = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
     
     search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
     

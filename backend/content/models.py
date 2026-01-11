@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class Content(models.Model):
     key = models.CharField(
@@ -33,7 +34,7 @@ class Content(models.Model):
 
     order = models.PositiveIntegerField(default=0)
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         unique_together = ("key", "page", "locale")

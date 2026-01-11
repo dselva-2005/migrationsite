@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Menu } from "lucide-react"
+import { Menu, ChevronRight } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/AuthProvider"
@@ -16,7 +17,243 @@ import {
 } from "@/components/ui/sheet"
 
 /* ---------------------------------- */
-/* Navbar */
+/* Data */
+/* ---------------------------------- */
+
+const COUNTRIES = [
+    {
+        href: "/countries/united-states",
+        label: "United States"
+    },
+    {
+        href: "/countries/australia",
+        label: "Australia"
+    },
+    {
+        href: "/countries/canada",
+        label: "Canada"
+    },
+    {
+        href: "/countries/uae",
+        label: "United Arab Emirates"
+    },
+    {
+        href: "/countries/uk",
+        label: "United Kingdom"
+    },
+    {
+        href: "/countries/south-africa",
+        label: "South Africa"
+    },
+    {
+        href: "/countries/bahamas",
+        label: "The Bahamas"
+    }
+]
+
+const VISAS = [
+    {
+        slug: "student-visa",
+        label: "Student Visa"
+    },
+    {
+        slug: "residence-visa",
+        label: "Residence Visa"
+    },
+    {
+        slug: "business-visa",
+        label: "Business Visa"
+    },
+    {
+        slug: "tourist-visa",
+        label: "Tourist Visa"
+    },
+    {
+        slug: "conference-visa",
+        label: "Conference Visa"
+    },
+    {
+        slug: "medical-visa",
+        label: "Medical Visa"
+    }
+]
+
+/* ---------------------------------- */
+/* Mobile Nav (Hamburger) - Fixed Version */
+/* ---------------------------------- */
+
+function MobileNav() {
+    const { user, isLoggedIn, loading, logout } = useAuth()
+    const [openSection, setOpenSection] = useState<string | null>(null)
+    
+    const companies = user?.companies ?? []
+    const isBusinessUser = companies.length > 0
+    const dashboardHref =
+        companies.length === 1
+            ? `/listing/${companies[0].companySlug}/account`
+            : "/listing"
+
+    const toggleSection = (section: string) => {
+        setOpenSection(openSection === section ? null : section)
+    }
+
+    return (
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Menu />
+                </Button>
+            </SheetTrigger>
+
+            <SheetContent side="right" className="w-80 p-0 overflow-y-auto">
+                <div className="p-6">
+                    <SheetTitle className="text-lg font-semibold mb-4">Menu</SheetTitle>
+                    <SheetDescription className="sr-only">
+                        Mobile navigation menu
+                    </SheetDescription>
+                </div>
+
+                {loading ? null : (
+                    <nav className="flex flex-col">
+                        {/* Main Navigation Items */}
+                        <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50">
+                            Write a Review
+                        </Link>
+                        <Link href="/blog" className="py-3 px-6 border-b hover:bg-gray-50">
+                            Blog
+                        </Link>
+                        <Link href="/listing" className="py-3 px-6 border-b hover:bg-gray-50">
+                            Listing
+                        </Link>
+
+                        {/* Countries Expandable Section */}
+                        <div className="border-b">
+                            <button
+                                onClick={() => toggleSection('countries')}
+                                className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
+                            >
+                                <span className="font-medium">Countries</span>
+                                <ChevronRight 
+                                    className={`h-4 w-4 transition-transform ${openSection === 'countries' ? 'rotate-90' : ''}`} 
+                                />
+                            </button>
+                            
+                            {openSection === 'countries' && (
+                                <div className="bg-gray-50">
+                                    {COUNTRIES.map((country) => (
+                                        <Link 
+                                            key={country.href} 
+                                            href={country.href}
+                                            className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
+                                        >
+                                            {country.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Visa Expandable Section */}
+                        <div className="border-b">
+                            <button
+                                onClick={() => toggleSection('visa')}
+                                className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
+                            >
+                                <span className="font-medium">Visa Types</span>
+                                <ChevronRight 
+                                    className={`h-4 w-4 transition-transform ${openSection === 'visa' ? 'rotate-90' : ''}`} 
+                                />
+                            </button>
+                            
+                            {openSection === 'visa' && (
+                                <div className="bg-gray-50">
+                                    {VISAS.map((visa) => (
+                                        <Link 
+                                            key={visa.slug} 
+                                            href={`/visa-overview?visa=${visa.slug}`}
+                                            className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
+                                        >
+                                            {visa.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Auth Links */}
+                        <div className="mt-4 px-6">
+                            {!isLoggedIn ? (
+                                <div className="flex flex-col gap-3">
+                                    <Link 
+                                        href="/login" 
+                                        className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link 
+                                        href="/register" 
+                                        className="py-2 px-4 rounded bg-primary text-white text-center hover:bg-primary/90"
+                                    >
+                                        Register
+                                    </Link>
+                                </div>
+                            ) : (
+                                <>
+                                    {!isBusinessUser ? (
+                                        <div className="flex flex-col gap-3">
+                                            <Link 
+                                                href="/business-login" 
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                            >
+                                                Become a Business
+                                            </Link>
+                                            <Link 
+                                                href="/profile" 
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <button
+                                                onClick={logout}
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50 text-left"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-3">
+                                            <Link 
+                                                href={dashboardHref} 
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                            >
+                                                Dashboard
+                                            </Link>
+                                            <Link 
+                                                href="/profile" 
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                            >
+                                                Profile
+                                            </Link>
+                                            <button
+                                                onClick={logout}
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50 text-left"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </nav>
+                )}
+            </SheetContent>
+        </Sheet>
+    )
+}
+
+/* ---------------------------------- */
+/* Navbar (Main Component) */
 /* ---------------------------------- */
 
 export default function Navbar() {
@@ -51,7 +288,7 @@ export default function Navbar() {
 }
 
 /* ---------------------------------- */
-/* Desktop Links */
+/* Desktop Links (Unchanged from previous) */
 /* ---------------------------------- */
 
 function NavLinks() {
@@ -70,6 +307,62 @@ function NavLinks() {
             <Link href="/review">Write a Review</Link>
             <Link href="/blog">Blog</Link>
             <Link href="/listing">Listing</Link>
+            
+            {/* Countries Hover Dropdown */}
+            <div className="relative group">
+                <button className="flex items-center hover:text-primary transition-colors py-2">
+                    Countries
+                    <svg 
+                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div className="absolute left-0 top-full hidden group-hover:block bg-white border rounded-md shadow-lg min-w-[200px] pt-2 z-50">
+                    <div className="py-1">
+                        {COUNTRIES.map((country) => (
+                            <Link
+                                key={country.href}
+                                href={country.href}
+                                className="block px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                            >
+                                {country.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Visa Hover Dropdown */}
+            <div className="relative group">
+                <button className="flex items-center hover:text-primary transition-colors py-2">
+                    Visa
+                    <svg 
+                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div className="absolute left-0 top-full hidden group-hover:block bg-white border rounded-md shadow-lg min-w-[180px] pt-2 z-50">
+                    <div className="py-1">
+                        {VISAS.map((visa) => (
+                            <Link
+                                key={visa.slug}
+                                href={`/visa-overview?visa=${visa.slug}`}
+                                className="block px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                            >
+                                {visa.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </div>
 
             {!isLoggedIn && (
                 <>
@@ -94,95 +387,5 @@ function NavLinks() {
 
             {isLoggedIn && <Link href="/profile">Profile</Link>}
         </nav>
-    )
-}
-
-/* ---------------------------------- */
-/* Mobile Nav (Hamburger) */
-/* ---------------------------------- */
-
-function MobileNav() {
-    const { user, isLoggedIn, loading, logout } = useAuth()
-    const companies = user?.companies ?? []
-    const isBusinessUser = companies.length > 0
-    const dashboardHref =
-        companies.length === 1
-            ? `/listing/${companies[0].companySlug}/account`
-            : "/listing"
-
-    return (
-        <Sheet>
-            <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Menu />
-                </Button>
-            </SheetTrigger>
-
-            <SheetContent side="right" className="w-80 p-6">
-                <SheetTitle className="text-lg font-semibold mb-4">Menu</SheetTitle>
-                <SheetDescription className="sr-only">
-                    Mobile navigation menu
-                </SheetDescription>
-
-                {loading ? null : (
-                    <nav className="flex flex-col gap-4 text-base font-medium">
-                        <Link href="/review" className="py-2 px-2 rounded hover:bg-gray-100">
-                            Write a Review
-                        </Link>
-                        <Link href="/blog" className="py-2 px-2 rounded hover:bg-gray-100">
-                            Blog
-                        </Link>
-                        <Link href="/listing" className="py-2 px-2 rounded hover:bg-gray-100">
-                            Listing
-                        </Link>
-
-                        {!isLoggedIn && (
-                            <>
-                                <Link href="/login" className="py-2 px-2 rounded hover:bg-gray-100">
-                                    Login
-                                </Link>
-                                <Link href="/register" className="py-2 px-2 rounded hover:bg-gray-100">
-                                    Register
-                                </Link>
-                            </>
-                        )}
-
-                        {isLoggedIn && !isBusinessUser && (
-                            <>
-                                <Link href="/business-login" className="py-2 px-2 rounded hover:bg-gray-100">
-                                    Become a Business
-                                </Link>
-                                <button
-                                    onClick={logout}
-                                    className="py-2 px-2 text-left rounded hover:bg-gray-100"
-                                >
-                                    Logout
-                                </button>
-                            </>
-                        )}
-
-                        {isLoggedIn && isBusinessUser && (
-                            <>
-                                <Link href={dashboardHref} className="py-2 px-2 rounded hover:bg-gray-100">
-                                    Dashboard
-                                </Link>
-                                <button
-                                    onClick={logout}
-                                    className="py-2 px-2 text-left rounded hover:bg-gray-100"
-                                >
-                                    Logout
-                                </button>
-                            </>
-                        )}
-
-                        {isLoggedIn && !isBusinessUser && (
-                            <Link href="/profile" className="py-2 px-2 rounded hover:bg-gray-100">
-                                Profile
-                            </Link>
-                        )}
-                    </nav>
-                )}
-            </SheetContent>
-        </Sheet>
     )
 }

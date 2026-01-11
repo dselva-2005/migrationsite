@@ -108,72 +108,6 @@ function ReplyCell({
 }
 
 /* ============================================================
-   Actions Cell
-============================================================ */
-
-function ReviewActions({
-    review,
-    onUpdated,
-}: {
-    review: CompanyReview
-    onUpdated: () => void
-}) {
-    const [loading, setLoading] = useState(false)
-
-    async function mutate(
-        action: "approve" | "reject"
-    ) {
-        if (loading) return
-
-        setLoading(true)
-        try {
-            await api.patch(
-                `/api/review/${review.id}/${action}/`
-            )
-            toast.success(
-                action === "approve"
-                    ? "Review approved"
-                    : "Review rejected"
-            )
-            onUpdated()
-        } catch {
-            toast.error("Action failed")
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    return (
-        <div className="flex gap-2">
-            <Button
-                size="sm"
-                disabled={
-                    loading ||
-                    review.moderation_status ===
-                        "approved"
-                }
-                onClick={() => mutate("approve")}
-            >
-                Approve
-            </Button>
-
-            <Button
-                size="sm"
-                variant="destructive"
-                disabled={
-                    loading ||
-                    review.moderation_status ===
-                        "rejected"
-                }
-                onClick={() => mutate("reject")}
-            >
-                Reject
-            </Button>
-        </div>
-    )
-}
-
-/* ============================================================
    Column Factory
 ============================================================ */
 
@@ -253,17 +187,6 @@ export function reviewColumns(
             header: "Reply",
             cell: ({ row }) => (
                 <ReplyCell
-                    review={row.original}
-                    onUpdated={onRowUpdated}
-                />
-            ),
-        },
-
-        {
-            id: "actions",
-            header: "Actions",
-            cell: ({ row }) => (
-                <ReviewActions
                     review={row.original}
                     onUpdated={onRowUpdated}
                 />

@@ -14,6 +14,9 @@ const STATIC_SEGMENTS = new Set([
     "listing",
     "account",
     "profile",
+    "visa-overview",
+    "visa",
+    "countries",
 ])
 
 export function buildBreadcrumbs(pathname: string): BreadcrumbItem[] {

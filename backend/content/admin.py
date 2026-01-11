@@ -2,11 +2,14 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from django.forms import Textarea
-from django.utils.safestring import mark_safe
 import json
 
 from .models import Content
 
+
+# ----------------------------
+# Pretty JSON Widget
+# ----------------------------
 class PrettyJSONWidget(Textarea):
     def format_value(self, value):
         if value is None:
@@ -21,8 +24,12 @@ class PrettyJSONWidget(Textarea):
         try:
             return json.dumps(value, indent=2, ensure_ascii=False)
         except Exception:
-            return value
+            return str(value)
 
+
+# ----------------------------
+# Admin Form
+# ----------------------------
 class ContentAdminForm(forms.ModelForm):
     class Meta:
         model = Content
@@ -31,21 +38,20 @@ class ContentAdminForm(forms.ModelForm):
             "value": PrettyJSONWidget(
                 attrs={
                     "rows": 18,
-                    "style": "font-family: monospace;"
+                    "style": "font-family: monospace;",
                 }
             )
         }
+
     def clean_value(self):
         value = self.cleaned_data.get("value")
         content_type = self.cleaned_data.get("content_type")
 
-        if isinstance(value, str) and content_type in {"list", "object", "image"}:
+        if content_type in {"list", "object"} and isinstance(value, str):
             try:
                 value = json.loads(value)
             except Exception:
-                raise forms.ValidationError(
-                    "Invalid JSON format."
-                )
+                raise forms.ValidationError("Invalid JSON format.")
 
         if content_type == "text" and not isinstance(value, str):
             raise forms.ValidationError("Text must be a string.")
@@ -58,18 +64,26 @@ class ContentAdminForm(forms.ModelForm):
 
         return value
 
+
+# ----------------------------
+# Admin
+# ----------------------------
 @admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
     form = ContentAdminForm
 
+    # 👁 Visible in list view (read-only)
     list_display = (
-        "key",
+        "id",
         "page",
+        "key",
         "content_type",
         "locale",
         "is_published",
         "updated_at",
     )
+
+    list_display_links = ("id",)
 
     list_filter = (
         "page",
@@ -84,8 +98,6 @@ class ContentAdmin(admin.ModelAdmin):
     )
 
     ordering = ("page", "order")
-
-    list_editable = ("is_published",)
 
     fieldsets = (
         ("Identification", {
@@ -104,18 +116,17 @@ class ContentAdmin(admin.ModelAdmin):
 
     readonly_fields = ("updated_at",)
 
+    # 🔓 Editable ONLY in detail view
     def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return self.readonly_fields + ("key", "page")
-        return self.readonly_fields
+        """
+        - List view → always read-only
+        - Detail view → page & key editable
+        """
+        readonly = list(self.readonly_fields)
 
-    formfield_overrides = {
-        models.JSONField: {
-            "widget": PrettyJSONWidget(
-                attrs={
-                    "rows": 18,
-                    "style": "font-family: monospace;"
-                }
-            )
-        }
-    }
+        if obj:
+            # detail view → allow editing
+            return readonly
+
+        # add view (optional)
+        return readonly

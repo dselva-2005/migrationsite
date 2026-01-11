@@ -25,17 +25,6 @@ class ReviewInline(GenericTabularInline):
     can_delete = False
     show_change_link = True
 
-    readonly_fields = (
-        "rating",
-        "author_name",
-        "title",
-        "body",
-        "media_preview",
-        "is_verified",
-        "moderation_status",
-        "created_at",
-    )
-
     fields = (
         "rating",
         "author_name",
@@ -121,14 +110,6 @@ class CompanyAdmin(admin.ModelAdmin):
     )
 
     prepopulated_fields = {"slug": ("name",)}
-
-    readonly_fields = (
-        "rating_average",
-        "rating_count",
-        "created_at",
-        "updated_at",
-        "search_vector",
-    )
 
     fieldsets = (
         (
@@ -309,27 +290,6 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         "user__username",
         "company_name",
         "company__name",
-    )
-
-    readonly_fields = (
-        "user",
-        "request_type",
-        "company",
-        "company_name",
-        "tagline",
-        "description",
-        "website",
-        "address_line_1",
-        "address_line_2",
-        "city",
-        "state",
-        "postal_code",
-        "country",
-        "phone",
-        "email",
-        "created_at",
-        "reviewed_by",
-        "reviewed_at",
     )
 
     actions = ["approve_requests", "reject_requests"]

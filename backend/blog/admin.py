@@ -9,15 +9,6 @@ class ReviewInline(GenericTabularInline):
     extra = 0
     can_delete = False
 
-    readonly_fields = (
-        "rating",
-        "author_name",
-        "author_email",
-        "body",
-        "is_verified",
-        "created_at",
-    )
-
 
 @admin.register(BlogCategory)
 class BlogCategoryAdmin(admin.ModelAdmin):
@@ -62,12 +53,6 @@ class BlogPostAdmin(admin.ModelAdmin):
         "author",
         "category",
         "tags",
-    )
-
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-        "view_count",
     )
 
     fieldsets = (

@@ -192,7 +192,7 @@ class CompanyOnboardingRequest(models.Model):
 
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     # --------------------
     # Address snapshot
@@ -254,7 +254,7 @@ class CompanyMembership(models.Model):
         default="PENDING"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         unique_together = ("user", "company")

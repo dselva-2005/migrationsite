@@ -78,7 +78,6 @@ class ContentAdmin(admin.ModelAdmin):
         "key",
         "content_type",
         "locale",
-        "is_published",
         "updated_at",
     )
 
@@ -88,7 +87,6 @@ class ContentAdmin(admin.ModelAdmin):
         "page",
         "content_type",
         "locale",
-        "is_published",
     )
 
     search_fields = (
@@ -106,7 +104,7 @@ class ContentAdmin(admin.ModelAdmin):
             "fields": ("content_type", "value"),
         }),
         ("Control", {
-            "fields": ("is_published", "order"),
+            "fields": ("order",),
         }),
         ("Meta", {
             "fields": ("updated_at",),

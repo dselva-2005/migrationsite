@@ -9,6 +9,8 @@ import Breadcrumbs from "@/components/header/Breadcrumbs";
 import { GlobalPrefetch } from "@/components/GlobalPrefetch";
 import ToasterClient from "@/components/data-table/ToasterClient";
 import AuthToasts from "@/components/AuthToast";
+import { PageContentProvider } from "@/providers/PageContentProvider";
+import Page from "./(marketing)/countries/[slug]/page";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +38,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Navbar/>
+          <PageContentProvider page="navbar">
+            <Navbar/>
+          </PageContentProvider>
           <Breadcrumbs/>
           <GlobalPrefetch />
           {children}

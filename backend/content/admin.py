@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django import forms
-from django.db import models
 from django.forms import Textarea
+from django.utils.html import format_html
 import json
 
-from .models import Content
+from .models import Content, MediaAsset
 
 
 # ----------------------------
@@ -28,7 +28,7 @@ class PrettyJSONWidget(Textarea):
 
 
 # ----------------------------
-# Admin Form
+# Content Admin Form
 # ----------------------------
 class ContentAdminForm(forms.ModelForm):
     class Meta:
@@ -66,13 +66,12 @@ class ContentAdminForm(forms.ModelForm):
 
 
 # ----------------------------
-# Admin
+# Content Admin
 # ----------------------------
 @admin.register(Content)
 class ContentAdmin(admin.ModelAdmin):
     form = ContentAdminForm
 
-    # 👁 Visible in list view (read-only)
     list_display = (
         "id",
         "page",
@@ -116,17 +115,94 @@ class ContentAdmin(admin.ModelAdmin):
 
     readonly_fields = ("updated_at",)
 
-    # 🔓 Editable ONLY in detail view
     def get_readonly_fields(self, request, obj=None):
         """
-        - List view → always read-only
-        - Detail view → page & key editable
+        Only `updated_at` is read-only.
         """
-        readonly = list(self.readonly_fields)
+        return self.readonly_fields
 
-        if obj:
-            # detail view → allow editing
-            return readonly
 
-        # add view (optional)
-        return readonly
+# ----------------------------
+# Media Asset Admin
+# ----------------------------
+@admin.register(MediaAsset)
+class MediaAssetAdmin(admin.ModelAdmin):
+    list_display = (
+        "preview",
+        "title",
+        "asset_type",
+        "copy_url",
+        "is_published",
+        "created_at",
+    )
+
+    list_filter = (
+        "asset_type",
+        "locale",
+        "is_published",
+    )
+
+    search_fields = ("title",)
+
+    readonly_fields = (
+        "preview",
+        "file_url",
+        "created_at",
+        "updated_at",
+    )
+
+    fieldsets = (
+        ("Basic Info", {
+            "fields": ("title", "asset_type", "locale", "is_published"),
+        }),
+        ("File", {
+            "fields": ("file", "file_url", "preview"),
+        }),
+        ("SEO", {
+            "fields": ("alt_text",),
+        }),
+        ("Meta", {
+            "fields": ("created_at", "updated_at"),
+        }),
+    )
+
+    # ----------------------------
+    # Thumbnail Preview
+    # ----------------------------
+    def preview(self, obj):
+        if not obj.file:
+            return "—"
+
+        if obj.asset_type in {"image", "icon"}:
+            return format_html(
+                '<img src="{}" style="max-height:60px;border-radius:4px;" />',
+                obj.file.url
+            )
+
+        return "—"
+
+    preview.short_description = "Preview"
+
+    # ----------------------------
+    # File URL (Detail View)
+    # ----------------------------
+    def file_url(self, obj):
+        return obj.file.url if obj.file else "—"
+
+    file_url.short_description = "File URL"
+
+    # ----------------------------
+    # Copyable URL (List View)
+    # ----------------------------
+    def copy_url(self, obj):
+        if not obj.file:
+            return "—"
+
+        return format_html(
+            '<input type="text" value="{}" '
+            'style="width:260px; font-size:12px;" '
+            'onclick="this.select()" readonly />',
+            obj.file.url
+        )
+
+    copy_url.short_description = "Copy URL"

@@ -1,6 +1,5 @@
 from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import format_html
@@ -282,6 +281,8 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
         "created_at",
         "reviewed_by",
     )
+
+    readonly_fields = ("status",)
 
     list_filter = ("request_type", "status", "created_at")
 

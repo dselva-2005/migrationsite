@@ -6,80 +6,182 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
-export function Footer() {
+import {
+    PageContentProvider,
+    usePageContent,
+} from "@/providers/PageContentProvider"
+
+/* =====================================================
+   TYPES
+===================================================== */
+type FooterLink = {
+    label: string
+    href: string
+}
+
+type SubscribeContent = {
+    title: string
+    description: string
+    placeholder: string
+    button_label: string
+}
+
+type FooterBottom = {
+    text: string
+    brand_label: string
+    brand_href: string
+}
+
+/* =====================================================
+   SKELETON
+===================================================== */
+function FooterSkeleton() {
+    return (
+        <footer className="dark bg-[#13181c]">
+            <div className="container mx-auto px-4 py-12">
+                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 animate-pulse">
+
+                    <div className="h-10 w-40 rounded bg-muted" />
+
+                    {[1, 2].map((i) => (
+                        <div key={i} className="space-y-3">
+                            <div className="h-4 w-24 rounded bg-muted" />
+                            {[1, 2, 3, 4].map((j) => (
+                                <div
+                                    key={j}
+                                    className="h-3 w-full rounded bg-muted"
+                                />
+                            ))}
+                        </div>
+                    ))}
+
+                    <div className="space-y-3">
+                        <div className="h-4 w-24 rounded bg-muted" />
+                        <div className="h-3 w-full rounded bg-muted" />
+                        <div className="h-10 w-full rounded bg-muted" />
+                        <div className="h-10 w-32 rounded bg-muted" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-t border-border">
+                <div className="container mx-auto px-4 py-6">
+                    <div className="h-3 w-64 mx-auto rounded bg-muted animate-pulse" />
+                </div>
+            </div>
+        </footer>
+    )
+}
+
+/* =====================================================
+   INNER FOOTER (CMS CONSUMER)
+===================================================== */
+function FooterInner() {
+    const { content, loading } = usePageContent()
+
+    if (loading || !content) return <FooterSkeleton />
+
+    const logo = content["footer.brand.logo"] as string | undefined
+    const logoAlt = content["footer.brand.alt"] as string | undefined
+
+    const aboutLinks =
+        content["footer.about.links"] as FooterLink[] | undefined
+
+    const supportLinks =
+        content["footer.support.links"] as FooterLink[] | undefined
+
+    const subscribe =
+        content["footer.subscribe"] as SubscribeContent | undefined
+
+    const bottom =
+        content["footer.bottom"] as FooterBottom | undefined
+
+    if (!logo || !aboutLinks || !supportLinks || !subscribe || !bottom) {
+        return <FooterSkeleton />
+    }
+
     return (
         <footer className="dark bg-[#13181c]">
             <div className="container mx-auto px-4 py-12 text-muted-foreground">
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* Logo */}
+
+                    {/* Brand */}
                     <Card className="bg-transparent border-none">
                         <Image
-                            src="/logo-light.svg"
-                            alt="Logo"
+                            src={logo}
+                            alt={logoAlt ?? "Logo"}
                             width={166}
                             height={39}
                         />
                     </Card>
 
-                    {/* About Us */}
+                    {/* About */}
                     <Card className="bg-transparent border-none">
                         <h3 className="mb-4 text-sm font-semibold text-foreground">
                             About Us
                         </h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link href="#">About Us</Link></li>
-                            <li><Link href="#">Get Support</Link></li>
-                            <li><Link href="#">Terms of Use</Link></li>
-                            <li><Link href="#">FAQs</Link></li>
-                            <li><Link href="#">Contact Us</Link></li>
+                            {aboutLinks.map((l, i) => (
+                                <li key={i}>
+                                    <Link href={l.href}>{l.label}</Link>
+                                </li>
+                            ))}
                         </ul>
                     </Card>
 
-                    {/* Get Support */}
+                    {/* Support */}
                     <Card className="bg-transparent border-none">
                         <h3 className="mb-4 text-sm font-semibold text-foreground">
                             Get Support
                         </h3>
                         <ul className="space-y-2 text-sm">
-                            <li><Link href="#">Documentation</Link></li>
-                            <li><Link href="#">Knowledge Base</Link></li>
-                            <li><Link href="#">Commenting</Link></li>
-                            <li><Link href="#">Cookie Preferences</Link></li>
-                            <li><Link href="#">Privacy Policy</Link></li>
+                            {supportLinks.map((l, i) => (
+                                <li key={i}>
+                                    <Link href={l.href}>{l.label}</Link>
+                                </li>
+                            ))}
                         </ul>
                     </Card>
 
                     {/* Subscribe */}
                     <Card className="bg-transparent border-none">
                         <h3 className="mb-4 text-sm font-semibold text-foreground">
-                            Subscribe
+                            {subscribe.title}
                         </h3>
                         <p className="mb-4 text-sm">
-                            Get all updates and notifications by subscribing to our newsletter.
+                            {subscribe.description}
                         </p>
                         <form
                             className="flex flex-col gap-3"
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                // handle submit logic here
-                            }}
+                            onSubmit={(e) => e.preventDefault()}
                         >
-                            <Input type="email" placeholder="Please enter your e-mail"/>
-                            <Button type="submit">Subscribe</Button>
+                            <Input placeholder={subscribe.placeholder} />
+                            <Button>{subscribe.button_label}</Button>
                         </form>
                     </Card>
                 </div>
             </div>
 
-            {/* Bottom area */}
+            {/* Bottom */}
             <div className="border-t border-border">
                 <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
-                    © 2026 Themigration. All Rights Reserved by{" "}
-                    <Link href="#" className="underline">
-                        Themigration
+                    {bottom.text}{" "}
+                    <Link href={bottom.brand_href} className="underline">
+                        {bottom.brand_label}
                     </Link>
                 </div>
             </div>
         </footer>
+    )
+}
+
+/* =====================================================
+   PUBLIC FOOTER (SELF-CONTAINED)
+===================================================== */
+export function Footer() {
+    return (
+        <PageContentProvider page="footer">
+            <FooterInner />
+        </PageContentProvider>
     )
 }

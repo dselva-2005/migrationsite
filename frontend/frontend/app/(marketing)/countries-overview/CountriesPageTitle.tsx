@@ -1,6 +1,7 @@
 "use client"
 
 import { usePageContent } from "@/providers/PageContentProvider"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /* ---------------- Types ---------------- */
 
@@ -9,14 +10,43 @@ type CountriesPageHeader = {
     backgroundImage: string
 }
 
+/* ---------------- Skeleton ---------------- */
+
+function CountriesPageTitleSkeleton() {
+    return (
+        <section
+            className="relative flex items-center justify-center"
+            style={{ minHeight: "420px" }}
+        >
+            {/* Background placeholder */}
+            <Skeleton className="absolute inset-0 rounded-none" />
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/20" />
+
+            {/* Title placeholder */}
+            <div className="relative z-10">
+                <Skeleton className="h-10 w-72 md:w-96" />
+            </div>
+        </section>
+    )
+}
+
 /* ---------------- Component ---------------- */
 
 export default function CountriesPageTitle() {
     const { content, loading } = usePageContent()
 
-    if (loading || !content) return null
+    if (loading) {
+        return <CountriesPageTitleSkeleton />
+    }
 
-    const header = content["countries_page.header"] as CountriesPageHeader | undefined
+    if (!content) return null
+
+    const header = content["countries_page.header"] as
+        | CountriesPageHeader
+        | undefined
+
     if (!header) return null
 
     return (
@@ -26,10 +56,10 @@ export default function CountriesPageTitle() {
                 backgroundImage: `url('${header.backgroundImage}')`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                minHeight: "420px", // ✅ key fix
+                minHeight: "420px",
             }}
         >
-            {/* Optional overlay for contrast */}
+            {/* Overlay */}
             <div className="absolute inset-0 bg-black/40" />
 
             <div className="relative z-10 auto-container">

@@ -19,6 +19,70 @@ import { Section } from "@/components/Section"
 
 import { useAuth } from "@/providers/AuthProvider"
 import CompanyDetails from "@/components/company/CompanyDetails"
+import { Skeleton } from "@/components/ui/skeleton"
+
+function CompanyHeaderSkeleton() {
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-lg" />
+                <div className="space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                </div>
+            </div>
+            <Skeleton className="h-10 w-32" />
+        </div>
+    )
+}
+
+function RatingSummarySkeleton() {
+    return (
+        <div className="space-y-4 rounded-lg border p-4">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+        </div>
+    )
+}
+
+function ReviewSkeleton() {
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                </div>
+            </div>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+        </div>
+    )
+}
+
+function ReviewSectionSkeleton() {
+    return (
+        <div className="space-y-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+                <ReviewSkeleton key={i} />
+            ))}
+        </div>
+    )
+}
+
+function CompanyDetailsSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-2/3" />
+        </div>
+    )
+}
+
 
 type Params = {
     slug: string
@@ -116,7 +180,37 @@ export default function CompanyReviewPage() {
 
     /* ---------------- Render ---------------- */
 
-    if (loading) return <div>Loading...</div>
+    if (loading) {
+        return (
+            <Section>
+                {/* ================= MOBILE SKELETON ================= */}
+                <div className="lg:hidden max-w-7xl mx-auto px-4 py-8 space-y-6">
+                    <CompanyHeaderSkeleton />
+                    <RatingSummarySkeleton />
+                    <ReviewSectionSkeleton />
+                    <CompanyDetailsSkeleton />
+                </div>
+
+                {/* ================= DESKTOP SKELETON ================= */}
+                <div className="hidden lg:grid max-w-7xl mx-auto px-4 py-8 grid-cols-3 gap-8">
+                    {/* LEFT */}
+                    <div className="col-span-2 space-y-6">
+                        <CompanyHeaderSkeleton />
+                        <ReviewSectionSkeleton />
+                        <CompanyDetailsSkeleton />
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="col-span-1">
+                        <div className="sticky top-[120px]">
+                            <RatingSummarySkeleton />
+                        </div>
+                    </div>
+                </div>
+            </Section>
+        )
+    }
+
     if (!company) return <div>Company not found</div>
 
     return (

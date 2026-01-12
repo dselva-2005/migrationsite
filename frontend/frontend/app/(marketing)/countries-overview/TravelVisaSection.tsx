@@ -2,6 +2,7 @@
 
 import { usePageContent } from "@/providers/PageContentProvider"
 import Image from "next/image"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /* =========================
    TYPES
@@ -24,14 +25,67 @@ type TravelVisaSectionData = {
 }
 
 /* =========================
+   SKELETON
+========================= */
+function TravelVisaSectionSkeleton() {
+    return (
+        <section className="py-20">
+            <div className="auto-container max-w-7xl mx-auto px-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+                    {/* Image */}
+                    <Skeleton className="h-[500px] w-full rounded-lg" />
+
+                    {/* Content */}
+                    <div>
+                        {/* Title */}
+                        <div className="mb-6 space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-8 w-72" />
+                        </div>
+
+                        {/* Paragraphs */}
+                        <div className="space-y-3 mb-8">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-11/12" />
+                            <Skeleton className="h-4 w-10/12" />
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="flex gap-4">
+                                    <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-6 w-24" />
+                                        <Skeleton className="h-4 w-32" />
+                                        <Skeleton className="h-3 w-40" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    )
+}
+
+/* =========================
    COMPONENT
 ========================= */
 export default function TravelVisaSection() {
     const { content, loading } = usePageContent()
 
-    const data = content?.["travelVisaSection"] as TravelVisaSectionData | undefined
+    if (loading) {
+        return <TravelVisaSectionSkeleton />
+    }
 
-    if (loading) return null
+    const data = content?.["travelVisaSection"] as
+        | TravelVisaSectionData
+        | undefined
+
     if (!data) return null
 
     return (
@@ -84,8 +138,12 @@ export default function TravelVisaSection() {
                                         />
                                     </div>
                                     <div>
-                                        <h2 className="text-3xl font-bold">{item.count}</h2>
-                                        <h4 className="font-semibold">{item.title}</h4>
+                                        <h2 className="text-3xl font-bold">
+                                            {item.count}
+                                        </h2>
+                                        <h4 className="font-semibold">
+                                            {item.title}
+                                        </h4>
                                         <p className="text-sm text-muted-foreground">
                                             {item.text}
                                         </p>

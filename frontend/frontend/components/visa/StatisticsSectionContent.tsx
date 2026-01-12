@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { usePageContent } from "@/providers/PageContentProvider"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /* -----------------------------
    Content shape from backend
@@ -30,13 +31,68 @@ export type StatisticsSectionContent = {
     }
 }
 
+/* =========================
+   SKELETON
+========================= */
+function StatisticsSkeleton() {
+    return (
+        <section>
+            <div className="container mx-auto px-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    {/* Image skeleton */}
+                    <div className="relative">
+                        <Skeleton className="w-full h-[420px] rounded-2xl" />
+                        <Skeleton className="absolute top-6 left-6 h-8 w-32 rounded-full" />
+                        <Skeleton className="absolute bottom-[-40px] right-[-40px] w-48 h-48 rounded-xl" />
+                    </div>
+
+                    {/* Content skeleton */}
+                    <div>
+                        <div className="mb-8 space-y-3">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-10 w-3/4" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                        </div>
+
+                        {/* Progress skeletons */}
+                        <div className="space-y-5 mb-10">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between mb-2">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-4 w-10" />
+                                    </div>
+                                    <Skeleton className="h-2 w-full rounded-full" />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Download skeleton */}
+                        <div className="flex items-center gap-4 border rounded-xl p-4">
+                            <Skeleton className="h-10 w-10 rounded" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-4 w-48" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+/* =========================
+   COMPONENT
+========================= */
 export default function StatisticsSection() {
     const { content, loading } = usePageContent()
 
-    if (loading || !content) return null
+    if (loading) return <StatisticsSkeleton />
+    if (!content) return null
 
     const data = content["visa.statistics"] as StatisticsSectionContent | undefined
-
     if (!data) return null
 
     return (

@@ -85,6 +85,56 @@ async function updateCompanyLogo(
 }
 
 /* ============================================================
+   SKELETONS
+============================================================ */
+
+function CompanyHeaderSkeleton() {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-lg" />
+
+                <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+
+                <Skeleton className="h-6 w-28 rounded-full" />
+            </CardHeader>
+        </Card>
+    )
+}
+
+function ReviewsTableSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-40" />
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+                {/* Search */}
+                <Skeleton className="h-9 w-64" />
+
+                {/* Rows */}
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton
+                        key={i}
+                        className="h-12 w-full rounded-md"
+                    />
+                ))}
+
+                {/* Pagination */}
+                <div className="flex justify-between pt-4">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-8 w-40" />
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+/* ============================================================
    PAGE
 ============================================================ */
 
@@ -171,7 +221,7 @@ export default function CompanyAccountPage() {
         refetchReviews()
     }, [refetchReviews])
 
-    /* ---------------- Logo update (2MB enforced) ---------------- */
+    /* ---------------- Logo update ---------------- */
 
     async function onLogoChange(
         e: React.ChangeEvent<HTMLInputElement>
@@ -179,7 +229,7 @@ export default function CompanyAccountPage() {
         if (!e.target.files?.[0] || !company) return
 
         const file = e.target.files[0]
-        const MAX_SIZE = 2 * 1024 * 1024 // 2MB
+        const MAX_SIZE = 2 * 1024 * 1024
 
         if (file.size > MAX_SIZE) {
             setLogoError("Logo must be less than 2 MB")
@@ -210,106 +260,107 @@ export default function CompanyAccountPage() {
         [refetchReviews]
     )
 
-    /* ---------------- Loading ---------------- */
-
-    if (loadingCompany || !company) {
-        return <Skeleton className="h-64 w-full" />
-    }
-
-    /* ---------------- UI ---------------- */
+    /* ============================================================
+       UI
+    ============================================================ */
 
     return (
         <Section>
             {/* ---------- Company Header ---------- */}
-            <Card>
-                <CardHeader className="flex flex-row items-center gap-4">
-                    {/* Logo */}
-                    <div className="relative">
-                        {company.logo ? (
-                            <Image
-                                key={company.logo}
-                                src={company.logo}
-                                alt={company.name}
-                                width={64}
-                                height={64}
-                                className="object-contain"
-                                unoptimized
-                            />
-                        ) : (
-                            <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                                No logo
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                            <CardTitle>
-                                {company.name}
-                            </CardTitle>
-                            {company.is_verified && (
-                                <Badge variant="secondary">
-                                    Verified
-                                </Badge>
+            {loadingCompany || !company ? (
+                <CompanyHeaderSkeleton />
+            ) : (
+                <Card>
+                    <CardHeader className="flex flex-row items-center gap-4">
+                        <div className="relative">
+                            {company.logo ? (
+                                <Image
+                                    key={company.logo}
+                                    src={company.logo}
+                                    alt={company.name}
+                                    width={64}
+                                    height={64}
+                                    className="object-contain"
+                                    unoptimized
+                                />
+                            ) : (
+                                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                    No logo
+                                </div>
                             )}
                         </div>
 
-                        <div className="text-sm text-muted-foreground mt-1">
-                            ⭐ {company.rating_average} ·{" "}
-                            {company.rating_count} reviews
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <CardTitle>
+                                    {company.name}
+                                </CardTitle>
+                                {company.is_verified && (
+                                    <Badge variant="secondary">
+                                        Verified
+                                    </Badge>
+                                )}
+                            </div>
+
+                            <div className="text-sm text-muted-foreground mt-1">
+                                ⭐ {company.rating_average} ·{" "}
+                                {company.rating_count} reviews
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Upload */}
-                    <label className="cursor-pointer">
-                        <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={onLogoChange}
-                            disabled={uploading}
-                        />
-                        <Badge variant="outline">
-                            {uploading
-                                ? "Uploading..."
-                                : "Change logo"}
-                        </Badge>
-                    </label>
-                </CardHeader>
+                        <label className="cursor-pointer">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={onLogoChange}
+                                disabled={uploading}
+                            />
+                            <Badge variant="outline">
+                                {uploading
+                                    ? "Uploading..."
+                                    : "Change logo"}
+                            </Badge>
+                        </label>
+                    </CardHeader>
 
-                {logoError && (
-                    <div className="px-6 pb-4 text-sm text-red-500">
-                        {logoError}
-                    </div>
-                )}
-            </Card>
+                    {logoError && (
+                        <div className="px-6 pb-4 text-sm text-red-500">
+                            {logoError}
+                        </div>
+                    )}
+                </Card>
+            )}
 
             {/* ---------- Reviews Table ---------- */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>
-                        Customer Reviews
-                    </CardTitle>
-                </CardHeader>
+            {loadingReviews ? (
+                <ReviewsTableSkeleton />
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>
+                            Customer Reviews
+                        </CardTitle>
+                    </CardHeader>
 
-                <CardContent>
-                    <DataTable
-                        data={reviews}
-                        columns={columns}
-                        page={page}
-                        pageSize={pageSize}
-                        total={total}
-                        loading={loadingReviews}
-                        onPageChange={setPage}
-                        onPageSizeChange={(size) => {
-                            setPageSize(size)
-                            setPage(1)
-                        }}
-                        onSearch={setSearch}
-                    />
-                </CardContent>
-            </Card>
+                    <CardContent>
+                        <DataTable
+                            data={reviews}
+                            columns={columns}
+                            page={page}
+                            pageSize={pageSize}
+                            total={total}
+                            loading={loadingReviews}
+                            onPageChange={setPage}
+                            onPageSizeChange={(size) => {
+                                setPageSize(size)
+                                setPage(1)
+                            }}
+                            onSearch={setSearch}
+                        />
+                    </CardContent>
+                </Card>
+            )}
         </Section>
     )
 }

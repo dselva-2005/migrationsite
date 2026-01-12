@@ -2,16 +2,44 @@
 
 import { cn } from "@/lib/utils"
 import { usePageContent } from "@/providers/PageContentProvider"
+import { Skeleton } from "@/components/ui/skeleton"
 
 type HeaderContent = {
     title: string
     background_image: string
 }
 
+/* =========================
+   SKELETON
+========================= */
+function PageHeaderSkeleton() {
+    return (
+        <section
+            className={cn(
+                "relative w-full bg-muted",
+                "py-24 md:py-32"
+            )}
+        >
+            <div className="relative container mx-auto px-4">
+                <div className="flex justify-center">
+                    <Skeleton className="h-10 md:h-14 w-64 md:w-96" />
+                </div>
+            </div>
+        </section>
+    )
+}
+
+/* =========================
+   COMPONENT
+========================= */
 export default function PageHeader() {
     const { content, loading } = usePageContent()
 
-    if (loading || !content) return null
+    if (loading) {
+        return <PageHeaderSkeleton />
+    }
+
+    if (!content) return null
 
     const hero = content["visa.hero"] as HeaderContent | undefined
 

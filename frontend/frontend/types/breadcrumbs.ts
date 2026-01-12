@@ -33,4 +33,5 @@ export const BREADCRUMB_ROUTES: Record<string, BreadcrumbConfig> = {
     },
 
     "/profile": { label: "Profile", clickable: true },
+    "/about": { label: "about", clickable: true },
 }

@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { usePageContent } from "@/providers/PageContentProvider"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /* -----------------------------
    Content shape from backend
@@ -23,10 +24,51 @@ export type WhatWeOfferContent = {
     }
 }
 
+/* =========================
+   SKELETON
+========================= */
+function WhatWeOfferSkeleton() {
+    return (
+        <section>
+            <div className="container mx-auto px-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    {/* Image skeleton */}
+                    <Skeleton className="w-full h-[420px] rounded-2xl" />
+
+                    {/* Content skeleton */}
+                    <div>
+                        <Skeleton className="h-4 w-32 mb-3" />
+                        <Skeleton className="h-10 w-3/4 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-5/6 mb-8" />
+
+                        {/* Stats skeleton */}
+                        <div className="flex items-start gap-6">
+                            {/* Circular stat placeholder */}
+                            <Skeleton className="w-[110px] h-[110px] rounded-full" />
+
+                            {/* Text block */}
+                            <div className="space-y-2">
+                                <Skeleton className="h-8 w-24" />
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-4 w-64" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+/* =========================
+   COMPONENT
+========================= */
 export default function WhatWeOfferSection() {
     const { content, loading } = usePageContent()
 
-    if (loading || !content) return null
+    if (loading) return <WhatWeOfferSkeleton />
+    if (!content) return null
 
     const data = content["visa.what_we_offer"] as WhatWeOfferContent | undefined
     if (!data) return null
@@ -41,10 +83,9 @@ export default function WhatWeOfferSection() {
     const offset = circumference - (percentage / 100) * circumference
 
     return (
-        <section className="">
+        <section>
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
                     {/* Image */}
                     <div className="relative w-full h-[420px] rounded-2xl overflow-hidden">
                         <Image
@@ -71,7 +112,6 @@ export default function WhatWeOfferSection() {
 
                         {/* Stats */}
                         <div className="mt-8 flex items-start gap-6">
-
                             {/* Circular Progress */}
                             <div className="relative w-[110px] h-[110px]">
                                 <svg
@@ -80,7 +120,6 @@ export default function WhatWeOfferSection() {
                                     viewBox={`0 0 ${size} ${size}`}
                                     className="rotate-[-90deg]"
                                 >
-                                    {/* Background ring */}
                                     <circle
                                         cx={size / 2}
                                         cy={size / 2}
@@ -89,13 +128,11 @@ export default function WhatWeOfferSection() {
                                         strokeWidth={stroke}
                                         fill="none"
                                     />
-
-                                    {/* Progress ring */}
                                     <circle
                                         cx={size / 2}
                                         cy={size / 2}
                                         r={radius}
-                                        stroke="#2563eb"   // primary blue (SAFE)
+                                        stroke="#2563eb"
                                         strokeWidth={stroke}
                                         fill="none"
                                         strokeDasharray={circumference}
@@ -104,7 +141,6 @@ export default function WhatWeOfferSection() {
                                     />
                                 </svg>
 
-                                {/* Center text */}
                                 <div className="absolute inset-0 flex items-center justify-center text-center">
                                     <div className="text-xs font-semibold leading-tight">
                                         {data.stats.year_label}
@@ -129,7 +165,6 @@ export default function WhatWeOfferSection() {
                                     {data.stats.description}
                                 </p>
                             </div>
-
                         </div>
                     </div>
                 </div>

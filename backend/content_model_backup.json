@@ -2239,5 +2239,142 @@
     "order": 0,
     "updated_at": "2026-01-11T10:24:27.730Z"
   }
+},
+{
+  "model": "content.content",
+  "pk": 68,
+  "fields": {
+    "key": "footer.brand.logo",
+    "value": "/logo-light.svg",
+    "content_type": "image",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:25:13.296Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 69,
+  "fields": {
+    "key": "footer.brand.alt",
+    "value": "TheMigration",
+    "content_type": "text",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:25:55.186Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 70,
+  "fields": {
+    "key": "footer.about.links",
+    "value": [
+      {
+        "href": "/",
+        "label": "Home"
+      },
+      {
+        "href": "/blog",
+        "label": "Blog"
+      },
+      {
+        "href": "/visa",
+        "label": "Visa"
+      },
+      {
+        "href": "/countries-overview",
+        "label": "Countries"
+      },
+      {
+        "href": "/review",
+        "label": "Reviews"
+      }
+    ],
+    "content_type": "list",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:26:19.737Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 71,
+  "fields": {
+    "key": "footer.support.links",
+    "value": [
+      {
+        "href": "#",
+        "label": "Privacy Policy"
+      }
+    ],
+    "content_type": "list",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:26:42.836Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 72,
+  "fields": {
+    "key": "footer.subscribe",
+    "value": {
+      "title": "Subscribe",
+      "description": "Get updates and notifications.",
+      "placeholder": "Enter your email",
+      "button_label": "Subscribe"
+    },
+    "content_type": "object",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:27:11.747Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 73,
+  "fields": {
+    "key": "footer.bottom",
+    "value": {
+      "text": "© 2026 Themigration. All rights reserved by",
+      "brand_href": "/",
+      "brand_label": "TheMigration"
+    },
+    "content_type": "object",
+    "page": "footer",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:27:34.337Z"
+  }
+},
+{
+  "model": "content.content",
+  "pk": 74,
+  "fields": {
+    "key": "navbar.brand",
+    "value": {
+      "href": "/",
+      "logo": "",
+      "name": "Migration Reviews"
+    },
+    "content_type": "object",
+    "page": "navbar",
+    "locale": "en",
+    "is_published": true,
+    "order": 0,
+    "updated_at": "2026-01-12T15:37:25.807Z"
+  }
 }
 ]

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 
 import { CompanyReviewGrid } from "@/components/CompanyReviewGrid"
+import { CompanyReviewGridSkeleton } from "@/components/company/CompanyReviewGridSkeleton"
 import { Section } from "@/components/Section"
 import { ReviewHero } from "@/components/review/ReviewHero"
 import { ReviewPagination } from "@/components/company/ReviewPagination"
@@ -37,38 +38,37 @@ function ReviewPageContent() {
         return () => {
             cancelled = true
         }
-    }, [page, pageSize])
-
-    if (loading) {
-        return (
-            <>
-            </>
-        )
-    }
+    }, [page])
 
     return (
         <>
             <ReviewHero />
 
             <Section>
-                <CompanyReviewGrid
-                    companies={companies.map((c) => ({
-                        id: String(c.id),
-                        name: c.name,
-                        slug: c.slug,
-                        domain: c.slug,
-                        imageUrl: c.logo ?? "/placeholder.png",
-                        rating: Number(c.rating_average),
-                        reviewCount: c.rating_count,
-                    }))}
-                />
+                {/* 👇 Skeleton only replaces grid content */}
+                {loading ? (
+                    <CompanyReviewGridSkeleton count={pageSize} />
+                ) : (
+                    <CompanyReviewGrid
+                        companies={companies.map((c) => ({
+                            id: String(c.id),
+                            name: c.name,
+                            slug: c.slug,
+                            domain: c.slug,
+                            imageUrl: c.logo ?? "/placeholder.png",
+                            rating: Number(c.rating_average),
+                            reviewCount: c.rating_count,
+                        }))}
+                    />
+                )}
 
                 <ReviewPagination
                     page={page}
                     pageSize={pageSize}
                     total={total}
                     onPageChange={(p) => {
-                        setLoading(true)
+                        if (p === page) return
+                        setLoading(true)   // ✅ user-driven
                         setPage(p)
                     }}
                 />
@@ -80,9 +80,7 @@ function ReviewPageContent() {
 export default function Review() {
     return (
         <PageContentProvider page="review">
-            <>
-                <ReviewPageContent />
-            </>
+            <ReviewPageContent />
         </PageContentProvider>
     )
 }

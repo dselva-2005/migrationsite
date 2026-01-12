@@ -5,6 +5,7 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { usePageContent } from "@/providers/PageContentProvider"
 
 /* ───────────────────────── TYPES ───────────────────────── */
@@ -36,13 +37,67 @@ type AboutCTA = {
     href: string
 }
 
+/* ───────────────────────── SKELETON ───────────────────────── */
+
+function AboutSectionSkeleton() {
+    return (
+        <section
+            id="about"
+            className="mx-auto max-w-7xl px-4 py-6 sm:py-2 lg:py-4"
+        >
+            <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+                {/* LEFT — IMAGE MOSAIC */}
+                <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                    <Skeleton className="aspect-[4/5] rounded-2xl" />
+                    <Skeleton className="aspect-[4/5] rounded-2xl" />
+                    <Skeleton className="aspect-[4/5] rounded-2xl" />
+                    <Skeleton className="aspect-[4/5] rounded-2xl" />
+                </div>
+
+                {/* RIGHT — CONTENT */}
+                <div className="flex flex-col justify-center gap-8 lg:gap-10">
+                    {/* Heading */}
+                    <div className="space-y-3">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-8 w-2/3" />
+                    </div>
+
+                    <Separator className="max-w-xs" />
+
+                    {/* Highlight */}
+                    <div className="flex items-start gap-4">
+                        <Skeleton className="h-12 w-12 rounded-md" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-5 w-40" />
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </div>
+
+                    {/* CTA */}
+                    <Skeleton className="h-12 w-40 rounded-full" />
+                </div>
+            </div>
+        </section>
+    )
+}
+
 /* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function AboutSection() {
     const { content, loading } = usePageContent()
 
-    // ⛔ gate on provider state
-    if (loading || !content) return null
+    /* ───────────── Loading state ───────────── */
+    if (loading || !content) {
+        return <AboutSectionSkeleton />
+    }
 
     const images = content["about.images"] as AboutImage[] | undefined
     const experience = content["about.experience"] as AboutExperience | undefined
@@ -163,7 +218,11 @@ export default function AboutSection() {
                     {/* CTA */}
                     {cta && (
                         <div>
-                            <Button asChild size="lg" className="rounded-full px-8">
+                            <Button
+                                asChild
+                                size="lg"
+                                className="rounded-full px-8"
+                            >
                                 <Link href={cta.href}>{cta.label}</Link>
                             </Button>
                         </div>

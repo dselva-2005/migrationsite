@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Menu, ChevronRight } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/AuthProvider"
 import { GlobalSearch } from "@/components/GlobalSearch"
+import { usePageContent } from "@/providers/PageContentProvider"
 
 import {
     Sheet,
@@ -79,13 +81,23 @@ const VISAS = [
 ]
 
 /* ---------------------------------- */
+/* Types */
+/* ---------------------------------- */
+
+interface BrandData {
+    href: string;
+    logo?: string;
+    name?: string;
+}
+
+/* ---------------------------------- */
 /* Mobile Nav (Hamburger) - Fixed Version */
 /* ---------------------------------- */
 
 function MobileNav() {
     const { user, isLoggedIn, loading, logout } = useAuth()
     const [openSection, setOpenSection] = useState<string | null>(null)
-    
+
     const companies = user?.companies ?? []
     const isBusinessUser = companies.length > 0
     const dashboardHref =
@@ -116,8 +128,14 @@ function MobileNav() {
                 {loading ? null : (
                     <nav className="flex flex-col">
                         {/* Main Navigation Items */}
+                        <Link href="/" className="py-3 px-6 border-b hover:bg-gray-50">
+                            Home
+                        </Link>
+                        <Link href="/about" className="py-3 px-6 border-b hover:bg-gray-50">
+                            About
+                        </Link>
                         <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50">
-                            Write a Review
+                            review
                         </Link>
                         <Link href="/blog" className="py-3 px-6 border-b hover:bg-gray-50">
                             Blog
@@ -133,16 +151,16 @@ function MobileNav() {
                                 className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
                             >
                                 <span className="font-medium">Countries</span>
-                                <ChevronRight 
-                                    className={`h-4 w-4 transition-transform ${openSection === 'countries' ? 'rotate-90' : ''}`} 
+                                <ChevronRight
+                                    className={`h-4 w-4 transition-transform ${openSection === 'countries' ? 'rotate-90' : ''}`}
                                 />
                             </button>
-                            
+
                             {openSection === 'countries' && (
                                 <div className="bg-gray-50">
                                     {COUNTRIES.map((country) => (
-                                        <Link 
-                                            key={country.href} 
+                                        <Link
+                                            key={country.href}
                                             href={country.href}
                                             className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
                                         >
@@ -160,17 +178,17 @@ function MobileNav() {
                                 className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
                             >
                                 <span className="font-medium">Visa Types</span>
-                                <ChevronRight 
-                                    className={`h-4 w-4 transition-transform ${openSection === 'visa' ? 'rotate-90' : ''}`} 
+                                <ChevronRight
+                                    className={`h-4 w-4 transition-transform ${openSection === 'visa' ? 'rotate-90' : ''}`}
                                 />
                             </button>
-                            
+
                             {openSection === 'visa' && (
                                 <div className="bg-gray-50">
                                     {VISAS.map((visa) => (
-                                        <Link 
-                                            key={visa.slug} 
-                                            href={`/visa-overview?visa=${visa.slug}`}
+                                        <Link
+                                            key={visa.slug}
+                                            href={`/visa/${visa.slug}`}
                                             className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
                                         >
                                             {visa.label}
@@ -184,14 +202,14 @@ function MobileNav() {
                         <div className="mt-4 px-6">
                             {!isLoggedIn ? (
                                 <div className="flex flex-col gap-3">
-                                    <Link 
-                                        href="/login" 
+                                    <Link
+                                        href="/login"
                                         className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                     >
                                         Login
                                     </Link>
-                                    <Link 
-                                        href="/register" 
+                                    <Link
+                                        href="/register"
                                         className="py-2 px-4 rounded bg-primary text-white text-center hover:bg-primary/90"
                                     >
                                         Register
@@ -201,42 +219,42 @@ function MobileNav() {
                                 <>
                                     {!isBusinessUser ? (
                                         <div className="flex flex-col gap-3">
-                                            <Link 
-                                                href="/business-login" 
+                                            <Link
+                                                href="/business-login"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Become a Business
                                             </Link>
-                                            <Link 
-                                                href="/profile" 
+                                            <Link
+                                                href="/profile"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Profile
                                             </Link>
                                             <button
                                                 onClick={logout}
-                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50 text-left"
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Logout
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
-                                            <Link 
-                                                href={dashboardHref} 
+                                            <Link
+                                                href={dashboardHref}
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Dashboard
                                             </Link>
-                                            <Link 
-                                                href="/profile" 
+                                            <Link
+                                                href="/profile"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Profile
                                             </Link>
                                             <button
                                                 onClick={logout}
-                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50 text-left"
+                                                className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Logout
                                             </button>
@@ -253,34 +271,92 @@ function MobileNav() {
 }
 
 /* ---------------------------------- */
+/* Brand Logo/Name Component */
+/* ---------------------------------- */
+
+function Brand() {
+    // Get content from PageContentProvider context
+    const { content, loading } = usePageContent()
+    
+    // Extract brand data from content
+    const brandData = content?.["navbar.brand"] as BrandData | undefined
+    
+    if (loading) {
+        // Show loading skeleton
+        return (
+            <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+        )
+    }
+    
+    const defaultBrand: BrandData = {
+        href: "/",
+        name: "Migration Reviews"
+    }
+    
+    const brand = brandData || defaultBrand
+    
+    return (
+        <Link href={brand.href} className="flex items-center shrink-0">
+            {brand.logo ? (
+                <div className="relative h-8 w-40">
+                    <Image
+                        src={brand.logo}
+                        alt={brand.name || "Brand Logo"}
+                        fill
+                        className="object-contain"
+                        priority
+                    />
+                </div>
+            ) : brand.name ? (
+                <span className="text-lg font-semibold">
+                    {brand.name}
+                </span>
+            ) : (
+                <span className="text-lg font-semibold">
+                    Migration Reviews
+                </span>
+            )}
+        </Link>
+    )
+}
+
+/* ---------------------------------- */
 /* Navbar (Main Component) */
 /* ---------------------------------- */
 
 export default function Navbar() {
     return (
         <header className="sticky top-0 z-50 border-b bg-background">
-            {/* Top row: Brand + Hamburger */}
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-                <Link href="/" className="text-lg font-semibold">
-                    Migration Reviews
-                </Link>
+            <div className="mx-auto max-w-8xl flex h-16 lg:px-10 xl:px-14 items-center px-4 gap-4">
 
-                {/* Desktop */}
-                <div className="hidden md:flex items-center gap-8">
+                {/* Brand - Now gets data from context */}
+                <Brand />
+
+                {/* Desktop Nav (ONLY on large screens) */}
+                <div className="hidden lg:flex flex-1 justify-center">
                     <NavLinks />
-                    <div className="w-72">
+                </div>
+
+                {/* Desktop Search */}
+                <div className="hidden md:flex items-center gap-3 ml-auto">
+                    <div className="w-56 xl:w-72">
                         <GlobalSearch />
+                    </div>
+
+                    {/* Tablet hamburger */}
+                    <div className="lg:hidden">
+                        <MobileNav />
                     </div>
                 </div>
 
-                {/* Mobile hamburger only */}
-                <div className="md:hidden">
+                {/* Mobile hamburger */}
+                <div className="md:hidden ml-auto">
                     <MobileNav />
                 </div>
             </div>
 
-            {/* Mobile search bar full width, below top row */}
-            <div className="md:hidden border-t border-gray-200 px-4 py-2 bg-background">
+            {/* Mobile search */}
+            <div className="md:hidden border-t px-4 py-2 bg-background">
                 <GlobalSearch />
             </div>
         </header>
@@ -304,18 +380,20 @@ function NavLinks() {
 
     return (
         <nav className="flex items-center gap-6 text-sm font-medium">
-            <Link href="/review">Write a Review</Link>
+            <Link href="/">Home</Link>
+            <Link href="/about">About</Link>
+            <Link href="/review">review</Link>
             <Link href="/blog">Blog</Link>
             <Link href="/listing">Listing</Link>
-            
+
             {/* Countries Hover Dropdown */}
             <div className="relative group">
                 <button className="flex items-center hover:text-primary transition-colors py-2">
                     Countries
-                    <svg 
-                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" 
-                        fill="none" 
-                        stroke="currentColor" 
+                    <svg
+                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -340,10 +418,10 @@ function NavLinks() {
             <div className="relative group">
                 <button className="flex items-center hover:text-primary transition-colors py-2">
                     Visa
-                    <svg 
-                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" 
-                        fill="none" 
-                        stroke="currentColor" 
+                    <svg
+                        className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -354,7 +432,7 @@ function NavLinks() {
                         {VISAS.map((visa) => (
                             <Link
                                 key={visa.slug}
-                                href={`/visa-overview?visa=${visa.slug}`}
+                                href={`/visa/${visa.slug}`}
                                 className="block px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
                             >
                                 {visa.label}

@@ -14,6 +14,76 @@ import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
 import { getBlogPost } from "@/services/blog"
 import { getBlogReviews } from "@/services/review"
+import { Skeleton } from "@/components/ui/skeleton"
+
+/* ---------------- Blog Skeletons ---------------- */
+
+function BlogHeaderSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-5 w-40" />
+        </div>
+    )
+}
+
+function BlogImageSkeleton() {
+    return (
+        <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden">
+            <Skeleton className="absolute inset-0" />
+        </div>
+    )
+}
+
+function BlogMetaSkeleton() {
+    return <Skeleton className="h-4 w-64" />
+}
+
+function BlogContentSkeleton() {
+    return (
+        <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-full" />
+            ))}
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-2/3" />
+        </div>
+    )
+}
+
+/* ---------------- Sidebar Skeletons ---------------- */
+
+function ReviewCardSkeleton() {
+    return (
+        <div className="border rounded-lg p-4 space-y-3">
+            <div className="flex justify-between items-center">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-1/2" />
+        </div>
+    )
+}
+
+function SidebarSkeleton() {
+    return (
+        <aside className="xl:col-span-4 sticky top-24 space-y-6">
+            <div className="flex justify-between items-center">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-4 w-20" />
+            </div>
+
+            <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <ReviewCardSkeleton key={i} />
+                ))}
+            </div>
+        </aside>
+    )
+}
+
 
 // ------------------------------------
 // Read-only star display
@@ -84,12 +154,22 @@ export default function SingleBlog() {
     if (loading) {
         return (
             <Section>
-                <div className="container max-w-3xl py-12">
-                    <p className="text-muted-foreground">Loading…</p>
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                    {/* Blog content skeleton */}
+                    <article className="xl:col-span-8 space-y-6">
+                        <BlogHeaderSkeleton />
+                        <BlogImageSkeleton />
+                        <BlogMetaSkeleton />
+                        <BlogContentSkeleton />
+                    </article>
+
+                    {/* Sidebar skeleton */}
+                    <SidebarSkeleton />
                 </div>
             </Section>
         )
     }
+
 
     if (!post) {
         return (

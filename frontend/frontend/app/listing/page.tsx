@@ -7,9 +7,9 @@ import { MapPin } from "lucide-react"
 import { Company } from "@/types/company"
 import { Section } from "@/components/Section"
 import { PageContentProvider } from "@/providers/PageContentProvider"
-import GlobalSpinner from "@/components/GlobalSpinner"
 import { getCompanies } from "@/services/company"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
+import { CompanyListItemSkeleton } from "@/components/company/CompanyListItemSkeleton"
 
 /* ---------------- Item ---------------- */
 
@@ -89,7 +89,6 @@ function CompanyListItem({
         </div>
     )
 }
-
 
 /* ---------------- Page ---------------- */
 
@@ -193,7 +192,7 @@ export default function Review() {
                                     Rating
                                 </h4>
                                 <div className="mt-2 space-y-1">
-                                    {[0,1, 2, 3, 4, 5].map((r) => (
+                                    {[0, 1, 2, 3, 4, 5].map((r) => (
                                         <button
                                             key={r}
                                             onClick={() =>
@@ -215,10 +214,9 @@ export default function Review() {
 
                     {/* List */}
                     <main className="order-last flex-1 lg:order-first">
+                        {/* Initial load skeleton */}
                         {loading && companies.length === 0 && (
-                            <div className="flex justify-center py-20">
-                                <GlobalSpinner />
-                            </div>
+                            <CompanyListItemSkeleton count={pageSize} />
                         )}
 
                         {!loading &&
@@ -241,6 +239,11 @@ export default function Review() {
                                 logo={company.logo ?? null}
                             />
                         ))}
+
+                        {/* Load-more skeleton */}
+                        {loading && companies.length > 0 && (
+                            <CompanyListItemSkeleton count={3} />
+                        )}
 
                         {hasMore && !loading && (
                             <div className="mt-8 text-center">

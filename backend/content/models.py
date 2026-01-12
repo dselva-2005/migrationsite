@@ -1,6 +1,52 @@
 from django.db import models
 from django.utils import timezone
 
+
+class MediaAsset(models.Model):
+    ASSET_TYPE_CHOICES = [
+        ("image", "Image"),
+        ("icon", "Icon / SVG"),
+        ("video", "Video"),
+        ("file", "File"),
+    ]
+
+    title = models.CharField(
+        max_length=255,
+        help_text="Human readable name (e.g. Navbar Logo)"
+    )
+
+    asset_type = models.CharField(
+        max_length=20,
+        choices=ASSET_TYPE_CHOICES,
+        default="image"
+    )
+
+    file = models.FileField(
+        upload_to="assets/%Y/%m/"
+    )
+
+    alt_text = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    locale = models.CharField(
+        max_length=10,
+        default="en"
+    )
+
+    is_published = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class Content(models.Model):
     key = models.CharField(
         max_length=255,

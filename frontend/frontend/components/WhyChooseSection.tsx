@@ -23,16 +23,70 @@ type WhyChooseImage = {
     alt: string
 }
 
+/* ───────────────────────── SKELETON ───────────────────────── */
+
+function WhyChooseSkeleton() {
+    return (
+        <section
+            className="mx-auto max-w-7xl px-4 py-16 lg:py-24 animate-pulse"
+        >
+            <div className="grid items-stretch gap-12 lg:grid-cols-12">
+
+                {/* LEFT — IMAGE SKELETON */}
+                <div className="hidden lg:block lg:col-span-4">
+                    <div className="h-full rounded-3xl bg-muted" />
+                </div>
+
+                {/* RIGHT — CONTENT */}
+                <div className="lg:col-span-8 flex flex-col space-y-10">
+
+                    {/* Header Skeleton */}
+                    <div className="max-w-2xl space-y-3">
+                        <div className="h-3 w-24 rounded bg-muted" />
+                        <div className="h-10 w-3/4 rounded bg-muted" />
+                        <div className="h-4 w-full rounded bg-muted" />
+                        <div className="h-4 w-5/6 rounded bg-muted" />
+                    </div>
+
+                    <Separator className="max-w-sm" />
+
+                    {/* Items Skeleton */}
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex gap-4 rounded-2xl border bg-background p-6"
+                            >
+                                <div className="h-12 w-12 rounded bg-muted shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-2/3 rounded bg-muted" />
+                                    <div className="h-3 w-full rounded bg-muted" />
+                                    <div className="h-3 w-5/6 rounded bg-muted" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
 /* ───────────────────────── COMPONENT ───────────────────────── */
 
 export default function WhyChooseSection() {
     const { content, loading } = usePageContent()
-    if (loading || !content) return null
+
+    /* ⛔ Loading → Skeleton */
+    if (loading) return <WhyChooseSkeleton />
+
+    if (!content) return null
 
     const header = content["whyChoose.header"] as WhyChooseHeader | undefined
     const items = content["whyChoose.items"] as WhyChooseItem[] | undefined
     const sideImage = content["whyChoose.image"] as WhyChooseImage | undefined
 
+    /* ⛔ CMS failure */
     if (!header || !items || items.length === 0) return null
 
     return (
@@ -40,13 +94,11 @@ export default function WhyChooseSection() {
             id="why-choose-us"
             className="mx-auto max-w-7xl px-4 py-16 lg:py-24"
         >
-            {/* ⬇️ items-stretch is critical */}
             <div className="grid items-stretch gap-12 lg:grid-cols-12">
 
                 {/* LEFT — SIDE IMAGE */}
                 {sideImage && (
                     <div className="hidden lg:block lg:col-span-4">
-                        {/* h-full makes it match content height */}
                         <div className="relative h-full overflow-hidden rounded-3xl">
                             <Image
                                 src={sideImage.src}
@@ -107,6 +159,7 @@ export default function WhyChooseSection() {
                             </div>
                         ))}
                     </div>
+
                 </div>
             </div>
         </section>

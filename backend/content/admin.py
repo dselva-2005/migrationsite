@@ -78,6 +78,7 @@ class ContentAdmin(admin.ModelAdmin):
         "key",
         "content_type",
         "locale",
+        "is_published",
         "updated_at",
     )
 
@@ -87,6 +88,7 @@ class ContentAdmin(admin.ModelAdmin):
         "page",
         "content_type",
         "locale",
+        "is_published",
     )
 
     search_fields = (
@@ -104,7 +106,7 @@ class ContentAdmin(admin.ModelAdmin):
             "fields": ("content_type", "value"),
         }),
         ("Control", {
-            "fields": ("order",),
+            "fields": ("is_published", "order"),
         }),
         ("Meta", {
             "fields": ("updated_at",),
@@ -130,14 +132,14 @@ class MediaAssetAdmin(admin.ModelAdmin):
         "title",
         "asset_type",
         "copy_url",
-        "is_published",
+        
         "created_at",
     )
 
     list_filter = (
         "asset_type",
         "locale",
-        "is_published",
+        
     )
 
     search_fields = ("title",)
@@ -151,7 +153,7 @@ class MediaAssetAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Info", {
-            "fields": ("title", "asset_type", "locale", "is_published"),
+            "fields": ("title", "asset_type", "locale",),
         }),
         ("File", {
             "fields": ("file", "file_url", "preview"),

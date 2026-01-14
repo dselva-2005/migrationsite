@@ -55,6 +55,8 @@ function ReviewPageContent() {
                             name: c.name,
                             slug: c.slug,
                             domain: c.slug,
+                            country: c.country,
+                            city: c.city,
                             imageUrl: c.logo ?? "/placeholder.png",
                             rating: Number(c.rating_average),
                             reviewCount: c.rating_count,

@@ -274,7 +274,7 @@ function BlogCard({ blog }: { blog: Blog }) {
                 <Image
                     src={
                         blog.image
-                            ? `http://localhost:8000${blog.image}`
+                            ? `${blog.image}`
                             : "/images/placeholder.png"
                     }
                     alt={blog.title}

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { searchAll, SearchResponse } from "@/types/search"
+import type { SearchResponse } from "@/types/search"
+import { globalSearch } from "@/services/globalsearch"
 import { Input } from "@/components/ui/input"
 import { Loader2, Search } from "lucide-react"
 
@@ -33,7 +34,8 @@ export function GlobalSearch() {
         }
 
         document.addEventListener("mousedown", handleClickOutside)
-        return () => document.removeEventListener("mousedown", handleClickOutside)
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
     /* ------------------------------
@@ -47,7 +49,8 @@ export function GlobalSearch() {
         }
 
         document.addEventListener("keydown", handleEscape)
-        return () => document.removeEventListener("keydown", handleEscape)
+        return () =>
+            document.removeEventListener("keydown", handleEscape)
     }, [])
 
     /* ------------------------------
@@ -65,7 +68,7 @@ export function GlobalSearch() {
         const timeout = setTimeout(async () => {
             try {
                 setLoading(true)
-                const data = await searchAll(trimmed)
+                const data = await globalSearch(trimmed)
                 setResults(data)
                 setIsOpen(true)
             } finally {

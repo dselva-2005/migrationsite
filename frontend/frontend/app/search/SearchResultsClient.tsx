@@ -11,48 +11,13 @@ import { PageContentProvider } from "@/providers/PageContentProvider"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import publicApi from "@/lib/publicApi"
 
-/* ───────────────────────── TYPES ───────────────────────── */
-
-type Blog = {
-    slug: string
-    title: string
-    excerpt: string
-    image: string | null
-    category: string
-    author: string
-    date: string
-    views: number
-    rating: number
-    reviewCount: number
-}
-
-type Company = {
-    id: number
-    slug: string
-    name: string
-    tagline?: string
-    rating_average: number
-    rating_count: number
-    city?: string
-    country?: string
-    logo?: string | null
-}
-
-type Meta = {
-    page: number
-    limit: number
-    total_blogs: number
-    total_companies: number
-}
-
-type FullSearchResponse = {
-    query: string
-    blogs: Blog[]
-    companies: Company[]
-    meta: Meta
-}
+import {
+    fullSearch,
+    type Blog,
+    type Company,
+    type FullSearchResponse,
+} from "@/services/search"
 
 /* ───────────────────────── PAGE ───────────────────────── */
 
@@ -71,23 +36,23 @@ export default function SearchResultsPage() {
             try {
                 setLoading(true)
 
-                const res = await publicApi.get<FullSearchResponse>(
-                    "/api/content/full-search/",
-                    { params: { q: query, page } }
-                )
+                const res = await fullSearch({
+                    query,
+                    page,
+                })
 
                 if (cancelled) return
 
                 setData(prev =>
                     reset || !prev
-                        ? res.data
+                        ? res
                         : {
-                              ...res.data,
+                              ...res,
                               companies: [
                                   ...prev.companies,
-                                  ...res.data.companies,
+                                  ...res.companies,
                               ],
-                              blogs: [...prev.blogs, ...res.data.blogs],
+                              blogs: [...prev.blogs, ...res.blogs],
                           }
                 )
             } finally {
@@ -274,7 +239,7 @@ function BlogCard({ blog }: { blog: Blog }) {
                 <Image
                     src={
                         blog.image
-                            ? `${blog.image}`
+                            ? blog.image
                             : "/images/placeholder.png"
                     }
                     alt={blog.title}

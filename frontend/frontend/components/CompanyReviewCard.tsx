@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { MapPin } from "lucide-react"
 
 import {
     Card,
@@ -19,6 +20,7 @@ interface CompanyReviewCardProps {
     reviewCount: number
     tagline?: string | null
     city?: string | null
+    country?: string | null
 }
 
 export function CompanyReviewCard({
@@ -30,6 +32,7 @@ export function CompanyReviewCard({
     reviewCount,
     tagline,
     city,
+    country,
 }: CompanyReviewCardProps) {
     return (
         <Card className="p-0 hover:shadow-lg">
@@ -63,7 +66,15 @@ export function CompanyReviewCard({
 
                     {/* Domain and City */}
                     <p className="text-xs text-muted-foreground">
-                        {domain} {city ? `• ${city}` : ""}
+                        {domain} <br />
+                        {(country || city) && (<div className="flex items-center gap-2 text-md text-gray-400">
+                            <MapPin className="h-5 w-5 shrink-0" />
+                            <span>
+                                {city && country
+                                    ? `${city}, ${country}`
+                                    : city || country}
+                            </span>
+                        </div>)}
                     </p>
 
                     {/* Rating */}

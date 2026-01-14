@@ -1,37 +1,99 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { searchAll, SearchResponse } from "@/types/search"
 import { Input } from "@/components/ui/input"
 import { Loader2, Search } from "lucide-react"
 
+const MIN_QUERY_LENGTH = 1
+const DEBOUNCE_MS = 350
+
 export function GlobalSearch() {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const router = useRouter()
+
     const [query, setQuery] = useState("")
     const [results, setResults] = useState<SearchResponse | null>(null)
     const [loading, setLoading] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
 
+    /* ------------------------------
+       Outside click → close
+    ------------------------------ */
     useEffect(() => {
-        if (!query || query.length < 2) {
+        function handleClickOutside(e: MouseEvent) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(e.target as Node)
+            ) {
+                setIsOpen(false)
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
+
+    /* ------------------------------
+       Escape key → close
+    ------------------------------ */
+    useEffect(() => {
+        function handleEscape(e: KeyboardEvent) {
+            if (e.key === "Escape") {
+                setIsOpen(false)
+            }
+        }
+
+        document.addEventListener("keydown", handleEscape)
+        return () => document.removeEventListener("keydown", handleEscape)
+    }, [])
+
+    /* ------------------------------
+       Debounced search
+    ------------------------------ */
+    useEffect(() => {
+        const trimmed = query.trim()
+
+        if (trimmed.length < MIN_QUERY_LENGTH) {
             setResults(null)
+            setIsOpen(false)
             return
         }
 
         const timeout = setTimeout(async () => {
             try {
                 setLoading(true)
-                const data = await searchAll(query)
+                const data = await searchAll(trimmed)
                 setResults(data)
+                setIsOpen(true)
             } finally {
                 setLoading(false)
             }
-        }, 500)
+        }, DEBOUNCE_MS)
 
         return () => clearTimeout(timeout)
     }, [query])
 
+    /* ------------------------------
+       Enter → full search page
+    ------------------------------ */
+    function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === "Enter") {
+            const trimmed = query.trim()
+            if (trimmed.length < MIN_QUERY_LENGTH) return
+
+            setIsOpen(false)
+            router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+        }
+    }
+
     return (
-        <div className="relative mx-auto w-full max-w-lg">
+        <div
+            ref={containerRef}
+            className="relative mx-auto w-full max-w-lg"
+        >
             {/* Search Input */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -40,6 +102,8 @@ export function GlobalSearch() {
                     placeholder="Search companies, blogs..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => results && setIsOpen(true)}
                     className="bg-white text-black border-gray-300 pl-9 focus:border-black"
                 />
 
@@ -48,8 +112,8 @@ export function GlobalSearch() {
                 )}
             </div>
 
-            {/* Results */}
-            {results && (
+            {/* Results Dropdown */}
+            {isOpen && results && (
                 <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
                     {/* Companies */}
                     {results.companies.length > 0 && (
@@ -59,6 +123,7 @@ export function GlobalSearch() {
                                     key={c.id}
                                     href={`/review/${c.slug}`}
                                     label={c.name}
+                                    onSelect={() => setIsOpen(false)}
                                 />
                             ))}
                         </Section>
@@ -72,6 +137,7 @@ export function GlobalSearch() {
                                     key={b.id}
                                     href={`/blog/${b.slug}`}
                                     label={b.title}
+                                    onSelect={() => setIsOpen(false)}
                                 />
                             ))}
                         </Section>
@@ -111,13 +177,16 @@ function Section({
 function ResultItem({
     href,
     label,
+    onSelect,
 }: {
     href: string
     label: string
+    onSelect?: () => void
 }) {
     return (
         <Link
             href={href}
+            onClick={onSelect}
             className="block px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
         >
             {label}

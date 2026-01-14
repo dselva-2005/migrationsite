@@ -70,9 +70,9 @@ export function CompanyHeader({
                     <div className="flex flex-col gap-2 flex-1">
                         <h1 className="text-2xl md:text-3xl font-bold">
                             {company.name}{" "}
-                            <span className="text-muted-foreground text-base md:text-lg font-normal">
+                            <p className="text-muted-foreground text-base md:text-lg font-normal">
                                 ({company.rating_count} reviews)
-                            </span>
+                            </p>
                         </h1>
 
                         <TrustpilotRating

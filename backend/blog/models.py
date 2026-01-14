@@ -87,8 +87,24 @@ class BlogPost(models.Model):
     
     class Meta:
         indexes = [
-            GinIndex(fields=["search_vector"]),  # full-text search index
+            # 🔥 Full text
+            GinIndex(fields=["search_vector"]),
+
+            # 🔥 Prefix search (1–2 chars)
+            models.Index(
+                fields=["title"],
+                name="blog_title_prefix",
+                opclasses=["text_pattern_ops"],
+            ),
+
+            # 🔥 Trigram typo tolerance (3+ chars)
+            GinIndex(
+                fields=["title"],
+                name="blog_title_trgm",
+                opclasses=["gin_trgm_ops"],
+            ),
         ]
+
 
     def save(self, *args, **kwargs):
         if (

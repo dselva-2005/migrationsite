@@ -6,9 +6,9 @@ from .models import BlogCategory
 
 class BlogPostBaseSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    category = serializers.CharField(source="category.name")
-    author = serializers.CharField(source="author.username")
-    date = serializers.DateTimeField(source="published_at")
+    category = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
     views = serializers.IntegerField(source="view_count")
 
     rating = serializers.FloatField(read_only=True)
@@ -31,11 +31,22 @@ class BlogPostBaseSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         request = self.context.get("request")
-        if obj.featured_image and request:
-            return request.build_absolute_uri(obj.featured_image.url)
-        elif obj.featured_image:
-            return obj.featured_image.url  # fallback to relative
+        if obj.featured_image:
+            return (
+                request.build_absolute_uri(obj.featured_image.url)
+                if request else obj.featured_image.url
+            )
         return None
+
+    def get_category(self, obj):
+        return obj.category.name if obj.category else "General"
+
+    def get_author(self, obj):
+        return obj.author.username if obj.author else "Editorial"
+
+    def get_date(self, obj):
+        return obj.published_at.strftime("%b %d, %Y") if obj.published_at else ""
+
 
 
 class BlogPostListSerializer(BlogPostBaseSerializer):

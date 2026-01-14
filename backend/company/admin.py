@@ -14,9 +14,8 @@ from review.models import Review
 
 
 # ======================================================
-# Review Inline
+# Review Inline (FIXED)
 # ======================================================
-
 
 class ReviewInline(GenericTabularInline):
     model = Review
@@ -29,9 +28,13 @@ class ReviewInline(GenericTabularInline):
         "author_name",
         "title",
         "body",
-        "media_preview",
         "is_verified",
         "moderation_status",
+        "created_at",
+    )
+
+    readonly_fields = (
+        "media_preview",
         "created_at",
     )
 
@@ -48,9 +51,11 @@ class ReviewInline(GenericTabularInline):
                     f"""
                     <a href="{url}" target="_blank">
                         <img src="{url}"
-                             style="max-height:80px; max-width:120px;
-                             margin:4px; border-radius:4px;
-                             object-fit:cover;" />
+                             style="max-height:80px;
+                                    max-width:120px;
+                                    margin:4px;
+                                    border-radius:4px;
+                                    object-fit:cover;" />
                     </a>
                     """
                 )
@@ -192,11 +197,9 @@ class CompanyAdmin(admin.ModelAdmin):
     inlines = [ReviewInline]
 
 
-
 # ======================================================
 # Category Admin
 # ======================================================
-
 
 @admin.register(CompanyCategory)
 class CompanyCategoryAdmin(admin.ModelAdmin):
@@ -205,13 +208,11 @@ class CompanyCategoryAdmin(admin.ModelAdmin):
 
 
 # ======================================================
-# 🔥 SINGLE SOURCE OF TRUTH — APPROVAL LOGIC
+# APPROVAL LOGIC (unchanged)
 # ======================================================
-
 
 @transaction.atomic
 def approve_onboarding_request(request_obj, admin_user):
-
     data = {
         "user_id": request_obj.user_id,
         "request_type": request_obj.request_type,
@@ -265,11 +266,6 @@ def approve_onboarding_request(request_obj, admin_user):
     )
 
 
-# ======================================================
-# Onboarding Request Admin
-# ======================================================
-
-
 @admin.register(CompanyOnboardingRequest)
 class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -283,9 +279,7 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("status",)
-
     list_filter = ("request_type", "status", "created_at")
-
     search_fields = (
         "user__email",
         "user__username",
@@ -296,30 +290,20 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
     actions = ["approve_requests", "reject_requests"]
 
     def company_display(self, obj):
-        if obj.request_type == "EXISTING":
-            return obj.company
-        return obj.company_name or "-"
+        return obj.company if obj.request_type == "EXISTING" else obj.company_name or "-"
 
     company_display.short_description = "Company"
 
-    # -----------------------
-    # Admin Actions
-    # -----------------------
-
     def approve_requests(self, request, queryset):
         approved = 0
-
         for req in queryset.filter(status="PENDING"):
             approve_onboarding_request(req, request.user)
             approved += 1
-
         self.message_user(
             request,
             f"{approved} onboarding request(s) approved.",
             level=messages.SUCCESS,
         )
-
-    approve_requests.short_description = "Approve selected requests"
 
     def reject_requests(self, request, queryset):
         rejected = queryset.filter(status="PENDING").update(
@@ -327,22 +311,16 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
             reviewed_by=request.user,
             reviewed_at=timezone.now(),
         )
-
         self.message_user(
             request,
             f"{rejected} onboarding request(s) rejected.",
             level=messages.WARNING,
         )
 
-    reject_requests.short_description = "Reject selected requests"
-
-    # -----------------------
-    # Lock editing after review
-    # -----------------------
-
     def has_change_permission(self, request, obj=None):
         if obj and obj.status != "PENDING":
             return False
         return super().has_change_permission(request, obj)
+
 
 admin.site.register(CompanyMembership)

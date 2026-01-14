@@ -95,6 +95,8 @@ export default function Home() {
                                 name: c.name,
                                 slug: c.slug,
                                 domain: c.slug,
+                                city: c.city,
+                                country: c.country,
                                 imageUrl: c.logo ?? "/placeholder.png",
                                 rating: Number(c.rating_average),
                                 reviewCount: c.rating_count,

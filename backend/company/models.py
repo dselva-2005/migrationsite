@@ -9,6 +9,7 @@ from auth_app.models import User
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 
+
 class CompanyCategory(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
@@ -38,16 +39,12 @@ class Company(models.Model):
 
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
-    
+
     # --------------------
     # Ownership
     # --------------------
     owner = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="companies"
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="companies"
     )
 
     # --------------------
@@ -63,7 +60,9 @@ class Company(models.Model):
     # Branding
     # --------------------
     logo = models.ImageField(upload_to="companies/logos/", blank=True, null=True)
-    cover_image = models.ImageField(upload_to="companies/covers/", blank=True, null=True)
+    cover_image = models.ImageField(
+        upload_to="companies/covers/", blank=True, null=True
+    )
 
     website = models.URLField(blank=True)
 
@@ -71,10 +70,7 @@ class Company(models.Model):
     # Classification
     # --------------------
     category = models.ForeignKey(
-        CompanyCategory,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="companies"
+        CompanyCategory, on_delete=models.SET_NULL, null=True, related_name="companies"
     )
 
     # --------------------
@@ -84,14 +80,11 @@ class Company(models.Model):
         max_digits=3,
         decimal_places=2,
         default=0.0,
-        validators=[MinValueValidator(0), MaxValueValidator(5)]
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
     rating_count = models.PositiveIntegerField(default=0)
 
-    reviews = GenericRelation(
-        "review.Review",
-        related_query_name="company"
-    )
+    reviews = GenericRelation("review.Review", related_query_name="company")
 
     # --------------------
     # Trust & Visibility
@@ -115,11 +108,26 @@ class Company(models.Model):
     class Meta:
         ordering = ["-rating_average", "-rating_count"]
         indexes = [
-            GinIndex(fields=["search_vector"]),  # full-text search index
+            GinIndex(fields=["search_vector"]),
+            GinIndex(
+                fields=["name"],
+                name="company_name_trgm",
+                opclasses=["gin_trgm_ops"],
+            ),
+            GinIndex(
+                fields=["tagline"],
+                name="company_tagline_trgm",
+                opclasses=["gin_trgm_ops"],
+            ),
             models.Index(fields=["slug"]),
             models.Index(fields=["rating_average"]),
             models.Index(fields=["rating_count"]),
             models.Index(fields=["is_verified"]),
+            models.Index(
+                fields=["name"],
+                name="company_name_prefix",
+                opclasses=["text_pattern_ops"],
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -152,22 +160,14 @@ class CompanyOnboardingRequest(models.Model):
     )
 
     user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="onboarding_requests"
+        User, on_delete=models.CASCADE, related_name="onboarding_requests"
     )
 
-    request_type = models.CharField(
-        max_length=10,
-        choices=REQUEST_TYPE_CHOICES
-    )
+    request_type = models.CharField(max_length=10, choices=REQUEST_TYPE_CHOICES)
 
     # Existing company (only if EXISTING)
     company = models.ForeignKey(
-        Company,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+        Company, on_delete=models.SET_NULL, null=True, blank=True
     )
 
     # New company snapshot (only if NEW)
@@ -176,18 +176,14 @@ class CompanyOnboardingRequest(models.Model):
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
 
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default="PENDING"
-    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
 
     reviewed_by = models.ForeignKey(
         User,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name="reviewed_onboarding_requests"
+        related_name="reviewed_onboarding_requests",
     )
 
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -209,14 +205,16 @@ class CompanyOnboardingRequest(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.request_type}"
-    
+
     def clean(self):
         if self.request_type == "NEW" and self.company:
-            raise ValidationError("New company request cannot reference existing company")
+            raise ValidationError(
+                "New company request cannot reference existing company"
+            )
 
         if self.request_type == "EXISTING" and not self.company:
             raise ValidationError("Existing company request must reference a company")
-        
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
@@ -236,23 +234,15 @@ class CompanyMembership(models.Model):
     )
 
     user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="company_memberships"
+        User, on_delete=models.CASCADE, related_name="company_memberships"
     )
 
     company = models.ForeignKey(
-        Company,
-        on_delete=models.CASCADE,
-        related_name="memberships"
+        Company, on_delete=models.CASCADE, related_name="memberships"
     )
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default="PENDING"
-    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
 
     created_at = models.DateTimeField(default=timezone.now)
 

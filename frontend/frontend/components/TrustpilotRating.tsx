@@ -10,10 +10,6 @@ interface TrustpilotRatingProps {
     ratingFontWeight?: string // ✅ new prop
 }
 
-export const trustpilotColor = (rating: number) => {
-    return "#FF8622"
-}
-
 export function TrustpilotRating({
     starsize = 18,
     rating,
@@ -22,7 +18,7 @@ export function TrustpilotRating({
     ratingFontWeight = "text-sm", // ✅ default
 }: TrustpilotRatingProps) {
     rating = rating || 0
-    const color = trustpilotColor(rating)
+    const color = "#FF8622"
 
     return (
         <div className="flex items-center gap-2">

@@ -38,6 +38,7 @@ export type Review = {
     author: string
     author_profile_image_url: string | null
     created_at: string
+    moderation_status: string
 
     media: ReviewMedia[]
 

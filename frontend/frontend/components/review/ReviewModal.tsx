@@ -40,6 +40,19 @@ export function ReviewModal({
 }: Props) {
     const isEditMode = review !== null
 
+    const getStatusBadge = (status?: string) => {
+        switch (status) {
+            case "approved":
+                return "bg-green-100 text-green-700 border-green-200"
+            case "pending":
+                return "bg-yellow-100 text-yellow-700 border-yellow-200"
+            case "rejected":
+                return "bg-red-100 text-red-700 border-red-200"
+            default:
+                return "bg-muted text-muted-foreground border-border"
+        }
+    }
+
     const [rating, setRating] = useState(0)
     const [body, setBody] = useState("")
 
@@ -128,13 +141,13 @@ export function ReviewModal({
 
             const savedReview = isEditMode
                 ? await updateCompanyReview(
-                      company.slug,
-                      formData
-                  )
+                    company.slug,
+                    formData
+                )
                 : await createCompanyReview(
-                      company.slug,
-                      formData
-                  )
+                    company.slug,
+                    formData
+                )
 
             for (const file of newMedia) {
                 await uploadReviewMedia(savedReview.id, file)
@@ -170,7 +183,7 @@ export function ReviewModal({
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3">
+                    <DialogTitle className="flex items-center gap-4">
                         {company.logo ? (
                             <Image
                                 src={company.logo}
@@ -181,17 +194,29 @@ export function ReviewModal({
                                 unoptimized
                             />
                         ) : (
-                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs">
+                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
                                 Logo
                             </div>
                         )}
-                        <span>
-                            {isEditMode
-                                ? "Edit your review"
-                                : `Review ${company.name}`}
-                        </span>
+
+                        <div className="flex flex-col">
+                            <span className="text-base font-semibold leading-tight">
+                                {isEditMode ? "Edit your review" : `Review ${company.name}`}
+                            </span>
+
+                            {review?.moderation_status && (
+                                <span
+                                    className={`mt-1 inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${getStatusBadge(
+                                        review.moderation_status
+                                    )}`}
+                                >
+                                    {review.moderation_status}
+                                </span>
+                            )}
+                        </div>
                     </DialogTitle>
                 </DialogHeader>
+
 
                 {/* Rating */}
                 <div className="flex justify-center gap-1 py-3">
@@ -239,7 +264,7 @@ export function ReviewModal({
                                 className="relative"
                             >
                                 {m.media_type ===
-                                "image" ? (
+                                    "image" ? (
                                     <img
                                         src={m.url}
                                         className="h-16 w-full object-cover rounded"
@@ -317,8 +342,8 @@ export function ReviewModal({
                     {submitting
                         ? "Saving..."
                         : isEditMode
-                        ? "Update review"
-                        : "Submit review"}
+                            ? "Update review"
+                            : "Submit review"}
                 </Button>
             </DialogContent>
         </Dialog>

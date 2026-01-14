@@ -24,6 +24,7 @@ export interface Company {
     country?: string
     phone?: string
     email?: string
+    moderation_status?: string
 
     rating_average: number
     rating_count: number

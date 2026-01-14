@@ -66,6 +66,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "id",
             "rating",
             "title",
+            "moderation_status",
             "body",
             "author",
             "author_profile_image_url",

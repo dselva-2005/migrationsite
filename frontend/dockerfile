@@ -1,15 +1,39 @@
-FROM node:20-alpine
+# ----------------------------
+# Build stage
+# ----------------------------
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Enable pnpm
+RUN npm install -g pnpm
+
+# Install deps
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-RUN npm install -g pnpm && pnpm install
-
+# Copy source
 COPY frontend .
 
+# Build Next.js (standalone output)
 RUN pnpm build
+
+
+# ----------------------------
+# Runtime stage (standalone)
+# ----------------------------
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy only standalone output
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+# Run minimal server
+CMD ["node", "server.js"]

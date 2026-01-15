@@ -9,6 +9,7 @@ const allowedImageDomains: string[] =
 const apiBaseUrl: string = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 const nextConfig: NextConfig = {
+  output:"standalone",
   reactStrictMode: true,
   images: {
     domains: allowedImageDomains,

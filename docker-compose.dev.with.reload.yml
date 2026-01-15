@@ -36,16 +36,12 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: dockerfile
+      dockerfile: Dockerfile        # ✅ SAME AS PROD
     container_name: frontend
-    command: npm run dev
     env_file:
       - ./.env.dev
-    volumes:
-      - ./frontend/frontend:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"                      # internal only
     restart: unless-stopped
 
   postgres:

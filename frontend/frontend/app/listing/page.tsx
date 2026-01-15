@@ -138,15 +138,23 @@ export default function Review() {
         })
     }, [companies, cityFilter, minRating])
 
-    const cities = useMemo(
-        () =>
-            Array.from(
-                new Set(
-                    companies.map((c) => c.city).filter(Boolean)
-                )
-            ) as string[],
-        [companies]
-    )
+    // ✅ FIXED: case-insensitive unique cities
+    const cities = useMemo(() => {
+        const map = new Map<string, string>()
+
+        companies.forEach((c) => {
+            if (!c.city) return
+            const trimmed = c.city.trim()
+            if (!trimmed) return
+
+            const key = trimmed.toLowerCase()
+            if (!map.has(key)) {
+                map.set(key, trimmed)
+            }
+        })
+
+        return Array.from(map.values())
+    }, [companies])
 
     const handleLoadMore = () => {
         if (!hasMore) return

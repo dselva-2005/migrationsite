@@ -29,6 +29,8 @@ from review.serializers import ReviewSerializer, ReviewCreateSerializer,ReviewDa
 from review.services import get_reviews_for_object
 from review.models import Review
 from review.views import CompanyReviewUpdateAPIView
+from rest_framework.exceptions import ValidationError
+from urllib.parse import urlparse
 
 # ------------------------------------
 # Company List
@@ -147,23 +149,72 @@ class CompanyReviewAPIView(APIView):
 # ------------------------------------
 # Business Onboarding
 # ------------------------------------
+
 class BusinessOnboardingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        data = request.data.copy()
+
+        # 🔒 WEBSITE / DOMAIN VALIDATION (MOST IMPORTANT FIELD)
+        website = data.get("website", "").strip()
+
+        if website:
+            parsed = urlparse(website)
+
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                return Response(
+                    {
+                        "detail": (
+                            "Website must be a valid URL starting with "
+                            "http:// or https:// (e.g. https://www.example.com)"
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         serializer = BusinessOnboardingSerializer(
-            data=request.data,
+            data=data,
             context={"request": request},
         )
 
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                serializer.save()
+
+        except ValidationError as e:
+            return Response(
+                {
+                    "detail": "Invalid data provided",
+                    "errors": e.detail,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except IntegrityError:
+            return Response(
+                {
+                    "detail": "A conflicting onboarding request already exists",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        except Exception:
+            return Response(
+                {
+                    "detail": "Failed to submit onboarding request",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(
-            {"detail": "Onboarding request submitted successfully"},
+            {
+                "detail": "Onboarding request submitted successfully",
+            },
             status=status.HTTP_201_CREATED,
         )
-
 
 # ------------------------------------
 # Simple Company List (internal use)

@@ -5,12 +5,13 @@ import { AuthProvider } from "@/providers/AuthProvider"
 import Navbar from "@/components/header/navbar";
 import { Footer } from "@/components/Footer"
 import { ScrollProgressCircle } from "@/components/ScrollProgress"
-import Breadcrumbs from "@/components/header/Breadcrumbs";
+// import Breadcrumbs from "@/components/header/Breadcrumbs";
 import { GlobalPrefetch } from "@/components/GlobalPrefetch";
 import ToasterClient from "@/components/data-table/ToasterClient";
 import AuthToasts from "@/components/AuthToast";
 import { PageContentProvider } from "@/providers/PageContentProvider";
-import Page from "./(marketing)/countries/[slug]/page";
+import { FloatingActionButton } from "@/components/FloatingActionButton"
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,12 +42,13 @@ export default function RootLayout({
           <PageContentProvider page="navbar">
             <Navbar/>
           </PageContentProvider>
-          <Breadcrumbs/>
+          {/* <Breadcrumbs/> */}
           <GlobalPrefetch />
           {children}
           <AuthToasts />
           <ToasterClient />
           <ScrollProgressCircle />
+          <FloatingActionButton />
           <Footer />
         </AuthProvider>
       </body>

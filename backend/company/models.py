@@ -28,6 +28,12 @@ class CompanyCategory(models.Model):
 
 
 class Company(models.Model):
+    view_count = models.PositiveBigIntegerField(default=0)
+    display_order = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Lower number = higher priority in listings"
+    )
 
     address_line_1 = models.CharField(max_length=255, blank=True)
     address_line_2 = models.CharField(max_length=255, blank=True)
@@ -106,7 +112,7 @@ class Company(models.Model):
     search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
 
     class Meta:
-        ordering = ["-rating_average", "-rating_count"]
+        ordering = ["display_order","-rating_average", "-rating_count"]
         indexes = [
             GinIndex(fields=["search_vector"]),
             GinIndex(
@@ -128,6 +134,7 @@ class Company(models.Model):
                 name="company_name_prefix",
                 opclasses=["text_pattern_ops"],
             ),
+            models.Index(fields=["display_order"]),
         ]
 
     def save(self, *args, **kwargs):

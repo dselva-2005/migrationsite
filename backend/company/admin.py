@@ -11,11 +11,13 @@ from company.models import (
     CompanyMembership,
 )
 from review.models import Review
-
+from django.db.models import F
+from django.db.models.expressions import OrderBy
 
 # ======================================================
 # Review Inline (FIXED)
 # ======================================================
+
 
 class ReviewInline(GenericTabularInline):
     model = Review
@@ -80,15 +82,23 @@ class ReviewInline(GenericTabularInline):
 class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "display_order",
         "category",
         "city",
         "state",
         "country",
+        "view_count",          # 👈 VIEWS SHOWN HERE
         "rating_average",
         "rating_count",
         "is_verified",
         "is_active",
         "created_at",
+    )
+
+    ordering = (
+        OrderBy(F("display_order"), nulls_last=True),
+        "-rating_average",
+        "-rating_count",
     )
 
     list_filter = (
@@ -115,6 +125,14 @@ class CompanyAdmin(admin.ModelAdmin):
 
     prepopulated_fields = {"slug": ("name",)}
 
+    readonly_fields = (
+        "view_count",          # 🔒 ADMIN CAN SEE, NOT EDIT
+        "rating_average",
+        "rating_count",
+        "created_at",
+        "updated_at",
+    )
+
     fieldsets = (
         (
             "Core Identity",
@@ -127,6 +145,16 @@ class CompanyAdmin(admin.ModelAdmin):
                     "description",
                     "category",
                 )
+            },
+        ),
+        (
+            "Listing Control",
+            {
+                "fields": ("display_order",),
+                "description": (
+                    "Lower numbers appear first in listings. "
+                    "Leave empty to use automatic ranking based on reviews."
+                ),
             },
         ),
         (
@@ -184,6 +212,7 @@ class CompanyAdmin(admin.ModelAdmin):
             "System",
             {
                 "fields": (
+                    "view_count",      # 👈 ALSO SHOWN HERE
                     "rating_average",
                     "rating_count",
                     "created_at",
@@ -193,13 +222,13 @@ class CompanyAdmin(admin.ModelAdmin):
         ),
     )
 
-    ordering = ("-rating_average", "-rating_count")
     inlines = [ReviewInline]
 
 
 # ======================================================
 # Category Admin
 # ======================================================
+
 
 @admin.register(CompanyCategory)
 class CompanyCategoryAdmin(admin.ModelAdmin):
@@ -210,6 +239,7 @@ class CompanyCategoryAdmin(admin.ModelAdmin):
 # ======================================================
 # APPROVAL LOGIC (unchanged)
 # ======================================================
+
 
 @transaction.atomic
 def approve_onboarding_request(request_obj, admin_user):
@@ -290,7 +320,9 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
     actions = ["approve_requests", "reject_requests"]
 
     def company_display(self, obj):
-        return obj.company if obj.request_type == "EXISTING" else obj.company_name or "-"
+        return (
+            obj.company if obj.request_type == "EXISTING" else obj.company_name or "-"
+        )
 
     company_display.short_description = "Company"
 

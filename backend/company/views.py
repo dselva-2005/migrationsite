@@ -31,27 +31,32 @@ from review.models import Review
 from review.views import CompanyReviewUpdateAPIView
 from rest_framework.exceptions import ValidationError
 from urllib.parse import urlparse
+from django.db.models.expressions import OrderBy
+from django.core.cache import cache
+
 
 # ------------------------------------
 # Company List
 # ------------------------------------
+
 class CompanyListAPIView(ListAPIView):
     serializer_class = CompanyListSerializer
     pagination_class = CompanyPagination
 
     def get_queryset(self):
-        queryset = Company.objects.filter(is_active=True)
+        qs = Company.objects.filter(is_active=True)
 
         category = self.request.query_params.get("category")
         if category:
-            queryset = queryset.filter(category__slug=category)
+            qs = qs.filter(category__slug=category)
 
-        ordering = self.request.query_params.get("ordering")
-        if ordering in ["rating_average", "rating_count", "created_at"]:
-            queryset = queryset.order_by(f"-{ordering}")
+        qs = qs.order_by(
+            OrderBy(F("display_order"), nulls_last=True),
+            "-rating_average",
+            "-rating_count",
+        )
 
-        return queryset
-
+        return qs
 
 # ------------------------------------
 # Company Detail
@@ -62,6 +67,27 @@ class CompanyDetailView(RetrieveAPIView):
 
     def get_queryset(self):
         return Company.objects.filter(is_active=True)
+
+    def retrieve(self, request, *args, **kwargs):
+        company = self.get_object()
+
+        # Identify viewer
+        if request.user.is_authenticated:
+            viewer_id = f"user:{request.user.id}"
+        else:
+            ip = request.META.get("REMOTE_ADDR", "unknown")
+            viewer_id = f"ip:{ip}"
+
+        cache_key = f"company:view:{company.pk}:{viewer_id}"
+
+        # Count once per 24h
+        if not cache.get(cache_key):
+            Company.objects.filter(pk=company.pk).update(
+                view_count=F("view_count") + 1
+            )
+            cache.set(cache_key, True, 60 * 60 * 24)
+
+        return super().retrieve(request, *args, **kwargs)
 
 
 # ------------------------------------

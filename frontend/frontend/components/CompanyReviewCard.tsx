@@ -8,7 +8,6 @@ import {
     Card,
     CardContent,
 } from "@/components/ui/card"
-import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 
 interface CompanyReviewCardProps {
@@ -38,16 +37,15 @@ export function CompanyReviewCard({
         <Card className="p-0 hover:shadow-lg">
             <Link href={`/review/${slug}`} className="block">
                 {/* Image */}
-                <div className="w-full">
-                    <AspectRatio ratio={1}>
-                        <Image
-                            src={imageUrl}
-                            alt={name}
-                            fill
-                            className="rounded-[6px]"
-                            unoptimized
-                        />
-                    </AspectRatio>
+                <div className="w-full h-full relative">
+                    <Image
+                        src={imageUrl}
+                        alt={name}
+                        width={120*3}
+                        height={90*3}
+                        className="object-cover rounded-[6px]"
+                        unoptimized
+                    />
                 </div>
 
                 {/* Card Content */}

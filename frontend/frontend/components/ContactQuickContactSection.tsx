@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { usePageContent } from "@/providers/PageContentProvider"
 import { Button } from "@/components/ui/button"
@@ -9,13 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { ContactQuickContactContent } from "@/types/contact"
 
+/* ---------------- Skeleton ---------------- */
 
 function ContactQuickContactSkeleton() {
     return (
         <section className="bg-muted/30 animate-pulse">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="grid lg:grid-cols-2 gap-12">
-                    {/* LEFT */}
                     <div>
                         <div className="mb-8 space-y-3">
                             <div className="h-4 w-32 bg-muted rounded" />
@@ -34,7 +35,6 @@ function ContactQuickContactSkeleton() {
                                         <div className="h-10 w-10 rounded bg-muted" />
                                         <div className="h-5 w-32 bg-muted rounded" />
                                     </div>
-
                                     <div className="space-y-2">
                                         <div className="h-3 w-full bg-muted rounded" />
                                         <div className="h-3 w-5/6 bg-muted rounded" />
@@ -44,7 +44,6 @@ function ContactQuickContactSkeleton() {
                         </div>
                     </div>
 
-                    {/* RIGHT */}
                     <div className="bg-background rounded-2xl p-8 shadow-sm space-y-6">
                         <div className="space-y-3">
                             <div className="h-4 w-28 bg-muted rounded" />
@@ -54,12 +53,8 @@ function ContactQuickContactSkeleton() {
 
                         <div className="space-y-4">
                             {Array.from({ length: 4 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-10 w-full bg-muted rounded"
-                                />
+                                <div key={i} className="h-10 w-full bg-muted rounded" />
                             ))}
-
                             <div className="h-11 w-full bg-muted rounded" />
                         </div>
                     </div>
@@ -69,6 +64,7 @@ function ContactQuickContactSkeleton() {
     )
 }
 
+/* ---------------- Main Component ---------------- */
 
 export default function ContactQuickContactSection() {
     const { content, loading } = usePageContent()
@@ -88,16 +84,30 @@ export default function ContactQuickContactSection() {
         e: React.FormEvent<HTMLFormElement>
     ): Promise<void> {
         e.preventDefault()
+        if (submitting) return
+
         setSubmitting(true)
 
-        const formData = new FormData(e.currentTarget)
+        const form = e.currentTarget
+        const formData = new FormData(form)
 
         try {
-            await fetch(right.form.endpoint, {
+            const res = await fetch(right.form.endpoint, {
                 method: right.form.method,
                 body: formData,
             })
-            e.currentTarget.reset()
+
+            if (!res.ok) {
+                throw new Error("Submission failed")
+            }
+
+            toast.success("Your message has been sent successfully 🎉")
+            form.reset()
+        } catch (err) {
+            console.error(err)
+            toast.error("Something went wrong", {
+                description: "Please try again later.",
+            })
         } finally {
             setSubmitting(false)
         }
@@ -107,6 +117,7 @@ export default function ContactQuickContactSection() {
         <section className="bg-muted/30">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="grid lg:grid-cols-2 gap-12">
+
                     {/* LEFT COLUMN */}
                     <div>
                         <div className="mb-8">
@@ -204,6 +215,7 @@ export default function ContactQuickContactSection() {
                                         name={field.name}
                                         placeholder={field.label}
                                         required={field.required}
+                                        maxLength={field.max_length}
                                     />
                                 )
                             )}
@@ -213,9 +225,7 @@ export default function ContactQuickContactSection() {
                                 disabled={submitting}
                                 className="w-full"
                             >
-                                {submitting
-                                    ? "Sending..."
-                                    : right.form.submit_label}
+                                {submitting ? "Sending..." : right.form.submit_label}
                             </Button>
                         </form>
                     </div>

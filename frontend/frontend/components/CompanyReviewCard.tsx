@@ -37,13 +37,14 @@ export function CompanyReviewCard({
         <Card className="p-0 hover:shadow-lg">
             <Link href={`/review/${slug}`} className="block">
                 {/* Image */}
-                <div className="w-full h-full relative">
+                {/* Image */}
+                <div className="w-full">
                     <Image
                         src={imageUrl}
                         alt={name}
-                        width={120*3}
-                        height={90*3}
-                        className="object-cover rounded-[6px]"
+                        width={360}
+                        height={270}
+                        className="w-full object-cover rounded-[6px]"
                         unoptimized
                     />
                 </div>

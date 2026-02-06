@@ -134,6 +134,9 @@ function MobileNav() {
                         <Link href="/about" className="py-3 px-6 border-b hover:bg-gray-50">
                             About
                         </Link>
+                        <Link href="/contact" className="py-3 px-6 border-b hover:bg-gray-50">
+                            Contact
+                        </Link>
                         <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50">
                             review
                         </Link>
@@ -382,6 +385,7 @@ function NavLinks() {
         <nav className="flex items-center gap-6 text-sm font-medium">
             <Link href="/">Home</Link>
             <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
             <Link href="/review">review</Link>
             <Link href="/blog">Blog</Link>
             <Link href="/listing">Listing</Link>

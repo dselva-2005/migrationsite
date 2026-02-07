@@ -77,6 +77,7 @@ class ContentAdmin(admin.ModelAdmin):
         "page",
         "key",
         "content_type",
+        "country",
         "locale",
         "is_published",
         "updated_at",
@@ -87,6 +88,7 @@ class ContentAdmin(admin.ModelAdmin):
     list_filter = (
         "page",
         "content_type",
+        "country",
         "locale",
         "is_published",
     )
@@ -100,7 +102,7 @@ class ContentAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Identification", {
-            "fields": ("page", "key", "locale"),
+            "fields": ("page", "key", "country", "locale"),
         }),
         ("Content", {
             "fields": ("content_type", "value"),
@@ -116,9 +118,6 @@ class ContentAdmin(admin.ModelAdmin):
     readonly_fields = ("updated_at",)
 
     def get_readonly_fields(self, request, obj=None):
-        """
-        Only `updated_at` is read-only.
-        """
         return self.readonly_fields
 
 
@@ -132,14 +131,13 @@ class MediaAssetAdmin(admin.ModelAdmin):
         "title",
         "asset_type",
         "copy_url",
-        
         "created_at",
     )
 
     list_filter = (
         "asset_type",
         "locale",
-        
+        "is_published",
     )
 
     search_fields = ("title",)
@@ -153,7 +151,7 @@ class MediaAssetAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Info", {
-            "fields": ("title", "asset_type", "locale",),
+            "fields": ("title", "asset_type", "locale", "is_published"),
         }),
         ("File", {
             "fields": ("file", "file_url", "preview"),

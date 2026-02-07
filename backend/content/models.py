@@ -71,6 +71,14 @@ class Content(models.Model):
         help_text="e.g. home, about, footer"
     )
 
+    # ✅ NEW FIELD (ONLY ADDITION)
+    country = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Country slug like 'canada', 'australia'. Leave empty for global content."
+    )
+
     locale = models.CharField(
         max_length=10,
         default="en"
@@ -83,5 +91,8 @@ class Content(models.Model):
     updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        unique_together = ("key", "page", "locale")
+        unique_together = ("key", "page", "locale", "country")
         ordering = ["page", "order"]
+
+    def __str__(self):
+        return f"{self.page} | {self.key} | {self.country or 'global'}"

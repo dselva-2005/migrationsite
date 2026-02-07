@@ -62,7 +62,7 @@ type PageContentShape = {
 export default function VisaPackageSection() {
     // Always call hooks at the top level, before any conditionals
     const [activeTab, setActiveTab] = useState<string>("");
-    
+
     const { content } = usePageContent() as {
         content: PageContentShape | null;
         loading?: boolean;
@@ -131,18 +131,19 @@ export default function VisaPackageSection() {
             <div className="space-y-8">
                 <div className="space-y-4">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{visaPackage.title}</h2>
-                    <p className="text-base sm:text-lg text-muted-foreground">
-                        {visaPackage.description}
-                    </p>
+                    <div
+                        className="text-base sm:text-lg text-muted-foreground"
+                        dangerouslySetInnerHTML={{ __html: visaPackage.description }}
+                    />
                 </div>
 
-                <Tabs 
-                    value={activeTab} 
-                    onValueChange={setActiveTab} 
+                <Tabs
+                    value={activeTab}
+                    onValueChange={setActiveTab}
                     className="w-full"
                 >
                     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-                        
+
                         {/* LEFT — TABS */}
                         <div className="w-full lg:w-1/3">
                             <TabsList className="flex flex-wrap sm:flex-nowrap lg:flex-col gap-2 p-2 bg-background border rounded-lg w-full h-fit">
@@ -171,9 +172,9 @@ export default function VisaPackageSection() {
                         {/* RIGHT — CONTENT */}
                         <div className="w-full lg:w-2/3">
                             {tabs.map((tab) => (
-                                <TabsContent 
-                                    key={tab.id} 
-                                    value={tab.id} 
+                                <TabsContent
+                                    key={tab.id}
+                                    value={tab.id}
                                     className="mt-0 data-[state=active]:animate-in data-[state=active]:fade-in"
                                 >
                                     <Card className="overflow-hidden p-0">
@@ -213,8 +214,8 @@ export default function VisaPackageSection() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                     {servicesIncluded.services.map((service) => (
-                        <Card 
-                            key={service.id} 
+                        <Card
+                            key={service.id}
                             className="text-center hover:shadow-md transition-shadow duration-200"
                         >
                             <CardContent>
@@ -229,10 +230,10 @@ export default function VisaPackageSection() {
                                     </div>
                                 </div>
                                 <h6 className="font-semibold text-xs sm:text-sm md:text-base mb-2">{service.label}</h6>
-                                <Button 
-                                    asChild 
-                                    variant="ghost" 
-                                    size="sm" 
+                                <Button
+                                    asChild
+                                    variant="ghost"
+                                    size="sm"
                                     className="w-full text-xs sm:text-sm h-7 sm:h-8"
                                 >
                                 </Button>

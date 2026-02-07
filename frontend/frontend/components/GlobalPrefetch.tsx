@@ -7,15 +7,17 @@ const PAGES_TO_PREFETCH = ["home", "review"]
 
 export function GlobalPrefetch() {
     useEffect(() => {
-        if ("requestIdleCallback" in window) {
-            requestIdleCallback(() => {
-                PAGES_TO_PREFETCH.forEach(prefetchPageContent)
+        const runPrefetch = () => {
+            PAGES_TO_PREFETCH.forEach((page) => {
+                prefetchPageContent(page) // ✅ only pass page, not index
             })
+        }
+
+        if ("requestIdleCallback" in window) {
+            requestIdleCallback(runPrefetch)
         } else {
             // fallback
-            setTimeout(() => {
-                PAGES_TO_PREFETCH.forEach(prefetchPageContent)
-            }, 0)
+            setTimeout(runPrefetch, 0)
         }
     }, [])
 

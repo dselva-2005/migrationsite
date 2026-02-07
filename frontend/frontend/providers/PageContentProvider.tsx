@@ -10,20 +10,24 @@ type PageContentContextType = {
     loading: boolean
 }
 
-const PageContentContext =
-    createContext<PageContentContextType | null>(null)
+const PageContentContext = createContext<PageContentContextType | null>(null)
 
 export const contentCache = new Map<string, PageContent>()
 
 /* ---------------------------------- */
 /* Prefetch (safe, no React state) */
 /* ---------------------------------- */
-export async function prefetchPageContent(page: string) {
-    if (contentCache.has(page)) return
+export async function prefetchPageContent(
+    page: string,
+    country?: string
+) {
+    const cacheKey = country ? `${page}:${country}` : page
+    if (contentCache.has(cacheKey)) return
 
     try {
-        const data = await getPageContent(page)
-        contentCache.set(page, data)
+        // ✅ Pass country to API directly
+        const data = await getPageContent(page, country)
+        contentCache.set(cacheKey, data)
     } catch {
         // silent fail
     }
@@ -34,12 +38,15 @@ export async function prefetchPageContent(page: string) {
 /* ---------------------------------- */
 export function PageContentProvider({
     page,
+    country,
     children,
 }: {
     page: string
+    country?: string
     children: React.ReactNode
 }) {
-    const cachedContent = contentCache.get(page) ?? null
+    const cacheKey = country ? `${page}:${country}` : page
+    const cachedContent = contentCache.get(cacheKey) ?? null
 
     const [content, setContent] = useState<PageContent | null>(cachedContent)
     const [loading, setLoading] = useState<boolean>(!cachedContent)
@@ -49,10 +56,10 @@ export function PageContentProvider({
 
         let cancelled = false
 
-        getPageContent(page)
+        getPageContent(page, country)
             .then((data) => {
                 if (cancelled) return
-                contentCache.set(page, data)
+                contentCache.set(cacheKey, data)
                 setContent(data)
             })
             .finally(() => {
@@ -62,7 +69,7 @@ export function PageContentProvider({
         return () => {
             cancelled = true
         }
-    }, [page, cachedContent])
+    }, [page, country, cacheKey, cachedContent])
 
     return (
         <PageContentContext.Provider value={{ content, loading }}>
@@ -71,6 +78,9 @@ export function PageContentProvider({
     )
 }
 
+/* ---------------------------------- */
+/* Hook for consuming content */
+/* ---------------------------------- */
 export function usePageContent() {
     const ctx = useContext(PageContentContext)
     if (!ctx) {

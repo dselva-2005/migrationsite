@@ -23,15 +23,36 @@ from django.db.models import (
 
 
 class PageContentView(APIView):
+    """
+    Fetch page content.
+    - Returns country-specific content where available.
+    - Falls back to default content for missing keys.
+    """
+
     def get(self, request, page):
-        contents = Content.objects.filter(page=page, is_published=True)
+        country = request.query_params.get("country")
 
-        data = {}
-        for item in contents:
-            data[item.key] = item.value
+        # 1️⃣ Fetch all content for the page, both country-specific and default
+        all_content_qs = Content.objects.filter(page=page, is_published=True)
 
-        return Response(data)
+        # 2️⃣ Separate default and country-specific
+        default_content = {
+            item.key: item.value
+            for item in all_content_qs.filter(country__isnull=True)
+        }
 
+        country_content = {}
+        if country:
+            country_content = {
+                item.key: item.value
+                for item in all_content_qs.filter(country=country)
+            }
+
+        # 3️⃣ Merge: country overrides default
+        merged_content = {**default_content, **country_content}
+
+        return Response(merged_content)
+    
 
 class SearchView(APIView):
     authentication_classes = []

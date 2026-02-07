@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     const ClientPageWrapper = (await import("./ClientPageWrapper")).default;
 
     return (
-        <PageContentProvider page="countries">
+        <PageContentProvider page="countries" country={slug}>
             <ClientPageWrapper countryName={countryName} />
         </PageContentProvider>
     );

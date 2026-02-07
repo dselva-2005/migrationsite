@@ -32,11 +32,11 @@ export default function ClientPageWrapper({ countryName }: ClientPageWrapperProp
 
                     {/* MAIN CONTENT - Right Column */}
                     <main className="lg:w-2/3 space-y-12">
-                        <section className="w-full">
+                        {/* <section className="w-full">
                             <CountryServicesTabs />
                         </section>
 
-                        <Separator className="my-8" />
+                        <Separator className="my-8" /> */}
 
                         <section className="w-full">
                             <VisaPackageSection />

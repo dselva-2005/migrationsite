@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation"
 type VisaOverviewContent = {
     image: string
     title: string
-    paragraphs: string[]
+    paragraphs: string[] // HTML strings
 }
 
 type VisaSectionDetails = Record<string, VisaOverviewContent>
@@ -35,7 +35,6 @@ type VisaPageContent = {
 function RightContentSkeleton() {
     return (
         <div className="space-y-20 max-w-7xl mx-auto animate-pulse">
-            {/* OVERVIEW */}
             <div className="space-y-6 py-10">
                 <div className="h-64 w-full rounded-lg bg-muted" />
                 <div className="space-y-3">
@@ -45,68 +44,6 @@ function RightContentSkeleton() {
                     <div className="h-4 w-4/6 bg-muted rounded" />
                 </div>
             </div>
-
-            {/* VISA TYPES */}
-            <section className="grid md:grid-cols-3 gap-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="border rounded-lg overflow-hidden">
-                        <div className="h-44 bg-muted" />
-                        <div className="p-4 space-y-2">
-                            <div className="h-4 w-full bg-muted rounded" />
-                            <div className="h-5 w-2/3 bg-muted rounded" />
-                        </div>
-                    </div>
-                ))}
-            </section>
-
-            {/* PACKAGES */}
-            <section className="space-y-8">
-                <div className="space-y-2">
-                    <div className="h-7 w-1/3 bg-muted rounded" />
-                    <div className="h-4 w-2/3 bg-muted rounded" />
-                </div>
-
-                <div className="grid lg:grid-cols-12 gap-8">
-                    {/* TABS */}
-                    <div className="lg:col-span-5 space-y-3">
-                        {Array.from({ length: 3 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="h-20 rounded-lg bg-muted"
-                            />
-                        ))}
-                    </div>
-
-                    {/* TAB CONTENT */}
-                    <div className="lg:col-span-7 space-y-4">
-                        <div className="h-6 w-1/2 bg-muted rounded" />
-                        <div className="h-4 w-full bg-muted rounded" />
-                        <div className="h-4 w-5/6 bg-muted rounded" />
-                        <div className="h-48 w-full bg-muted rounded-lg" />
-                    </div>
-                </div>
-            </section>
-
-            {/* REASONS */}
-            <section className="space-y-8">
-                <div className="space-y-2">
-                    <div className="h-7 w-1/3 bg-muted rounded" />
-                    <div className="h-4 w-2/3 bg-muted rounded" />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="flex gap-4">
-                            <div className="h-12 w-12 bg-muted rounded" />
-                            <div className="space-y-2 flex-1">
-                                <div className="h-4 w-1/2 bg-muted rounded" />
-                                <div className="h-3 w-full bg-muted rounded" />
-                                <div className="h-3 w-5/6 bg-muted rounded" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
         </div>
     )
 }
@@ -130,18 +67,16 @@ export default function RightContent() {
     const packages = pageContent?.packages
     const reason = pageContent?.reason
 
-    // ✅ HOOK MUST BE HERE (UNCONDITIONAL)
     const [activeTab, setActiveTab] = useState(
         packages?.tabs?.[0]?.key ?? ""
     )
 
-    // ✅ RETURNS AFTER ALL HOOKS
     if (loading) return <RightContentSkeleton />
-
     if (!packages || !reason) return null
 
     return (
         <div className="space-y-20 max-w-7xl mx-auto">
+
             {/* ================= VISA OVERVIEW ================= */}
             {overview && (
                 <div className="flex flex-col gap-6 py-10">
@@ -152,17 +87,19 @@ export default function RightContent() {
                         height={400}
                         className="rounded-lg object-cover w-full"
                     />
+
                     <div className="space-y-4">
                         <h2 className="text-3xl font-bold">
                             {overview.title}
                         </h2>
-                        {overview.paragraphs.map((p, i) => (
-                            <p
+
+                        {/* ✅ HTML STRING RENDERING */}
+                        {overview.paragraphs.map((html, i) => (
+                            <div
                                 key={i}
-                                className="text-muted-foreground"
-                            >
-                                {p}
-                            </p>
+                                className="text-muted-foreground prose max-w-none"
+                                dangerouslySetInnerHTML={{ __html: html }}
+                            />
                         ))}
                     </div>
                 </div>
@@ -182,6 +119,7 @@ export default function RightContent() {
                             height={260}
                             className="w-full"
                         />
+
                         <div className="p-4">
                             <p className="text-sm">
                                 {v.description}
@@ -226,6 +164,7 @@ export default function RightContent() {
                             const isActive = activeTab
                                 ? activeTab === tab.key
                                 : index === 0
+
                             return (
                                 <button
                                     key={tab.key}
@@ -253,7 +192,9 @@ export default function RightContent() {
                         const isActive = activeTab
                             ? activeTab === tab.key
                             : index === 0
+
                         if (!isActive) return null
+
                         return (
                             <div
                                 key={tab.key}

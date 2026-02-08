@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 
@@ -8,13 +8,39 @@ import { Section } from "@/components/Section"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { AddReviewModal } from "@/components/review/AddReviewModal"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { toast } from "sonner" // <--- import your toaster
 
 import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
 import { getBlogPost } from "@/services/blog"
 import { getBlogReviews } from "@/services/review"
 import { Skeleton } from "@/components/ui/skeleton"
+
+
+function ShadowDOMRenderer({ html }: { html: string }) {
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (containerRef.current && !containerRef.current.shadowRoot) {
+            // Create shadow DOM
+            const shadow = containerRef.current.attachShadow({ mode: 'open' })
+
+            // Create styles that match browser defaults
+            const style = document.createElement('style')
+            style.textContent = ``
+
+            // Create content div
+            const content = document.createElement('div')
+            content.innerHTML = html
+
+            // Append to shadow DOM
+            shadow.appendChild(style)
+            shadow.appendChild(content)
+        }
+    }, [html])
+
+    return <div ref={containerRef} className="w-full" />
+}
 
 /* ---------------- Blog Skeletons ---------------- */
 
@@ -83,6 +109,7 @@ function SidebarSkeleton() {
         </aside>
     )
 }
+
 
 // ------------------------------------
 // Read-only star display
@@ -169,6 +196,7 @@ export default function SingleBlog() {
         )
     }
 
+
     if (!post) {
         return (
             <Section>
@@ -213,17 +241,7 @@ export default function SingleBlog() {
                         {post.views} views
                     </div>
 
-                    {/* Render HTML content from TinyMCE */}
-                    {/* Remove 'prose' class and use custom styling */}
-                    <div 
-                        className="blog-content"
-                        style={{
-                            lineHeight: '1.8',
-                            fontSize: '16px',
-                            color: '#374151',
-                        }}
-                        dangerouslySetInnerHTML={{ __html: post.content }}
-                    />
+                    <ShadowDOMRenderer html={post.content} />
                 </article>
 
                 {/* ---------------- Sidebar ---------------- */}
@@ -281,7 +299,7 @@ export default function SingleBlog() {
                     slug={slug}
                     onClose={() => setOpenModal(false)}
                     onSuccess={() => {
-                        toast.success("Review submitted! Pending approval")
+                        toast.success("Review submitted! Pending approval") // ✅ toast
                         loadReviews()
                         setOpenModal(false)
                     }}

@@ -11,6 +11,7 @@ services:
       - ./backend:/app                # 🔥 LIVE CODE MOUNT
       - media:/app/media
       - static:/app/staticfiles
+    user: "1003:1000"
     depends_on:
       - postgres
       - redis
@@ -28,6 +29,7 @@ services:
       - ./.env.dev
     volumes:
       - ./backend:/app                # 🔥 LIVE CODE MOUNT
+    user: "1003:1000"  # Added this line
     depends_on:
       - redis
       - postgres

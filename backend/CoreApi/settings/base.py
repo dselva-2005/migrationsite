@@ -6,6 +6,7 @@ Shared between dev & prod.
 from pathlib import Path
 import os
 from datetime import timedelta
+
 os.umask(0o002)  # new files: 664, new dirs: 775
 # --------------------------------------------------
 # Base directory
@@ -19,18 +20,13 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 DEBUG = False  # overridden in dev.py
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1"
-).split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # --------------------------------------------------
 # CSRF
 # --------------------------------------------------
 CSRF_TRUSTED_ORIGINS = [
-    origin
-    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
-    if origin
+    origin for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if origin
 ]
 
 # --------------------------------------------------
@@ -38,7 +34,6 @@ CSRF_TRUSTED_ORIGINS = [
 # --------------------------------------------------
 INSTALLED_APPS = [
     "jazzmin",
-
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.auth",
@@ -46,17 +41,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-
     "auth_app",
     "content",
     "company",
     "review",
     "blog",
     "contact",
+    "tinymce",
 ]
 
 # --------------------------------------------------
@@ -115,7 +109,9 @@ DATABASES = {
 # Password validation
 # --------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -155,9 +151,7 @@ AUTH_USER_MODEL = "auth_app.User"
 # CORS
 # --------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
-    origin
-    for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
-    if origin
+    origin for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if origin
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -257,3 +251,18 @@ JAZZMIN_SETTINGS["icons"] = {
 # --------------------------------------------------
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+TINYMCE_DEFAULT_CONFIG = {
+    "height": "320px",
+    "width": "100%",
+    "menubar": "file edit view insert format tools table help",
+    "plugins": "advlist autolink lists link image charmap print preview anchor "
+    "searchreplace visualblocks code fullscreen insertdatetime media table "
+    "paste code help wordcount",
+    "toolbar": "undo redo | bold italic underline strikethrough | "
+    "fontselect fontsizeselect formatselect | alignleft aligncenter "
+    "alignright alignjustify | outdent indent |  numlist bullist | "
+    "forecolor backcolor removeformat | pagebreak | charmap emoticons | "
+    "fullscreen preview save print | insertfile image media pageembed template "
+    "link anchor codesample | a11ycheck ltr rtl | showcomments addcomment code",
+    "custom_undo_redo_levels": 50,
+}

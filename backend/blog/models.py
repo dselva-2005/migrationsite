@@ -5,6 +5,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from review.models import Review
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
+from tinymce.models import HTMLField  # ✅ Import TinyMCE HTMLField
 
 class BlogCategory(models.Model):
     name = models.CharField(max_length=100)
@@ -39,7 +40,8 @@ class BlogPost(models.Model):
     )
 
     excerpt = models.TextField(blank=True)
-    content = models.TextField()
+    # ✅ REPLACE models.TextField() with HTMLField from TinyMCE
+    content = HTMLField()  # Rich text editor field
 
     # ✅ FEATURED IMAGE
     featured_image = models.ImageField(

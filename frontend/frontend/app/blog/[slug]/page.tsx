@@ -8,7 +8,7 @@ import { Section } from "@/components/Section"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { AddReviewModal } from "@/components/review/AddReviewModal"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner" // <--- import your toaster
+import { toast } from "sonner"
 
 import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
@@ -83,7 +83,6 @@ function SidebarSkeleton() {
         </aside>
     )
 }
-
 
 // ------------------------------------
 // Read-only star display
@@ -170,7 +169,6 @@ export default function SingleBlog() {
         )
     }
 
-
     if (!post) {
         return (
             <Section>
@@ -215,8 +213,15 @@ export default function SingleBlog() {
                         {post.views} views
                     </div>
 
-                    <div
-                        className="prose max-w-none"
+                    {/* Render HTML content from TinyMCE */}
+                    {/* Remove 'prose' class and use custom styling */}
+                    <div 
+                        className="blog-content"
+                        style={{
+                            lineHeight: '1.8',
+                            fontSize: '16px',
+                            color: '#374151',
+                        }}
                         dangerouslySetInnerHTML={{ __html: post.content }}
                     />
                 </article>
@@ -276,7 +281,7 @@ export default function SingleBlog() {
                     slug={slug}
                     onClose={() => setOpenModal(false)}
                     onSuccess={() => {
-                        toast.success("Review submitted! Pending approval") // ✅ toast
+                        toast.success("Review submitted! Pending approval")
                         loadReviews()
                         setOpenModal(false)
                     }}

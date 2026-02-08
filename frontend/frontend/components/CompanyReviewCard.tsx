@@ -37,7 +37,6 @@ export function CompanyReviewCard({
         <Card className="p-0 hover:shadow-lg">
             <Link href={`/review/${slug}`} className="block">
                 {/* Image */}
-                {/* Image */}
                 <div className="w-full">
                     <Image
                         src={imageUrl}
@@ -51,8 +50,8 @@ export function CompanyReviewCard({
 
                 {/* Card Content */}
                 <CardContent className="p-4 space-y-2 rounded-md">
-                    {/* Company Name */}
-                    <h3 className="text-sm font-semibold leading-tight">
+                    {/* Company Name with ellipsis */}
+                    <h3 className="text-sm font-semibold leading-tight line-clamp-1">
                         {name}
                     </h3>
 
@@ -64,17 +63,19 @@ export function CompanyReviewCard({
                     )}
 
                     {/* Domain and City */}
-                    <p className="text-xs text-muted-foreground">
-                        {domain} <br />
-                        {(country || city) && (<div className="flex items-center gap-2 text-md text-gray-400">
-                            <MapPin className="h-5 w-5 shrink-0" />
-                            <span>
-                                {city && country
-                                    ? `${city}, ${country}`
-                                    : city || country}
-                            </span>
-                        </div>)}
-                    </p>
+                    <div className="text-xs text-muted-foreground">
+                        <p className="line-clamp-1">{domain}</p>
+                        {(country || city) && (
+                            <div className="flex items-center gap-1 mt-1 text-gray-400">
+                                <MapPin className="h-3 w-3 shrink-0" />
+                                <span className="line-clamp-1">
+                                    {city && country
+                                        ? `${city}, ${country}`
+                                        : city || country}
+                                </span>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Rating */}
                     <TrustpilotRating

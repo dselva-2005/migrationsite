@@ -9,7 +9,14 @@ const VALID_COUNTRY_SLUGS = [
     "uae",
     "uk",
     "south-africa",
-    "bahamas"
+    "bahamas",
+    "new-zealand",
+    "germany",
+    "ierland",
+    "portugal",
+    "spain",
+    "slovenia",
+    "romania",
 ];
 
 // Map slugs to display names
@@ -20,7 +27,14 @@ const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
     "uae": "United Arab Emirates",
     "uk": "United Kingdom",
     "south-africa": "South Africa",
-    "bahamas": "The Bahamas"
+    "bahamas": "The Bahamas",
+    "new-zealand": "New Zealand",
+    "germany": "Germany",
+    "ierland": "Ierland",
+    "portugal": "Portugal",
+    "spain": "Spain",
+    "slovenia": "Slovenia",
+    "romania": "Romania",
 };
 
 function getCountryName(slug: string): string {

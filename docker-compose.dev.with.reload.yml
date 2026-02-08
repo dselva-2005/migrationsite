@@ -36,12 +36,16 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile        # ✅ SAME AS PROD
+      dockerfile: Dockerfile.dev
     container_name: frontend
     env_file:
       - ./.env.dev
-    expose:
-      - "3000"                      # internal only
+    volumes:
+      - ./frontend/frontend:/app     # 🔥 LIVE HOT RELOAD (correct path)
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
     restart: unless-stopped
 
   postgres:

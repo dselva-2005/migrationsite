@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Enable pnpm
+RUN npm install -g pnpm
+
+# Copy lock files from the REAL app directory
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install
+
+# Copy actual Next.js source
+COPY frontend/ .
+
+ENV NODE_ENV=development
+EXPOSE 3000
+
+CMD ["pnpm", "dev"]

@@ -113,13 +113,13 @@ export default function CountriesSection() {
 
                 {/* Tabs */}
                 <Tabs defaultValue={filterKeys[0]}>
-                    <TabsList className="mx-auto mb-10 flex w-fit gap-6">
+                    {/* <TabsList className="mx-auto mb-10 flex w-fit gap-6">
                         {filterKeys.map(key => (
                             <TabsTrigger key={key} value={key}>
                                 {filters[key]}
                             </TabsTrigger>
                         ))}
-                    </TabsList>
+                    </TabsList> */}
 
                     {filterKeys.map(key => (
                         <TabsContent key={key} value={key}>

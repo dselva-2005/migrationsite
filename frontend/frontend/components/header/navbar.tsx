@@ -22,36 +22,36 @@ import {
 /* Data */
 /* ---------------------------------- */
 
-const COUNTRIES = [
-    {
-        href: "/countries/united-states",
-        label: "United States"
-    },
-    {
-        href: "/countries/australia",
-        label: "Australia"
-    },
-    {
-        href: "/countries/canada",
-        label: "Canada"
-    },
-    {
-        href: "/countries/uae",
-        label: "United Arab Emirates"
-    },
-    {
-        href: "/countries/uk",
-        label: "United Kingdom"
-    },
-    {
-        href: "/countries/south-africa",
-        label: "South Africa"
-    },
-    {
-        href: "/countries/bahamas",
-        label: "The Bahamas"
-    }
-]
+// const COUNTRIES = [
+//     {
+//         href: "/countries/united-states",
+//         label: "United States"
+//     },
+//     {
+//         href: "/countries/australia",
+//         label: "Australia"
+//     },
+//     {
+//         href: "/countries/canada",
+//         label: "Canada"
+//     },
+//     {
+//         href: "/countries/uae",
+//         label: "United Arab Emirates"
+//     },
+//     {
+//         href: "/countries/uk",
+//         label: "United Kingdom"
+//     },
+//     {
+//         href: "/countries/south-africa",
+//         label: "South Africa"
+//     },
+//     {
+//         href: "/countries/bahamas",
+//         label: "The Bahamas"
+//     }
+// ]
 
 const VISAS = [
     {
@@ -148,7 +148,7 @@ function MobileNav() {
                         </Link>
 
                         {/* Countries Expandable Section */}
-                        <div className="border-b">
+                        {/* <div className="border-b">
                             <button
                                 onClick={() => toggleSection('countries')}
                                 className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
@@ -172,7 +172,7 @@ function MobileNav() {
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </div> */}
 
                         {/* Visa Expandable Section */}
                         <div className="border-b">
@@ -391,7 +391,7 @@ function NavLinks() {
             <Link href="/listing">Listing</Link>
 
             {/* Countries Hover Dropdown */}
-            <div className="relative group">
+            {/* <div className="relative group">
                 <button className="flex items-center hover:text-primary transition-colors py-2">
                     Countries
                     <svg
@@ -416,7 +416,7 @@ function NavLinks() {
                         ))}
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* Visa Hover Dropdown */}
             <div className="relative group">

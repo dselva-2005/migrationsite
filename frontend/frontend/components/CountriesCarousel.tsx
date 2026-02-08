@@ -3,9 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import Autoplay from "embla-carousel-autoplay"
 import type { CarouselApi } from "@/components/ui/carousel"
-
 import {
     Carousel,
     CarouselContent,
@@ -45,7 +43,6 @@ function CarouselDots({
         onSelect()
 
         return () => {
-            // IMPORTANT: do not return api.off(...)
             api.off("select", onSelect)
         }
     }, [api])
@@ -70,25 +67,84 @@ function CarouselDots({
     )
 }
 
-
 export function CountriesCarousel({ items }: { items: Country[] }) {
     const [api, setApi] = React.useState<CarouselApi | null>(null)
+    const [current, setCurrent] = React.useState(0)
+    const [count, setCount] = React.useState(0)
 
-    const autoplay = React.useRef(
-        Autoplay({
-            delay: 3500,
-            stopOnInteraction: false,
-        })
-    )
+    // Custom autoplay logic (like first component)
+    React.useEffect(() => {
+        if (!api) return
+
+        let interval: NodeJS.Timeout | null = null
+
+        const startAutoScroll = () => {
+            stopAutoScroll()
+            interval = setInterval(() => {
+                if (!api.canScrollNext()) {
+                    api.scrollTo(0)
+                } else {
+                    api.scrollNext()
+                }
+            }, 3000) // ⏱️ adjust speed here
+        }
+
+        const stopAutoScroll = () => {
+            if (interval) {
+                clearInterval(interval)
+                interval = null
+            }
+        }
+
+        // Start immediately
+        startAutoScroll()
+
+        // Pause on user interaction
+        api.on("pointerDown", stopAutoScroll)
+        api.on("pointerUp", startAutoScroll)
+
+        return () => {
+            stopAutoScroll()
+            api.off("pointerDown", stopAutoScroll)
+            api.off("pointerUp", startAutoScroll)
+        }
+    }, [api])
+
+    // Initialize carousel state
+    React.useEffect(() => {
+        if (!api) return
+
+        const onInit = () => {
+            setCount(api.scrollSnapList().length)
+            setCurrent(api.selectedScrollSnap())
+        }
+
+        const onSelect = () => {
+            setCurrent(api.selectedScrollSnap())
+        }
+
+        api.on("init", onInit)
+        api.on("reInit", onInit)
+        api.on("select", onSelect)
+
+        onInit()
+
+        return () => {
+            api.off("init", onInit)
+            api.off("reInit", onInit)
+            api.off("select", onSelect)
+        }
+    }, [api])
 
     return (
         <div className="relative overflow-hidden">
             <Carousel
                 setApi={setApi}
-                opts={{ align: "start", loop: true }}
-                plugins={[autoplay.current]}
-                onMouseEnter={() => autoplay.current.stop()}
-                onMouseLeave={() => autoplay.current.reset()}
+                opts={{ 
+                    align: "start", 
+                    loop: true,
+                    duration: 30 // smoother transition
+                }}
             >
                 <CarouselContent className="-ml-6 py-6">
                     {items.map((item) => (
@@ -145,7 +201,7 @@ export function CountriesCarousel({ items }: { items: Country[] }) {
                                             href={item.link}
                                             className="text-sm font-medium text-primary hover:underline"
                                         >
-                                            {item.cta}
+                                            {item.cta || "Read more"}
                                         </Link>
                                     </div>
                                 </CardContent>
@@ -159,7 +215,7 @@ export function CountriesCarousel({ items }: { items: Country[] }) {
                 <CarouselNext className="hidden lg:flex" />
 
                 {/* Scroll dots */}
-                <CarouselDots api={api} count={items.length} />
+                <CarouselDots api={api} count={count} />
             </Carousel>
         </div>
     )

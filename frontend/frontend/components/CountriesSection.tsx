@@ -42,12 +42,16 @@ export default function CountriesSection() {
                 filters: undefined,
                 grouped: {},
                 filterKeys: [],
+                allCountries: [],
             }
         }
 
         const header = content["countries.header"] as CountriesHeader | undefined
         const items = (content["countries.items"] as Country[]) ?? []
         const filters = content["countries.filters"] as CountriesFilters | undefined
+
+        // Get all countries (no category filtering)
+        const allCountries = items.filter(item => item.category === "" || !item.category)
 
         if (!filters) {
             return {
@@ -56,19 +60,27 @@ export default function CountriesSection() {
                 filters,
                 grouped: {},
                 filterKeys: [],
+                allCountries,
             }
         }
 
         const grouped: Record<string, Country[]> = {}
         const filterKeys = Object.keys(filters)
 
+        // Initialize groups
         filterKeys.forEach(key => {
             grouped[key] = []
         })
 
+        // Add a "all" key for countries without category
+        grouped["all"] = allCountries
+
+        // Group items by category (if they have one)
         items.forEach(item => {
-            if (grouped[item.category]) {
-                grouped[item.category].push(item)
+            if (item.category && item.category !== "") {
+                if (grouped[item.category]) {
+                    grouped[item.category].push(item)
+                }
             }
         })
 
@@ -77,7 +89,8 @@ export default function CountriesSection() {
             items,
             filters,
             grouped,
-            filterKeys,
+            filterKeys: ["all", ...filterKeys], // Add "all" as first tab
+            allCountries,
         }
     }, [content])
 
@@ -111,21 +124,29 @@ export default function CountriesSection() {
                     )}
                 </div>
 
-                {/* Tabs */}
-                <Tabs defaultValue={filterKeys[0]}>
+                {/* Tabs - Commented out since all countries are in "all" tab */}
+                <Tabs defaultValue="all">
                     {/* <TabsList className="mx-auto mb-10 flex w-fit gap-6">
                         {filterKeys.map(key => (
                             <TabsTrigger key={key} value={key}>
-                                {filters[key]}
+                                {key === "all" ? "All Countries" : filters[key]}
                             </TabsTrigger>
                         ))}
                     </TabsList> */}
 
-                    {filterKeys.map(key => (
-                        <TabsContent key={key} value={key}>
-                            <CountriesCarousel items={grouped[key]} />
-                        </TabsContent>
-                    ))}
+                    {/* Only show "all" tab since all countries have no category */}
+                    <TabsContent key="all" value="all">
+                        <CountriesCarousel items={grouped["all"]} />
+                    </TabsContent>
+
+                    {/* Optional: Show other tabs if there are categorized items */}
+                    {filterKeys
+                        .filter(key => key !== "all" && grouped[key]?.length > 0)
+                        .map(key => (
+                            <TabsContent key={key} value={key}>
+                                <CountriesCarousel items={grouped[key]} />
+                            </TabsContent>
+                        ))}
                 </Tabs>
 
             </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import Image from "next/image"
 import clsx from "clsx"
-import { Star, X } from "lucide-react"
+import { Star, X, ImagePlus } from "lucide-react"
 
 import {
     Dialog,
@@ -56,12 +56,8 @@ export function ReviewModal({
     const [rating, setRating] = useState(0)
     const [body, setBody] = useState("")
 
-    const [existingMedia, setExistingMedia] = useState<
-        ReviewMedia[]
-    >([])
-    const [deleteMediaIds, setDeleteMediaIds] = useState<
-        number[]
-    >([])
+    const [existingMedia, setExistingMedia] = useState<ReviewMedia[]>([])
+    const [deleteMediaIds, setDeleteMediaIds] = useState<number[]>([])
     const [newMedia, setNewMedia] = useState<File[]>([])
 
     const [submitting, setSubmitting] = useState(false)
@@ -201,7 +197,9 @@ export function ReviewModal({
 
                         <div className="flex flex-col">
                             <span className="text-base font-semibold leading-tight">
-                                {isEditMode ? "Edit your review" : `Review ${company.name}`}
+                                {isEditMode
+                                    ? "Edit your review"
+                                    : `Review ${company.name}`}
                             </span>
 
                             {review?.moderation_status && (
@@ -217,18 +215,15 @@ export function ReviewModal({
                     </DialogTitle>
                 </DialogHeader>
 
-
                 {/* Rating */}
                 <div className="flex justify-center gap-1 py-3">
                     {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                             key={i}
                             size={30}
-                            onClick={() =>
-                                setRating(i + 1)
-                            }
+                            onClick={() => setRating(i + 1)}
                             className={clsx(
-                                "cursor-pointer",
+                                "cursor-pointer transition-colors",
                                 i < rating
                                     ? "fill-yellow-400 text-yellow-400"
                                     : "text-muted-foreground"
@@ -247,42 +242,47 @@ export function ReviewModal({
                     className="min-h-[120px]"
                 />
 
-                {/* Media input */}
-                <input
-                    type="file"
-                    multiple
-                    accept="image/*,video/*"
-                    onChange={onMediaChange}
-                />
+                {/* 🔥 Media upload dropzone */}
+                <label className="relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-6 text-center transition hover:border-primary hover:bg-muted">
+                    <ImagePlus className="mb-2 h-6 w-6 text-muted-foreground" />
+                    <p className="text-sm font-medium">
+                        Upload images or videos
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Up to 5 files • JPG, PNG, MP4
+                    </p>
+
+                    <input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*"
+                        onChange={onMediaChange}
+                        className="absolute inset-0 opacity-0"
+                    />
+                </label>
 
                 {/* Existing media */}
                 {existingMedia.length > 0 && (
                     <div className="grid grid-cols-5 gap-2">
                         {existingMedia.map((m) => (
-                            <div
-                                key={m.id}
-                                className="relative"
-                            >
-                                {m.media_type ===
-                                    "image" ? (
+                            <div key={m.id} className="relative">
+                                {m.media_type === "image" ? (
                                     <img
                                         src={m.url}
-                                        className="h-16 w-full object-cover rounded"
+                                        className="h-16 w-full rounded object-cover"
                                     />
                                 ) : (
                                     <video
                                         src={m.url}
-                                        className="h-16 w-full object-cover rounded"
+                                        className="h-16 w-full rounded object-cover"
                                     />
                                 )}
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        removeExistingMedia(
-                                            m.id
-                                        )
+                                        removeExistingMedia(m.id)
                                     }
-                                    className="absolute -top-2 -right-2 bg-black text-white rounded-full p-1"
+                                    className="absolute -top-2 -right-2 rounded-full bg-black p-1 text-white"
                                 >
                                     <X size={12} />
                                 </button>
@@ -295,25 +295,16 @@ export function ReviewModal({
                 {newMedia.length > 0 && (
                     <div className="grid grid-cols-5 gap-2">
                         {newMedia.map((file, i) => (
-                            <div
-                                key={i}
-                                className="relative"
-                            >
-                                {file.type.startsWith(
-                                    "image"
-                                ) ? (
+                            <div key={i} className="relative">
+                                {file.type.startsWith("image") ? (
                                     <img
-                                        src={URL.createObjectURL(
-                                            file
-                                        )}
-                                        className="h-16 w-full object-cover rounded"
+                                        src={URL.createObjectURL(file)}
+                                        className="h-16 w-full rounded object-cover"
                                     />
                                 ) : (
                                     <video
-                                        src={URL.createObjectURL(
-                                            file
-                                        )}
-                                        className="h-16 w-full object-cover rounded"
+                                        src={URL.createObjectURL(file)}
+                                        className="h-16 w-full rounded object-cover"
                                     />
                                 )}
                                 <button
@@ -321,7 +312,7 @@ export function ReviewModal({
                                     onClick={() =>
                                         removeNewMedia(i)
                                     }
-                                    className="absolute -top-2 -right-2 bg-black text-white rounded-full p-1"
+                                    className="absolute -top-2 -right-2 rounded-full bg-black p-1 text-white"
                                 >
                                     <X size={12} />
                                 </button>

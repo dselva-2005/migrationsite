@@ -39,9 +39,15 @@ function FooterSkeleton() {
     return (
         <footer className="dark bg-[#13181c]">
             <div className="container mx-auto px-4 py-12">
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 animate-pulse">
+                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 animate-pulse">
 
                     <div className="h-10 w-40 rounded bg-muted" />
+
+                    <div className="space-y-3">
+                        <div className="h-4 w-24 rounded bg-muted" />
+                        <div className="h-3 w-full rounded bg-muted" />
+                        <div className="h-3 w-5/6 rounded bg-muted" />
+                    </div>
 
                     {[1, 2].map((i) => (
                         <div key={i} className="space-y-3">
@@ -74,7 +80,7 @@ function FooterSkeleton() {
 }
 
 /* =====================================================
-   INNER FOOTER (CMS CONSUMER)
+   INNER FOOTER
 ===================================================== */
 function FooterInner() {
     const { content, loading } = usePageContent()
@@ -83,6 +89,12 @@ function FooterInner() {
 
     const logo = content["footer.brand.logo"] as string | undefined
     const logoAlt = content["footer.brand.alt"] as string | undefined
+
+    const aboutTitle =
+        content["footer.about.title"] as string | undefined
+
+    const aboutText =
+        content["footer.about.text"] as string | undefined
 
     const aboutLinks =
         content["footer.about.links"] as FooterLink[] | undefined
@@ -103,7 +115,7 @@ function FooterInner() {
     return (
         <footer className="dark bg-[#13181c]">
             <div className="container mx-auto px-4 py-12 text-muted-foreground">
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
 
                     {/* Brand */}
                     <Card className="bg-transparent border-none">
@@ -115,7 +127,21 @@ function FooterInner() {
                         />
                     </Card>
 
-                    {/* About */}
+                    {/* About Text */}
+                    {aboutText && (
+                        <Card className="bg-transparent border-none">
+                            {aboutTitle && (
+                                <h3 className="mb-4 text-sm font-semibold text-foreground">
+                                    {aboutTitle}
+                                </h3>
+                            )}
+                            <p className="text-sm leading-relaxed">
+                                {aboutText}
+                            </p>
+                        </Card>
+                    )}
+
+                    {/* About Links */}
                     <Card className="bg-transparent border-none">
                         <h3 className="mb-4 text-sm font-semibold text-foreground">
                             About Us
@@ -176,7 +202,7 @@ function FooterInner() {
 }
 
 /* =====================================================
-   PUBLIC FOOTER (SELF-CONTAINED)
+   PUBLIC FOOTER
 ===================================================== */
 export function Footer() {
     return (

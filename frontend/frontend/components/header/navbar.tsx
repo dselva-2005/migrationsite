@@ -7,7 +7,6 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/AuthProvider"
-import { GlobalSearch } from "@/components/GlobalSearch"
 import { usePageContent } from "@/providers/PageContentProvider"
 
 import {

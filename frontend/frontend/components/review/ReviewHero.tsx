@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePageContent } from "@/providers/PageContentProvider"
+import { GlobalSearch } from "../GlobalSearch"
 
 /* ---------------- Types ---------------- */
 
@@ -50,6 +51,7 @@ export function ReviewHero() {
                         <p className="text-base text-muted-foreground sm:text-lg">
                             {message.subtitle}
                         </p>
+                        <GlobalSearch></GlobalSearch>
                     </div>
                 </div>
             </div>

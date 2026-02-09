@@ -90,4 +90,3 @@ celerybeat.pid
 # =========================
 *.tmp
 *.swp
-*.bak

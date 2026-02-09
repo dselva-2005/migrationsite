@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation"
 import { useState, FormEvent, JSX } from "react"
-import axios, { AxiosError } from "axios"
+import axios from "axios"
 import publicApi from "@/lib/publicApi"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-
 
 /* ---------------- Types ---------------- */
 
@@ -38,15 +38,16 @@ type ApiErrorResponse = {
 /* -------------- Component -------------- */
 
 export default function RegisterForm(): JSX.Element {
+    const router = useRouter()
+
     const [form, setForm] = useState<RegisterFormState>({
         username: "",
         email: "",
         password: "",
         confirmPassword: "",
     })
-    const router = useRouter()
+
     const [errors, setErrors] = useState<FieldErrors>({})
-    const [serverError, setServerError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
     /* ------------ Validation ------------ */
@@ -78,6 +79,13 @@ export default function RegisterForm(): JSX.Element {
         }
 
         setErrors(nextErrors)
+
+        if (Object.keys(nextErrors).length > 0) {
+            toast.warning("Fix form errors", {
+                description: "Please correct the highlighted fields and try again.",
+            })
+        }
+
         return Object.keys(nextErrors).length === 0
     }
 
@@ -85,8 +93,6 @@ export default function RegisterForm(): JSX.Element {
 
     const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-
-        setServerError(null)
 
         if (!validate()) return
 
@@ -99,25 +105,33 @@ export default function RegisterForm(): JSX.Element {
                 password: form.password,
             })
 
+            toast.success("Account created", {
+                description: "You can now log in with your credentials.",
+            })
+
             setForm({
                 username: "",
                 email: "",
                 password: "",
                 confirmPassword: "",
             })
-            router.push("/login");
+
+            router.push("/login")
         } catch (error: unknown) {
             if (axios.isAxiosError<ApiErrorResponse>(error)) {
                 const data = error.response?.data
 
-                setServerError(
-                    data?.detail ??
-                    data?.username?.[0] ??
-                    data?.email?.[0] ??
-                    "Registration failed"
-                )
+                toast.error("Registration failed", {
+                    description:
+                        data?.detail ??
+                        data?.username?.[0] ??
+                        data?.email?.[0] ??
+                        "Something went wrong. Please try again.",
+                })
             } else {
-                setServerError("Registration failed")
+                toast.error("Registration failed", {
+                    description: "Unexpected error occurred.",
+                })
             }
         } finally {
             setLoading(false)
@@ -141,10 +155,7 @@ export default function RegisterForm(): JSX.Element {
                             id="username"
                             value={form.username}
                             onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    username: e.target.value,
-                                })
+                                setForm({ ...form, username: e.target.value })
                             }
                             className={errors.username ? "border-red-500" : ""}
                         />
@@ -214,14 +225,6 @@ export default function RegisterForm(): JSX.Element {
                             </p>
                         )}
                     </div>
-
-                    {serverError && (
-                        <div className="rounded-md bg-red-50 p-3">
-                            <p className="text-sm text-red-600">
-                                {serverError}
-                            </p>
-                        </div>
-                    )}
 
                     <Button
                         type="submit"

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { getPageContent } from "@/services/content"
+import { GlobalSearch } from "./GlobalSearch"
 
 type Slide = {
     title: string
@@ -66,13 +67,13 @@ export default function Hero() {
                             <p className="text-muted-foreground text-base sm:text-lg">
                                 {content.description}
                             </p>
-
-                            <Button size="lg" className="gap-2" asChild>
+                            <GlobalSearch></GlobalSearch>
+                            {/* <Button size="lg" className="gap-2" asChild>
                                 <a href={cta.href}>
                                     {cta.label}
                                     <ArrowRight className="h-4 w-4" />
                                 </a>
-                            </Button>
+                            </Button> */}
                         </div>
                     </div>
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useState, FormEvent, JSX } from "react"
 import axios, { AxiosError } from "axios"
 import publicApi from "@/lib/publicApi"
@@ -13,6 +14,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+
 
 /* ---------------- Types ---------------- */
 
@@ -42,10 +44,9 @@ export default function RegisterForm(): JSX.Element {
         password: "",
         confirmPassword: "",
     })
-
+    const router = useRouter()
     const [errors, setErrors] = useState<FieldErrors>({})
     const [serverError, setServerError] = useState<string | null>(null)
-    const [success, setSuccess] = useState(false)
     const [loading, setLoading] = useState(false)
 
     /* ------------ Validation ------------ */
@@ -86,7 +87,6 @@ export default function RegisterForm(): JSX.Element {
         e.preventDefault()
 
         setServerError(null)
-        setSuccess(false)
 
         if (!validate()) return
 
@@ -99,13 +99,13 @@ export default function RegisterForm(): JSX.Element {
                 password: form.password,
             })
 
-            setSuccess(true)
             setForm({
                 username: "",
                 email: "",
                 password: "",
                 confirmPassword: "",
             })
+            router.push("/login");
         } catch (error: unknown) {
             if (axios.isAxiosError<ApiErrorResponse>(error)) {
                 const data = error.response?.data
@@ -221,12 +221,6 @@ export default function RegisterForm(): JSX.Element {
                                 {serverError}
                             </p>
                         </div>
-                    )}
-
-                    {success && (
-                        <p className="text-sm text-green-600">
-                            Account created successfully. You can now log in.
-                        </p>
                     )}
 
                     <Button

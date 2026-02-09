@@ -145,7 +145,7 @@ export default function NewsSection() {
                             </div>
 
                             {/* Content */}
-                            <CardContent className="flex h-full flex-col gap-4 p-8">
+                            <CardContent className="flex flex-col gap-4 p-8">
                                 {/* Meta */}
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                     <span className="font-medium text-primary">
@@ -167,7 +167,7 @@ export default function NewsSection() {
                                 </p>
 
                                 {/* Footer */}
-                                <div className="mt-auto flex items-center justify-between pt-4">
+                                <div className="mt-auto flex items-center justify-between">
                                     <Link
                                         href={post.href}
                                         className="text-sm font-medium text-primary hover:underline"

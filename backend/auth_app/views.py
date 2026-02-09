@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -161,6 +161,7 @@ class MeView(APIView):
             "email": user.email,
             "username": user.username,
             "is_business": memberships.exists(),
+            "mobile_number": user.mobile_number,
             "companies": [
                 {
                     "company_id": m.company.id,
@@ -176,7 +177,7 @@ class MeView(APIView):
 class ProfileView(APIView):
     authentication_classes = [JWTAuthenticationFromCookie]
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
         serializer = ProfileSerializer(

@@ -18,6 +18,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "email",
             "username",
             "profile_image",
+            "mobile_number",
             "profile_image_url",
             "date_joined",
         )

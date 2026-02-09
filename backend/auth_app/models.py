@@ -42,6 +42,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=30, unique=True, db_index=True)
 
+    mobile_number = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True,
+    )
+
     profile_image = models.ImageField(
         upload_to=user_profile_image_path,
         null=True,

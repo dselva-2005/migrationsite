@@ -114,7 +114,7 @@ export default function LeftSidebar() {
             </div>
 
             {/* DOWNLOADS */}
-            {downloads.length > 0 && (
+            {/* {downloads.length > 0 && (
                 <div className="bg-muted p-6 rounded-xl">
                     <h4 className="mb-4 text-lg font-semibold">
                         Downloads
@@ -143,7 +143,7 @@ export default function LeftSidebar() {
                         ))}
                     </ul>
                 </div>
-            )}
+            )} */}
 
             {/* BANNER */}
             {banner && (

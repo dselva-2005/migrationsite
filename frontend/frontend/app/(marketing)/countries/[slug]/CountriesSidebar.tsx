@@ -96,7 +96,7 @@ export default function CountriesSidebar() {
             </div>
 
             {/* Downloads */}
-            <Card>
+            {/* <Card>
                 <CardContent className="p-6">
                     <div className="space-y-4">
                         <h4 className="text-lg font-semibold">{downloads.title}</h4>
@@ -124,7 +124,7 @@ export default function CountriesSidebar() {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Banner */}
             <Card className="relative overflow-hidden">

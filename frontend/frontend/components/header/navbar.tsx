@@ -97,6 +97,7 @@ interface BrandData {
 function MobileNav() {
     const { user, isLoggedIn, loading, logout } = useAuth()
     const [openSection, setOpenSection] = useState<string | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
 
     const companies = user?.companies ?? []
     const isBusinessUser = companies.length > 0
@@ -109,8 +110,12 @@ function MobileNav() {
         setOpenSection(openSection === section ? null : section)
     }
 
+    const handleLinkClick = () => {
+        setIsOpen(false)
+    }
+
     return (
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                     <Menu />
@@ -128,24 +133,24 @@ function MobileNav() {
                 {loading ? null : (
                     <nav className="flex flex-col">
                         {/* Main Navigation Items */}
-                        <Link href="/" className="py-3 px-6 border-b hover:bg-gray-50">
+                        <Link href="/" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             Home
                         </Link>
-                        <Link href="/about" className="py-3 px-6 border-b hover:bg-gray-50">
+                        <Link href="/about" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             About
                         </Link>
-                        <Link href="/contact" className="py-3 px-6 border-b hover:bg-gray-50">
+                        <Link href="/contact" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             Contact
                         </Link>
-                        <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50">
+                        <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             review
                         </Link>
-                        <Link href="/blog" className="py-3 px-6 border-b hover:bg-gray-50">
+                        <Link href="/blog" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             Blog
                         </Link>
-                        <Link href="/listing" className="py-3 px-6 border-b hover:bg-gray-50">
+                        {/* <Link href="/listing" className="py-3 px-6 border-b hover:bg-gray-50" onClick={handleLinkClick}>
                             Listing
-                        </Link>
+                        </Link> */}
 
                         {/* Countries Expandable Section */}
                         {/* <div className="border-b">
@@ -166,6 +171,7 @@ function MobileNav() {
                                             key={country.href}
                                             href={country.href}
                                             className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
+                                            onClick={handleLinkClick}
                                         >
                                             {country.label}
                                         </Link>
@@ -175,7 +181,7 @@ function MobileNav() {
                         </div> */}
 
                         {/* Visa Expandable Section */}
-                        <div className="border-b">
+                        {/* <div className="border-b">
                             <button
                                 onClick={() => toggleSection('visa')}
                                 className="flex items-center justify-between w-full py-3 px-6 hover:bg-gray-50"
@@ -193,13 +199,14 @@ function MobileNav() {
                                             key={visa.slug}
                                             href={`/visa/${visa.slug}`}
                                             className="block py-2 px-10 hover:bg-gray-100 text-gray-700"
+                                            onClick={handleLinkClick}
                                         >
                                             {visa.label}
                                         </Link>
                                     ))}
                                 </div>
                             )}
-                        </div>
+                        </div> */}
 
                         {/* Auth Links */}
                         <div className="mt-4 px-6">
@@ -208,12 +215,14 @@ function MobileNav() {
                                     <Link
                                         href="/login"
                                         className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                        onClick={handleLinkClick}
                                     >
                                         Login
                                     </Link>
                                     <Link
                                         href="/register"
                                         className="py-2 px-4 rounded bg-primary text-white text-center hover:bg-primary/90"
+                                        onClick={handleLinkClick}
                                     >
                                         Register
                                     </Link>
@@ -225,17 +234,22 @@ function MobileNav() {
                                             <Link
                                                 href="/business-login"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                                onClick={handleLinkClick}
                                             >
                                                 Become a Business
                                             </Link>
                                             <Link
                                                 href="/profile"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                                onClick={handleLinkClick}
                                             >
                                                 Profile
                                             </Link>
                                             <button
-                                                onClick={logout}
+                                                onClick={() => {
+                                                    logout()
+                                                    handleLinkClick()
+                                                }}
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Logout
@@ -246,17 +260,22 @@ function MobileNav() {
                                             <Link
                                                 href={dashboardHref}
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                                onClick={handleLinkClick}
                                             >
                                                 Dashboard
                                             </Link>
                                             <Link
                                                 href="/profile"
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
+                                                onClick={handleLinkClick}
                                             >
                                                 Profile
                                             </Link>
                                             <button
-                                                onClick={logout}
+                                                onClick={() => {
+                                                    logout()
+                                                    handleLinkClick()
+                                                }}
                                                 className="py-2 px-4 rounded border text-center hover:bg-gray-50"
                                             >
                                                 Logout
@@ -388,7 +407,7 @@ function NavLinks() {
             <Link href="/contact">Contact</Link>
             <Link href="/review">review</Link>
             <Link href="/blog">Blog</Link>
-            <Link href="/listing">Listing</Link>
+            {/* <Link href="/listing">Listing</Link> */}
 
             {/* Countries Hover Dropdown */}
             {/* <div className="relative group">
@@ -419,7 +438,7 @@ function NavLinks() {
             </div> */}
 
             {/* Visa Hover Dropdown */}
-            <div className="relative group">
+            {/* <div className="relative group">
                 <button className="flex items-center hover:text-primary transition-colors py-2">
                     Visa
                     <svg
@@ -444,7 +463,7 @@ function NavLinks() {
                         ))}
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {!isLoggedIn && (
                 <>

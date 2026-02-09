@@ -2,12 +2,21 @@ import api from "@/lib/axios"
 
 /* ---------- Types ---------- */
 
-export interface UserProfile {
+export type Company = {
+    company_id: number
+    company_slug: string
+    company_name: string
+    role: string
+}
+
+export type UserProfile = {
     id: number
     email: string
     username: string
-    profile_image_url: string | null
-    date_joined: string
+    is_business: boolean
+    mobile_number: string | null
+    profile_image_url?: string | null
+    companies: Company[]
 }
 
 /* ---------- Cache ---------- */
@@ -76,4 +85,25 @@ export async function updateProfileImage(
 export function clearProfileCache() {
     profileCache.clear()
     profilePromise.clear()
+}
+
+/* ---------- Update Profile (username / mobile) ---------- */
+
+export async function updateProfile(
+    data: Partial<Pick<UserProfile, "username" | "mobile_number">>
+): Promise<UserProfile> {
+    const res = await api.patch<UserProfile>(
+        "/api/auth/profile/",
+        data,
+        {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }
+    )
+
+    // 🔁 Update cache
+    profileCache.set(PROFILE_KEY, res.data)
+
+    return res.data
 }

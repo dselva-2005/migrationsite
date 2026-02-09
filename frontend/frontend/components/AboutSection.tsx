@@ -215,8 +215,8 @@ export default function AboutSection() {
                         </p>
                     )}
 
-                    {/* CTA */}
-                    {cta && (
+                    {/* CTA temporary removal*/}
+                    {/* {cta && (
                         <div>
                             <Button
                                 asChild
@@ -226,7 +226,7 @@ export default function AboutSection() {
                                 <Link href={cta.href}>{cta.label}</Link>
                             </Button>
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
         </section>

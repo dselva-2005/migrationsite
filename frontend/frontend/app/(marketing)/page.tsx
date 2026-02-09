@@ -83,10 +83,10 @@ export default function Home() {
             ) : (
                 <>
                     <Hero />
-
+                    {/* temperory removal 
                     <Section tone="base">
                         <InfoSection />
-                    </Section>
+                    </Section> */}
 
                     <Section tone="base">
                         <CompanyReviewsSection

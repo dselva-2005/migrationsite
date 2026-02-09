@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { prefetchPageContent } from "@/providers/PageContentProvider"
 
-const PAGES_TO_PREFETCH = ["home", "review"]
+const PAGES_TO_PREFETCH = ["home", "review" ,"blog" ,"about" ,"contact" ,]
 
 export function GlobalPrefetch() {
     useEffect(() => {

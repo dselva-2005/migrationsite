@@ -11,7 +11,7 @@ interface TrustpilotRatingProps {
 }
 
 export const trustpilotColor = (rating: number) => {
-    return "#FF8622"
+    return "#841315"
 }
 
 export function TrustpilotRating({

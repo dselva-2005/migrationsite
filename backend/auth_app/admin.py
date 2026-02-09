@@ -46,6 +46,7 @@ class UserAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "username",
+        "mobile_number",
         "email",
         "is_business_user",   # ✔ badge
         "is_active",

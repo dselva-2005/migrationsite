@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { createBlogReview } from "@/services/review"
 
 type Props = {
@@ -10,10 +11,15 @@ type Props = {
 }
 
 export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
+    const [mounted, setMounted] = useState(false)
     const [rating, setRating] = useState(5)
     const [title, setTitle] = useState("")
     const [body, setBody] = useState("")
     const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     async function handleSubmit() {
         if (!body.trim()) {
@@ -39,35 +45,34 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
         }
     }
 
-    const StarInput = () => (
-        <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className={`text-2xl ${
-                        star <= rating ? "text-yellow-400" : "text-gray-300"
-                    }`}
-                >
-                    ★
-                </button>
-            ))}
-        </div>
-    )
+    if (!mounted) return null
 
-    return (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
             <div className="bg-background rounded-xl p-6 w-full max-w-md space-y-4">
                 <h3 className="text-lg font-semibold">Add Review</h3>
 
                 {/* Rating */}
                 <div className="flex items-center gap-2">
                     <span className="text-sm">Rating:</span>
-                    <StarInput />
+                    <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                type="button"
+                                onClick={() => setRating(star)}
+                                className={`text-2xl ${
+                                    star <= rating
+                                        ? "text-yellow-400"
+                                        : "text-gray-300"
+                                }`}
+                            >
+                                ★
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Title */}
                 <input
                     className="w-full border rounded-md p-2"
                     placeholder="Title (optional)"
@@ -76,7 +81,6 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                     disabled={loading}
                 />
 
-                {/* Body */}
                 <textarea
                     className="w-full border rounded-md p-2 min-h-[100px]"
                     placeholder="Your review"
@@ -85,7 +89,6 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                     disabled={loading}
                 />
 
-                {/* Actions */}
                 <div className="flex gap-2">
                     <button
                         onClick={onClose}
@@ -103,6 +106,7 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

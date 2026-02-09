@@ -1,7 +1,7 @@
 from .base import *
 import os
 
-DEBUG = False
+DEBUG = True
 
 DOMAIN = os.environ.get("DOMAIN")
 

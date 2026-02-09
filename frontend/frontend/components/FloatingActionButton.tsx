@@ -123,7 +123,7 @@ function ContactModal({
 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                <div className="relative w-full max-w-5xl">
+                <div className="relative w-full max-w-xl">
                     <div className="rounded-2xl p-10 shadow-sm bg-background">
                         <button
                             onClick={onClose}

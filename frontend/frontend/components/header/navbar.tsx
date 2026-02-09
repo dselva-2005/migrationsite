@@ -205,7 +205,7 @@ function Brand() {
     return (
         <Link href={brand.href} className="flex items-center shrink-0">
             {brand.logo ? (
-                <div className="relative h-8 w-40">
+                <div className="relative h-20 w-70">
                     <Image
                         src={brand.logo}
                         alt={brand.name || "Brand Logo"}

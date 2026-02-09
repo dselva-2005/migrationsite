@@ -53,7 +53,7 @@ export default function Hero() {
     const content = slides[index]
 
     return (
-        <section className="relative w-full overflow-hidden bg-muted">
+        <section className="relative w-full bg-muted">
             <div className="mx-auto max-w-7xl px-6 py-20">
                 <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
 

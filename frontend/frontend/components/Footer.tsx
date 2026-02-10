@@ -122,8 +122,8 @@ function FooterInner() {
                         <Image
                             src={logo}
                             alt={logoAlt ?? "Logo"}
-                            width={166}
-                            height={39}
+                            width={450}
+                            height={100}
                         />
                     </Card>
 

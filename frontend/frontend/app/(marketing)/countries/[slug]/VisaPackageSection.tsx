@@ -145,7 +145,7 @@ export default function VisaPackageSection() {
                     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
                         {/* LEFT — TABS */}
-                        <div className="w-full lg:w-1/3">
+                        {/* <div className="w-full lg:w-1/3">
                             <TabsList className="flex flex-wrap sm:flex-nowrap lg:flex-col gap-2 p-2 bg-background border rounded-lg w-full h-fit">
                                 {tabs.map((tab) => (
                                     <TabsTrigger
@@ -167,10 +167,10 @@ export default function VisaPackageSection() {
                                     </TabsTrigger>
                                 ))}
                             </TabsList>
-                        </div>
+                        </div> */}
 
                         {/* RIGHT — CONTENT */}
-                        <div className="w-full lg:w-2/3">
+                        {/* <div className="w-full lg:w-2/3">
                             {tabs.map((tab) => (
                                 <TabsContent
                                     key={tab.id}
@@ -198,13 +198,13 @@ export default function VisaPackageSection() {
                                     </Card>
                                 </TabsContent>
                             ))}
-                        </div>
+                        </div> */}
                     </div>
                 </Tabs>
             </div>
 
             {/* SERVICES INCLUDED */}
-            <div className="space-y-8">
+            {/* <div className="space-y-8">
                 <div className="space-y-4">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{servicesIncluded.title}</h2>
                     <p className="text-base sm:text-lg text-muted-foreground">
@@ -241,7 +241,7 @@ export default function VisaPackageSection() {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </div> */}
 
         </div>
     );

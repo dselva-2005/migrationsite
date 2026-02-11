@@ -12,7 +12,7 @@ interface VisaServiceCardProps {
     image: string
     items: string[]
     href: string
-    cta?:string
+    cta?: string
 
     /** Controlled by parent */
     imageClassName?: string
@@ -33,37 +33,24 @@ export function VisaServiceCard({
     return (
         <Card
             className={cn(
-                "group h-full overflow-hidden rounded-xl p-0 transition-shadow hover:shadow-lg",
+                "group h-full overflow-hidden rounded-xl !p-0 transition-shadow hover:shadow-lg",
                 cardClassName
             )}
         >
             {/* Image wrapper */}
-            <div
-                className={cn(
-                    "relative w-full aspect-[3/3] overflow-hidden",
-                    imageClassName
-                )}
-            >
+            <div className="relative w-full">
                 <Image
                     src={image}
                     alt={title}
-                    fill
-                    sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
-                    className="
-                        object-cover
-                        transition-transform
-                        duration-500
-                        ease-out
-                        group-hover:scale-110
-                    "
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
                 />
-
-                {/* Optional subtle overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/5" />
             </div>
 
+
             {/* Content */}
-            <CardContent className="flex h-75 flex-col p-6">
+            <CardContent className="flex h-75 flex-col pb-6">
                 <span className="text-2xl font-bold text-primary">
                     {index}
                 </span>

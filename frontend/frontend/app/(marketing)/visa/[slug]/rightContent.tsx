@@ -106,7 +106,7 @@ export default function RightContent() {
             )}
 
             {/* ================= VISA TYPES ================= */}
-            <section className="grid md:grid-cols-3 gap-6">
+            {/* <section className="grid md:grid-cols-3 gap-6">
                 {visaTypes.map((v) => (
                     <div
                         key={v.id}
@@ -145,10 +145,10 @@ export default function RightContent() {
                         </div>
                     </div>
                 ))}
-            </section>
+            </section> */}
 
             {/* ================= PACKAGES ================= */}
-            <section>
+            {/* <section>
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold">
                         {packages.title}
@@ -217,10 +217,10 @@ export default function RightContent() {
                         )
                     })}
                 </div>
-            </section>
+            </section> */}
 
             {/* ================= REASONS ================= */}
-            <section>
+            {/* <section>
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold">
                         {reason.title}
@@ -253,7 +253,7 @@ export default function RightContent() {
                         </div>
                     ))}
                 </div>
-            </section>
+            </section> */}
         </div>
     )
 }

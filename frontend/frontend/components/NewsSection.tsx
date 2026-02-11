@@ -151,7 +151,7 @@ export default function NewsSection() {
                                     <span className="font-medium text-primary">
                                         {post.category}
                                     </span>
-                                    <span>By {post.author}</span>
+                                    {/* <span>By {post.author}</span> */}
                                 </div>
 
                                 {/* Title */}

@@ -48,7 +48,7 @@ export function BlogRowCard({ post }: { post: BlogPost }) {
 
                     {/* META */}
                     <ul className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        <li>by {post.author}</li>
+                        {/* <li>by {post.author}</li> */}
                         <li>{post.date}</li>
                         <li>{post.views} views</li>
                     </ul>

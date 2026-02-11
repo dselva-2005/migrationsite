@@ -1,9 +1,8 @@
 "use client"
-
+import { useEffect, useRef } from "react"
 import { usePageContent } from "@/providers/PageContentProvider"
 import { VisaTypeCard, VisaPackages, VisaReasonItem } from "@/types/visa"
 import Image from "next/image"
-import Link from "next/link"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
 
@@ -28,6 +27,53 @@ type VisaPageContent = {
         items: VisaReasonItem[]
     }
 }
+
+
+function ShadowDOMRenderer({ html }: { html: string }) {
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        // ✅ Attach shadow only once
+        let shadow = container.shadowRoot
+        if (!shadow) {
+            shadow = container.attachShadow({ mode: "open" })
+
+            const style = document.createElement("style")
+            style.textContent = `
+                :host { all: initial; font-family: system-ui, sans-serif; }
+                h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+                h2 { font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 1rem; }
+                h3 { font-size: 1.2rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+                p { margin-bottom: 1rem; line-height: 1.7; }
+                ul, ol { margin: 1rem 0 1rem 1.5rem; }
+                li { margin-bottom: 0.5rem; }
+                table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background: #f5f5f5; font-weight: 600; }
+            `
+            shadow.appendChild(style)
+        }
+
+        // ✅ Update content safely
+        const contentWrapperId = "shadow-content"
+        let content = shadow.getElementById(contentWrapperId)
+
+        if (!content) {
+            content = document.createElement("div")
+            content.id = contentWrapperId
+            shadow.appendChild(content)
+        }
+
+        content.innerHTML = html
+
+    }, [html])
+
+    return <div ref={containerRef} className="w-full" />
+}
+
 
 /* =========================
    SKELETON
@@ -94,19 +140,29 @@ export default function RightContent() {
                         </h2>
 
                         {/* ✅ HTML STRING RENDERING */}
-                        {overview.paragraphs.map((html, i) => (
-                            <div
-                                key={i}
-                                className="text-muted-foreground prose max-w-none"
-                                dangerouslySetInnerHTML={{ __html: html }}
-                            />
-                        ))}
+                        <ShadowDOMRenderer html={overview.paragraphs.join("")} />
                     </div>
                 </div>
             )}
 
             {/* ================= VISA TYPES ================= */}
-            {/* <section className="grid md:grid-cols-3 gap-6">
+            {/* (unchanged) */}
+
+            {/* ================= PACKAGES ================= */}
+            {/* (unchanged) */}
+
+            {/* ================= REASONS ================= */}
+            {/* (unchanged) */}
+        </div>
+    )
+}
+
+
+
+
+
+{/* ================= VISA TYPES ================= */ }
+{/* <section className="grid md:grid-cols-3 gap-6">
                 {visaTypes.map((v) => (
                     <div
                         key={v.id}
@@ -147,8 +203,8 @@ export default function RightContent() {
                 ))}
             </section> */}
 
-            {/* ================= PACKAGES ================= */}
-            {/* <section>
+{/* ================= PACKAGES ================= */ }
+{/* <section>
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold">
                         {packages.title}
@@ -219,8 +275,8 @@ export default function RightContent() {
                 </div>
             </section> */}
 
-            {/* ================= REASONS ================= */}
-            {/* <section>
+{/* ================= REASONS ================= */ }
+{/* <section>
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold">
                         {reason.title}
@@ -254,6 +310,3 @@ export default function RightContent() {
                     ))}
                 </div>
             </section> */}
-        </div>
-    )
-}

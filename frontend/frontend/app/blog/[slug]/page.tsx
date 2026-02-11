@@ -236,7 +236,7 @@ export default function SingleBlog() {
                     </div>
 
                     <div className="text-sm text-muted-foreground">
-                        {post.author} ·{" "}
+                        {/* {post.author} ·{" "} */}
                         {new Date(post.date).toLocaleDateString()} ·{" "}
                         {post.views} views
                     </div>
@@ -274,7 +274,7 @@ export default function SingleBlog() {
                                         size={18}
                                     />
                                     <Badge variant="secondary">
-                                        {review.author}
+                                        {/* {review.author} */}
                                     </Badge>
                                 </div>
 

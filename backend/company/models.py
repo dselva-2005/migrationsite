@@ -258,3 +258,28 @@ class CompanyMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} @ {self.company}"
+
+class CompanySuggestion(models.Model):
+    company_name = models.CharField(max_length=255, db_index=True)
+    website = models.URLField(blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    message = models.TextField(blank=True)
+
+    # Proper secure user relation
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="company_suggestions"
+    )
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    is_reviewed = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]

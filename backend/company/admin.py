@@ -3,6 +3,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import format_html
+from company.models import CompanySuggestion
 
 from company.models import (
     Company,
@@ -356,3 +357,90 @@ class CompanyOnboardingRequestAdmin(admin.ModelAdmin):
 
 
 admin.site.register(CompanyMembership)
+
+# ======================================================
+# Company Suggestion Admin
+# ======================================================
+
+@admin.register(CompanySuggestion)
+class CompanySuggestionAdmin(admin.ModelAdmin):
+    list_display = (
+        "company_name",
+        "email",
+        "phone",
+        "submitted_by",
+        "is_reviewed",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_reviewed",
+        "created_at",
+    )
+
+    search_fields = (
+        "company_name",
+        "email",
+        "phone",
+        "message",
+        "submitted_by__email",
+        "submitted_by__username",
+    )
+
+    readonly_fields = (
+        "submitted_by",
+        "ip_address",
+        "user_agent",
+        "created_at",
+    )
+
+    ordering = ("-created_at",)
+
+    fieldsets = (
+        (
+            "Company Information",
+            {
+                "fields": (
+                    "company_name",
+                    "website",
+                    "email",
+                    "phone",
+                )
+            },
+        ),
+        (
+            "Message",
+            {
+                "fields": ("message",),
+            },
+        ),
+        (
+            "Submission Info",
+            {
+                "fields": (
+                    "submitted_by",
+                    "ip_address",
+                    "user_agent",
+                    "created_at",
+                ),
+            },
+        ),
+        (
+            "Review Status",
+            {
+                "fields": ("is_reviewed",),
+            },
+        ),
+    )
+
+    actions = ["mark_as_reviewed"]
+
+    def mark_as_reviewed(self, request, queryset):
+        updated = queryset.update(is_reviewed=True)
+        self.message_user(
+            request,
+            f"{updated} suggestion(s) marked as reviewed.",
+            level=messages.SUCCESS,
+        )
+
+    mark_as_reviewed.short_description = "Mark selected suggestions as reviewed"

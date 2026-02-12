@@ -87,10 +87,14 @@ function MobileNav() {
                             Contact
                         </Link>
                         <Link href="/review" className="py-3 px-6 border-b hover:bg-gray-50 font-medium text-primary" onClick={handleLinkClick}>
-                            Leave a Review
+                            Write a Review
                         </Link>
                         <Link href="/blog" className="py-3 px-6 border-b hover:bg-gray-50 text-sm font-medium" onClick={handleLinkClick}>
                             Blog
+                        </Link>
+                        <Link
+                            href="/register-a-business" className="py-3 px-6 border-b hover:bg-gray-50 text-sm font-medium" onClick={handleLinkClick}>
+                            Register a Business
                         </Link>
 
                         {/* Auth Links */}
@@ -292,6 +296,7 @@ function NavLinks() {
             <Link href="/about" className={navLinkStyles}>About</Link>
             <Link href="/contact" className={navLinkStyles}>Contact</Link>
             <Link href="/blog" className={navLinkStyles}>Blog</Link>
+            <Link href="/register-a-business" className={navLinkStyles}>Register a Business</Link>
         </nav>
     )
 }
@@ -322,7 +327,7 @@ export default function Navbar() {
                         href="/review"
                         className={reviewButtonStyles}
                     >
-                        Leave a Review
+                        Write a Review
                     </Link>
 
                     {/* Auth buttons/actions */}

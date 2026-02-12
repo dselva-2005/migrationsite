@@ -4,6 +4,33 @@ from .models import Company, CompanyOnboardingRequest
 from django.db.models import Count
 from review.models import Review
 from django.contrib.contenttypes.models import ContentType
+from company.models import CompanySuggestion
+
+
+class CompanySuggestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanySuggestion
+        fields = [
+            "company_name",
+            "website",
+            "email",
+            "phone",
+            "message",
+        ]
+
+    def validate_company_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Company name is required")
+        return value
+
+    def validate(self, attrs):
+        # Basic spam protection: require at least email or phone
+        if not attrs.get("email") and not attrs.get("phone"):
+            raise serializers.ValidationError(
+                "At least one contact field (email or phone) is required."
+            )
+        return attrs
 
 
 class CompanyListSerializer(serializers.ModelSerializer):

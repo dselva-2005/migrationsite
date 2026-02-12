@@ -33,6 +33,12 @@ from rest_framework.exceptions import ValidationError
 from urllib.parse import urlparse
 from django.db.models.expressions import OrderBy
 from django.core.cache import cache
+from company.models import CompanySuggestion
+from company.serializers import CompanySuggestionSerializer
+from rest_framework.permissions import AllowAny
+from django.utils.timezone import now
+from datetime import timedelta
+
 
 
 # ------------------------------------
@@ -405,3 +411,51 @@ class CompanyMyReviewAPIView(APIView):
 
     def patch(self, request, slug):
         return CompanyReviewUpdateAPIView().patch(request, slug)
+    
+
+# ------------------------------------
+# Company Suggestion (Public Form)
+# ------------------------------------
+class CompanySuggestionCreateView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = CompanySuggestionSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+
+        # 🔒 Rate limit basic protection (per IP - 5 per hour)
+        ip_address = request.META.get("REMOTE_ADDR")
+        one_hour_ago = now() - timedelta(hours=1)
+
+        recent_count = CompanySuggestion.objects.filter(
+            ip_address=ip_address,
+            created_at__gte=one_hour_ago,
+        ).count()
+
+        if recent_count >= 5:
+            return Response(
+                {"detail": "Too many submissions. Please try again later."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        try:
+            with transaction.atomic():
+                suggestion = serializer.save(
+                    submitted_by=request.user
+                    if request.user.is_authenticated
+                    else None,
+                    ip_address=ip_address,
+                    user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                )
+
+        except Exception:
+            return Response(
+                {"detail": "Failed to submit suggestion"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {"detail": "Company suggestion submitted successfully"},
+            status=status.HTTP_201_CREATED,
+        )

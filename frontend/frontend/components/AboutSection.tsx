@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useRef } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -37,6 +38,64 @@ type AboutCTA = {
     href: string
 }
 
+/* ───────────────────────── SHADOW DOM RENDERER ───────────────────────── */
+
+function ShadowDOMRenderer({ html }: { html: string }) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const shadowRef = useRef<ShadowRoot | null>(null)
+
+    useEffect(() => {
+        const host = containerRef.current
+        if (!host) return
+
+        if (!shadowRef.current) {
+            shadowRef.current = host.attachShadow({ mode: "open" })
+
+            const style = document.createElement("style")
+            style.textContent = `
+                div {
+                    font-family: inherit;
+                    color: inherit;
+                    line-height: 1.7;
+                    font-size: 16px;
+                }
+                h1, h2, h3, h4, h5, h6 {
+                    font-weight: 600;
+                    margin: 1rem 0 0.5rem;
+                }
+                p {
+                    margin: 0.75rem 0;
+                }
+                ul {
+                    margin: 0.75rem 0;
+                    padding-left: 1.25rem;
+                }
+                li {
+                    margin: 0.4rem 0;
+                }
+                img {
+                    max-width: 100%;
+                    height: auto;
+                    display: block;
+                    margin: 1rem 0;
+                }
+            `
+            shadowRef.current.appendChild(style)
+        }
+
+        const wrapper = document.createElement("div")
+        wrapper.innerHTML = html
+
+        const existingNodes = shadowRef.current.querySelectorAll("div")
+        existingNodes.forEach(node => node.remove())
+
+        shadowRef.current.appendChild(wrapper)
+
+    }, [html])
+
+    return <div ref={containerRef} className="w-full" />
+}
+
 /* ───────────────────────── SKELETON ───────────────────────── */
 
 function AboutSectionSkeleton() {
@@ -45,8 +104,7 @@ function AboutSectionSkeleton() {
             id="about"
             className="mx-auto max-w-7xl px-4 py-6 sm:py-2 lg:py-4"
         >
-            <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
-                {/* LEFT — IMAGE MOSAIC */}
+            <div className="grid lg:grid-cols-2 gap-14 lg:gap-20">
                 <div className="grid grid-cols-2 gap-4 sm:gap-6">
                     <Skeleton className="aspect-[4/5] rounded-2xl" />
                     <Skeleton className="aspect-[4/5] rounded-2xl" />
@@ -54,35 +112,9 @@ function AboutSectionSkeleton() {
                     <Skeleton className="aspect-[4/5] rounded-2xl" />
                 </div>
 
-                {/* RIGHT — CONTENT */}
-                <div className="flex flex-col justify-center gap-8 lg:gap-10">
-                    {/* Heading */}
-                    <div className="space-y-3">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-8 w-3/4" />
-                        <Skeleton className="h-8 w-2/3" />
-                    </div>
-
-                    <Separator className="max-w-xs" />
-
-                    {/* Highlight */}
-                    <div className="flex items-start gap-4">
-                        <Skeleton className="h-12 w-12 rounded-md" />
-                        <div className="space-y-2">
-                            <Skeleton className="h-3 w-24" />
-                            <Skeleton className="h-5 w-40" />
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                        <Skeleton className="h-4 w-2/3" />
-                    </div>
-
-                    {/* CTA */}
-                    <Skeleton className="h-12 w-40 rounded-full" />
+                <div className="flex flex-col gap-8 lg:gap-10">
+                    <Skeleton className="h-8 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
                 </div>
             </div>
         </section>
@@ -94,7 +126,6 @@ function AboutSectionSkeleton() {
 export default function AboutSection() {
     const { content, loading } = usePageContent()
 
-    /* ───────────── Loading state ───────────── */
     if (loading || !content) {
         return <AboutSectionSkeleton />
     }
@@ -106,14 +137,7 @@ export default function AboutSection() {
     const description = content["about.description"] as string | undefined
     const cta = content["about.cta"] as AboutCTA | undefined
 
-    /* ───────────── Graceful CMS failure ───────────── */
-    if (
-        !images ||
-        images.length < 3 ||
-        !experience ||
-        !header ||
-        !highlight
-    ) {
+    if (!images || images.length < 3 || !experience || !header || !highlight) {
         return null
     }
 
@@ -122,11 +146,10 @@ export default function AboutSection() {
             id="about"
             className="mx-auto max-w-7xl px-4 py-6 sm:py-2 lg:py-4"
         >
-            <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+            <div className="grid lg:grid-cols-2 gap-14 lg:gap-20 lg:items-start">
 
-                {/* LEFT — IMAGE MOSAIC */}
-                <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                    {/* Image 1 */}
+                {/* LEFT — IMAGE MOSAIC (Sticky) */}
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:sticky lg:top-24 h-fit">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
                             src={images[0].src}
@@ -137,7 +160,6 @@ export default function AboutSection() {
                         />
                     </div>
 
-                    {/* Experience */}
                     <div className="flex aspect-[4/5] flex-col items-center justify-center rounded-2xl bg-muted text-center">
                         <span className="text-5xl font-semibold tabular-nums sm:text-6xl">
                             {experience.years}
@@ -147,7 +169,6 @@ export default function AboutSection() {
                         </span>
                     </div>
 
-                    {/* Image 2 */}
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
                             src={images[1].src}
@@ -157,7 +178,6 @@ export default function AboutSection() {
                         />
                     </div>
 
-                    {/* Image 3 */}
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
                         <Image
                             src={images[2].src}
@@ -168,15 +188,15 @@ export default function AboutSection() {
                     </div>
                 </div>
 
-                {/* RIGHT — CONTENT */}
-                <div className="flex flex-col justify-center gap-8 lg:gap-10">
-                    {/* Heading */}
+                {/* RIGHT — CONTENT (Sticky) */}
+                <div className="flex flex-col gap-8 lg:gap-10 lg:sticky lg:top-24 h-fit">
+
                     <div className="space-y-3">
                         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                             {header.eyebrow}
                         </p>
 
-                        <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                        <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
                             {header.title}
                             {header.subtitle && (
                                 <>
@@ -189,7 +209,6 @@ export default function AboutSection() {
 
                     <Separator className="max-w-xs" />
 
-                    {/* Highlight */}
                     <div className="flex items-start gap-4">
                         <Image
                             src={highlight.icon}
@@ -208,14 +227,10 @@ export default function AboutSection() {
                         </div>
                     </div>
 
-                    {/* Description */}
                     {description && (
-                        <p className="max-w-xl text-base leading-relaxed text-muted-foreground">
-                            {description}
-                        </p>
+                        <ShadowDOMRenderer html={description} />
                     )}
 
-                    {/* CTA temporary removal*/}
                     {cta && (
                         <div>
                             <Button

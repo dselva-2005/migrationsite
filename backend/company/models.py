@@ -283,3 +283,8 @@ class CompanySuggestion(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Company Registration Form"
+        verbose_name_plural = "Company Registration Forms"
+
+    def __str__(self):
+        return self.company_name

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, FormEvent, useEffect } from "react"
+import { useState, FormEvent } from "react"
 import axios from "axios"
 import { toast } from "sonner"
 
@@ -27,7 +27,8 @@ interface ErrorResponse {
 }
 
 export default function RegisterBusinessForm() {
-    const { user, isLoggedIn } = useAuth()
+    // Auth context kept (for future logic if needed)
+    useAuth()
 
     const [form, setForm] = useState<RegisterBusinessPayload>({
         company_name: "",
@@ -38,17 +39,6 @@ export default function RegisterBusinessForm() {
     })
 
     const [loading, setLoading] = useState(false)
-
-    /* ---------------- Prefill Email If Logged In ---------------- */
-
-    useEffect(() => {
-        if (isLoggedIn && user?.email) {
-            setForm(prev => ({
-                ...prev,
-                email: user.email ?? "",
-            }))
-        }
-    }, [isLoggedIn, user])
 
     /* ---------------- Validation ---------------- */
 
@@ -104,7 +94,7 @@ export default function RegisterBusinessForm() {
             setForm({
                 company_name: "",
                 website: "",
-                email: isLoggedIn && user?.email ? user.email : "",
+                email: "",
                 phone_number: "",
                 message: "",
             })
@@ -112,7 +102,7 @@ export default function RegisterBusinessForm() {
             if (axios.isAxiosError<ErrorResponse>(err)) {
                 toast.error(
                     err.response?.data?.detail ??
-                        "Failed to submit request"
+                    "Failed to submit request"
                 )
             } else {
                 toast.error("Unexpected error occurred")
@@ -145,7 +135,7 @@ export default function RegisterBusinessForm() {
                     </div>
 
                     <div className="space-y-1">
-                        <Label htmlFor="website">Website (Optional)</Label>
+                        <Label htmlFor="website">Website</Label>
                         <Input
                             id="website"
                             value={form.website}
@@ -157,14 +147,7 @@ export default function RegisterBusinessForm() {
                     </div>
 
                     <div className="space-y-1">
-                        <Label htmlFor="email">
-                            Contact Email
-                            {isLoggedIn && (
-                                <span className="text-xs text-muted-foreground ml-2">
-                                    (auto-filled from your account)
-                                </span>
-                            )}
-                        </Label>
+                        <Label htmlFor="email">Contact Email</Label>
                         <Input
                             id="email"
                             type="email"

@@ -5,6 +5,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.utils.encoding import force_str
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -65,16 +66,29 @@ class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
+def decode_uid(uidb64):
+    try:
+        # decode bytes to string, then convert to int
+        uid_bytes = urlsafe_base64_decode(uidb64)
+        uid_str = uid_bytes.decode()  # bytes -> str
+        return int(uid_str)
+    except Exception:
+        return None
+
+
 class ResetPasswordSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
     password = serializers.CharField(min_length=8)
 
     def validate(self, attrs):
+        uid = decode_uid(attrs["uid"])
+        if uid is None:
+            raise serializers.ValidationError("Invalid reset link")
+
         try:
-            uid = urlsafe_base64_decode(attrs["uid"]).decode()
-            user = User.objects.get(id=uid)
-        except Exception:
+            user = User.objects.get(pk=uid)
+        except User.DoesNotExist:
             raise serializers.ValidationError("Invalid reset link")
 
         token = attrs["token"]

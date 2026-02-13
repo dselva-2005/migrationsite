@@ -2,7 +2,7 @@
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes,force_str
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate
@@ -216,9 +216,9 @@ class ForgotPasswordView(APIView):
         email = serializer.validated_data["email"]
         user = User.objects.filter(email=email).first()
 
-        # DO NOT reveal user existence
         if user:
-            uid = urlsafe_base64_encode(force_bytes(user.id))
+            uid = urlsafe_base64_encode(force_bytes(user.pk))  # returns string in modern Django
+            uid = force_str(uid)  # ensure it’s string, not bytes
             token = PasswordResetTokenGenerator().make_token(user)
 
             reset_url = (

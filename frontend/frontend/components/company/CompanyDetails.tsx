@@ -124,7 +124,7 @@ export default function CompanyDetails({ company }: { company: Company }) {
                 )}
 
                 {/* Joined */}
-                {company.created_at && (
+                {/* {company.created_at && (
                     <div>
                         <Label>Joined</Label>
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -136,7 +136,7 @@ export default function CompanyDetails({ company }: { company: Company }) {
                             </span>
                         </div>
                     </div>
-                )}
+                )} */}
             </CardContent>
         </Card>)
 }            

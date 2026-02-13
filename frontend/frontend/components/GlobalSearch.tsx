@@ -124,7 +124,7 @@ export function GlobalSearch() {
                             {results.companies.map(c => (
                                 <ResultItem
                                     key={c.id}
-                                    href={`/review/${c.slug}`}
+                                    href={`/listing/${c.slug}`}
                                     label={c.name}
                                     onSelect={() => setIsOpen(false)}
                                 />

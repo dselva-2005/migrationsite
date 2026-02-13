@@ -54,7 +54,7 @@ function CompanyListItem({
 
                 <div className="space-y-2">
                     <a
-                        href={`/review/${slug}`}
+                        href={`/listing/${slug}`}
                         className="text-lg font-semibold hover:underline"
                     >
                         {name}

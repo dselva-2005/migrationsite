@@ -32,6 +32,12 @@ type FooterBottom = {
     brand_href: string
 }
 
+type SocialLink = {
+    label: string
+    href: string
+    icon: string
+}
+
 /* =====================================================
    SKELETON
 ===================================================== */
@@ -90,23 +96,13 @@ function FooterInner() {
     const logo = content["footer.brand.logo"] as string | undefined
     const logoAlt = content["footer.brand.alt"] as string | undefined
 
-    const aboutTitle =
-        content["footer.about.title"] as string | undefined
-
-    const aboutText =
-        content["footer.about.text"] as string | undefined
-
-    const aboutLinks =
-        content["footer.about.links"] as FooterLink[] | undefined
-
-    const supportLinks =
-        content["footer.support.links"] as FooterLink[] | undefined
-
-    const subscribe =
-        content["footer.subscribe"] as SubscribeContent | undefined
-
-    const bottom =
-        content["footer.bottom"] as FooterBottom | undefined
+    const aboutTitle = content["footer.about.title"] as string | undefined
+    const aboutText = content["footer.about.text"] as string | undefined
+    const aboutLinks = content["footer.about.links"] as FooterLink[] | undefined
+    const supportLinks = content["footer.support.links"] as FooterLink[] | undefined
+    const socialLinks = content["footer.social.links"] as SocialLink[] | undefined
+    const subscribe = content["footer.subscribe"] as SubscribeContent | undefined
+    const bottom = content["footer.bottom"] as FooterBottom | undefined
 
     if (!logo || !aboutLinks || !supportLinks || !subscribe || !bottom) {
         return <FooterSkeleton />
@@ -135,17 +131,25 @@ function FooterInner() {
                                     {aboutTitle}
                                 </h3>
                             )}
-                            <p className="text-sm leading-relaxed">
-                                {aboutText}
-                            </p>
+                            <p className="text-sm leading-relaxed">{aboutText}</p>
+
+                            {/* Social Media Icons */}
+                            {socialLinks && (
+                                <div className="mt-6 flex gap-4">
+                                    {socialLinks.map((s, i) => (
+                                        <Link key={i} href={s.href} target="_blank" rel="noopener noreferrer">
+                                            <Image src={s.icon} alt={s.label} width={24} height={24} />
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                            
                         </Card>
                     )}
 
                     {/* About Links */}
                     <Card className="bg-transparent border-none">
-                        <h3 className="mb-4 text-sm font-semibold text-foreground">
-                            About Us
-                        </h3>
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">About Us</h3>
                         <ul className="space-y-2 text-sm">
                             {aboutLinks.map((l, i) => (
                                 <li key={i}>
@@ -155,11 +159,9 @@ function FooterInner() {
                         </ul>
                     </Card>
 
-                    {/* Support */}
+                    {/* Support Links */}
                     <Card className="bg-transparent border-none">
-                        <h3 className="mb-4 text-sm font-semibold text-foreground">
-                            Get Support
-                        </h3>
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">Get Support</h3>
                         <ul className="space-y-2 text-sm">
                             {supportLinks.map((l, i) => (
                                 <li key={i}>
@@ -171,16 +173,9 @@ function FooterInner() {
 
                     {/* Subscribe */}
                     <Card className="bg-transparent border-none">
-                        <h3 className="mb-4 text-sm font-semibold text-foreground">
-                            {subscribe.title}
-                        </h3>
-                        <p className="mb-4 text-sm">
-                            {subscribe.description}
-                        </p>
-                        <form
-                            className="flex flex-col gap-3"
-                            onSubmit={(e) => e.preventDefault()}
-                        >
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">{subscribe.title}</h3>
+                        <p className="mb-4 text-sm">{subscribe.description}</p>
+                        <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
                             <Input placeholder={subscribe.placeholder} />
                             <Button>{subscribe.button_label}</Button>
                         </form>

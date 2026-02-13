@@ -35,7 +35,7 @@ export function CompanyReviewCard({
 }: CompanyReviewCardProps) {
     return (
         <Card className="p-0 hover:shadow-lg">
-            <Link href={`/review/${slug}`} className="block">
+            <Link href={`/listing/${slug}`} className="block">
                 {/* Image */}
                 <div className="w-full">
                     <Image

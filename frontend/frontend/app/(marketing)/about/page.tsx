@@ -8,6 +8,8 @@ export default function About() {
         <PageContentProvider page="about">
             <Section>
                 <AboutSection></AboutSection>
+            </Section>
+            <Section>
                 <WhyChooseSection></WhyChooseSection>
             </Section>
         </PageContentProvider>

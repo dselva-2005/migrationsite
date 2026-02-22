@@ -102,7 +102,7 @@ export default function NewsSection() {
     /* ---------------- Render ---------------- */
 
     return (
-        <section id="news" className="bg-background py-20">
+        <section id="news" className="bg-background py-5">
             <div className="mx-auto max-w-7xl px-4">
 
                 {/* Header */}

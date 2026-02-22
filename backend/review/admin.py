@@ -9,6 +9,7 @@ from .tasks import send_review_approved_email, send_review_rejected_email
 # REVIEW MEDIA ADMIN (standalone)
 # =====================================================
 
+
 @admin.register(ReviewMedia)
 class ReviewMediaAdmin(admin.ModelAdmin):
     list_display = (
@@ -18,14 +19,13 @@ class ReviewMediaAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "media_type",
-    )
+    list_filter = ("media_type",)
 
 
 # =====================================================
 # REVIEW MEDIA INLINE (inside Review)
 # =====================================================
+
 
 class ReviewMediaInline(admin.TabularInline):
     model = ReviewMedia
@@ -70,6 +70,7 @@ class ReviewMediaInline(admin.TabularInline):
 # REVIEW REPLY INLINE (One-to-One)
 # =====================================================
 
+
 class ReviewReplyInline(admin.StackedInline):
     model = ReviewReply
     extra = 0
@@ -91,6 +92,7 @@ class ReviewReplyInline(admin.StackedInline):
 # =====================================================
 # CUSTOM FILTER: HAS MEDIA
 # =====================================================
+
 
 class HasMediaFilter(admin.SimpleListFilter):
     title = "Has Media"
@@ -114,12 +116,14 @@ class HasMediaFilter(admin.SimpleListFilter):
 # REVIEW ADMIN WITH ACTIONS AND EDITABLE FIELDS
 # =====================================================
 
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "content_type",
-        "object_id",
+        # "content_type",
+        # "object_id",
+        "related_object",
         "rating",
         "author_name",
         "has_reply",
@@ -152,46 +156,61 @@ class ReviewAdmin(admin.ModelAdmin):
 
     # ✅ ADDED: fieldsets to organize editable fields
     fieldsets = (
-        ("Review Information", {
-            "fields": (
-                "content_type",
-                "object_id",
-                "title",
-                "body",
-                "rating",
-            )
-        }),
-        ("Author Information", {
-            "fields": (
-                "user",
-                "author_name",
-                "author_email",
-            )
-        }),
-        ("Moderation & Verification", {
-            "fields": (
-                "moderation_status",
-                "is_verified",
-            )
-        }),
-        ("Technical Information", {
-            "fields": (
-                "ip_address",
-                "user_agent",
-            ),
-            "classes": ("collapse",)  # Makes this section collapsible
-        }),
-        ("Timestamps", {
-            "fields": (
-                "created_at",
-                "updated_at",
-            ),
-            "classes": ("collapse",)  # Makes this section collapsible
-        }),
+        (
+            "Review Information",
+            {
+                "fields": (
+                    "content_type",
+                    "object_id",
+                    "title",
+                    "body",
+                    "rating",
+                )
+            },
+        ),
+        (
+            "Author Information",
+            {
+                "fields": (
+                    "user",
+                    "author_name",
+                    "author_email",
+                )
+            },
+        ),
+        (
+            "Moderation & Verification",
+            {
+                "fields": (
+                    "moderation_status",
+                    "is_verified",
+                )
+            },
+        ),
+        (
+            "Technical Information",
+            {
+                "fields": (
+                    "ip_address",
+                    "user_agent",
+                ),
+                "classes": ("collapse",),  # Makes this section collapsible
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": ("collapse",),  # Makes this section collapsible
+            },
+        ),
     )
 
     # ✅ NEW: Add bulk actions
-    actions = ['approve_reviews', 'reject_reviews']
+    actions = ["approve_reviews", "reject_reviews"]
 
     # ---------------------------------
     # Optimized queryset
@@ -221,19 +240,25 @@ class ReviewAdmin(admin.ModelAdmin):
     def has_media(self, obj):
         return obj.media.exists()
 
+    @admin.display(description="Reviewed Object")
+    def related_object(self, obj):
+        if obj.content_object:
+            return str(obj.content_object)
+        return "—"
+
     # ---------------------------------
     # ✅ NEW: Approve Reviews Action
     # ---------------------------------
     def approve_reviews(self, request, queryset):
         # Get reviews that can be approved (not already approved)
-        reviews_to_approve = queryset.exclude(moderation_status='approved')
-        
+        reviews_to_approve = queryset.exclude(moderation_status="approved")
+
         approved_count = 0
         for review in reviews_to_approve:
-            review.moderation_status = 'approved'
+            review.moderation_status = "approved"
             review.save()
             approved_count += 1
-            
+
             # Send email notification if user exists
             if review.user and review.user.email:
                 try:
@@ -243,25 +268,25 @@ class ReviewAdmin(admin.ModelAdmin):
                     self.message_user(
                         request,
                         f"Failed to send email for review {review.id}: {str(e)}",
-                        level=messages.WARNING
+                        level=messages.WARNING,
                     )
-        
+
         # Count of already approved reviews
-        already_approved = queryset.filter(moderation_status='approved').count()
-        
+        already_approved = queryset.filter(moderation_status="approved").count()
+
         if approved_count > 0:
             self.message_user(
                 request,
                 f"Successfully approved {approved_count} review(s). {already_approved} were already approved.",
-                level=messages.SUCCESS
+                level=messages.SUCCESS,
             )
         else:
             self.message_user(
                 request,
                 f"No reviews to approve. {already_approved} review(s) were already approved.",
-                level=messages.WARNING
+                level=messages.WARNING,
             )
-    
+
     approve_reviews.short_description = "✅ Approve selected reviews"
 
     # ---------------------------------
@@ -269,14 +294,14 @@ class ReviewAdmin(admin.ModelAdmin):
     # ---------------------------------
     def reject_reviews(self, request, queryset):
         # Get reviews that can be rejected (not already rejected)
-        reviews_to_reject = queryset.exclude(moderation_status='rejected')
-        
+        reviews_to_reject = queryset.exclude(moderation_status="rejected")
+
         rejected_count = 0
         for review in reviews_to_reject:
-            review.moderation_status = 'rejected'
+            review.moderation_status = "rejected"
             review.save()
             rejected_count += 1
-            
+
             # Send email notification if user exists
             if review.user and review.user.email:
                 try:
@@ -286,25 +311,25 @@ class ReviewAdmin(admin.ModelAdmin):
                     self.message_user(
                         request,
                         f"Failed to send email for review {review.id}: {str(e)}",
-                        level=messages.WARNING
+                        level=messages.WARNING,
                     )
-        
+
         # Count of already rejected reviews
-        already_rejected = queryset.filter(moderation_status='rejected').count()
-        
+        already_rejected = queryset.filter(moderation_status="rejected").count()
+
         if rejected_count > 0:
             self.message_user(
                 request,
                 f"Successfully rejected {rejected_count} review(s). {already_rejected} were already rejected.",
-                level=messages.SUCCESS
+                level=messages.SUCCESS,
             )
         else:
             self.message_user(
                 request,
                 f"No reviews to reject. {already_rejected} review(s) were already rejected.",
-                level=messages.WARNING
+                level=messages.WARNING,
             )
-    
+
     reject_reviews.short_description = "❌ Reject selected reviews"
 
 

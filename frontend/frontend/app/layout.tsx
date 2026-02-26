@@ -35,11 +35,11 @@ export const metadata: Metadata = {
     title: "Migration Reviews | Trusted Reviews of Migration Companies",
     description:
       "Discover trusted migration reviews and compare migration companies to find the best service providers. Make informed decisions with verified migration company.",
-    url: "https://themigrationreviews.com",
+    url: "https://migrationreviews.com",
     siteName: "Migration Reviews",
     images: [
       {
-        url: "https://themigrationreviews.com/opengraph-image.png", 
+        url: "https://migrationreviews.com/opengraph-image.png", 
         width: 1200,
         height: 630,
         alt: "Migration Reviews - Trusted Migration Company Reviews",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     description:
       "Discover trusted migration reviews and compare migration companies to find the best service providers.",
     images: [
-      "https://themigrationreviews.com/opengraph-image.png"
+      "https://migrationreviews.com/opengraph-image.png"
     ],
   },
 };

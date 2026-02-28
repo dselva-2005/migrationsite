@@ -82,7 +82,7 @@ class Review(models.Model):
     search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
     
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["is_read","-created_at"]
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "content_type", "object_id"],

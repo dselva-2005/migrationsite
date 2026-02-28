@@ -22,6 +22,12 @@ class Review(models.Model):
         db_index=True,
     )
     # --------------------
+    # Admin Read Tracking
+    # --------------------
+    is_read = models.BooleanField(default=False, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    
+    # --------------------
     # Generic Target
     # --------------------
     content_type = models.ForeignKey(

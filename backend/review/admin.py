@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib import messages
+from django.utils import timezone
 from .models import Review, ReviewReply, ReviewMedia, EmailTemplate
 from .tasks import send_review_approved_email, send_review_rejected_email
 
@@ -120,9 +121,8 @@ class HasMediaFilter(admin.SimpleListFilter):
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = (
+        "unread_badge",   # ✅ NEW
         "id",
-        # "content_type",
-        # "object_id",
         "related_object",
         "rating",
         "author_name",
@@ -137,6 +137,7 @@ class ReviewAdmin(admin.ModelAdmin):
         "rating",
         "is_verified",
         "moderation_status",
+        "is_read",  # ✅ NEW
         "content_type",
         "user",
         "reply",
@@ -154,7 +155,6 @@ class ReviewAdmin(admin.ModelAdmin):
         ReviewMediaInline,
     ]
 
-    # ✅ ADDED: fieldsets to organize editable fields
     fieldsets = (
         (
             "Review Information",
@@ -194,7 +194,7 @@ class ReviewAdmin(admin.ModelAdmin):
                     "ip_address",
                     "user_agent",
                 ),
-                "classes": ("collapse",),  # Makes this section collapsible
+                "classes": ("collapse",),
             },
         ),
         (
@@ -203,21 +203,45 @@ class ReviewAdmin(admin.ModelAdmin):
                 "fields": (
                     "created_at",
                     "updated_at",
+                    "is_read",   # ✅ NEW
+                    "read_at",   # ✅ NEW
                 ),
-                "classes": ("collapse",),  # Makes this section collapsible
+                "classes": ("collapse",),
             },
         ),
     )
 
-    # ✅ NEW: Add bulk actions
-    actions = ["approve_reviews", "reject_reviews"]
+    # ✅ UPDATED: added mark_as_read action
+    actions = ["approve_reviews", "reject_reviews", "mark_as_read"]
 
     # ---------------------------------
     # Optimized queryset
     # ---------------------------------
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related("reply", "user").prefetch_related("media")
+        return qs.select_related("reply", "user").prefetch_related("media").order_by("is_read", "-created_at")
+
+    # ---------------------------------
+    # ✅ NEW: Unread Badge Column
+    # ---------------------------------
+    @admin.display(description="Status")
+    def unread_badge(self, obj):
+        if not obj.is_read:
+            return format_html(
+                '<span style="color: white; background: red; padding: 3px 6px; border-radius: 4px;">NEW</span>'
+            )
+        return "—"
+
+    # ---------------------------------
+    # Auto mark as read when opened
+    # ---------------------------------
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        obj = self.get_object(request, object_id)
+        if obj and not obj.is_read:
+            obj.is_read = True
+            obj.read_at = timezone.now()
+            obj.save(update_fields=["is_read", "read_at"])
+        return super().change_view(request, object_id, form_url, extra_context)
 
     # ---------------------------------
     # Boolean column: Has Reply
@@ -247,10 +271,24 @@ class ReviewAdmin(admin.ModelAdmin):
         return "—"
 
     # ---------------------------------
-    # ✅ NEW: Approve Reviews Action
+    # ✅ NEW: Mark as Read Action
+    # ---------------------------------
+    def mark_as_read(self, request, queryset):
+        unread = queryset.filter(is_read=False)
+        updated_count = unread.update(is_read=True, read_at=timezone.now())
+
+        self.message_user(
+            request,
+            f"{updated_count} review(s) marked as read.",
+            level=messages.SUCCESS,
+        )
+
+    mark_as_read.short_description = "📖 Mark selected reviews as read"
+
+    # ---------------------------------
+    # Approve Reviews Action
     # ---------------------------------
     def approve_reviews(self, request, queryset):
-        # Get reviews that can be approved (not already approved)
         reviews_to_approve = queryset.exclude(moderation_status="approved")
 
         approved_count = 0
@@ -259,19 +297,16 @@ class ReviewAdmin(admin.ModelAdmin):
             review.save()
             approved_count += 1
 
-            # Send email notification if user exists
             if review.user and review.user.email:
                 try:
                     send_review_approved_email.delay(review.user.id, review.id)
                 except Exception as e:
-                    # Log error but continue processing
                     self.message_user(
                         request,
                         f"Failed to send email for review {review.id}: {str(e)}",
                         level=messages.WARNING,
                     )
 
-        # Count of already approved reviews
         already_approved = queryset.filter(moderation_status="approved").count()
 
         if approved_count > 0:
@@ -290,10 +325,9 @@ class ReviewAdmin(admin.ModelAdmin):
     approve_reviews.short_description = "✅ Approve selected reviews"
 
     # ---------------------------------
-    # ✅ NEW: Reject Reviews Action
+    # Reject Reviews Action
     # ---------------------------------
     def reject_reviews(self, request, queryset):
-        # Get reviews that can be rejected (not already rejected)
         reviews_to_reject = queryset.exclude(moderation_status="rejected")
 
         rejected_count = 0
@@ -302,19 +336,16 @@ class ReviewAdmin(admin.ModelAdmin):
             review.save()
             rejected_count += 1
 
-            # Send email notification if user exists
             if review.user and review.user.email:
                 try:
                     send_review_rejected_email.delay(review.user.id, review.id)
                 except Exception as e:
-                    # Log error but continue processing
                     self.message_user(
                         request,
                         f"Failed to send email for review {review.id}: {str(e)}",
                         level=messages.WARNING,
                     )
 
-        # Count of already rejected reviews
         already_rejected = queryset.filter(moderation_status="rejected").count()
 
         if rejected_count > 0:
@@ -331,7 +362,6 @@ class ReviewAdmin(admin.ModelAdmin):
             )
 
     reject_reviews.short_description = "❌ Reject selected reviews"
-
 
 @admin.register(EmailTemplate)
 class EmailTemplateAdmin(admin.ModelAdmin):

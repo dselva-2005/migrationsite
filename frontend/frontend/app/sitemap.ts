@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next"
 
+export const dynamic = "force-dynamic"
+
 type SitemapItem = {
   slug: string
   updated_at: string
@@ -8,15 +10,21 @@ type SitemapItem = {
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
 
 async function fetchSitemapData(endpoint: string): Promise<SitemapItem[]> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    next: { revalidate: 3600 },
-  })
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      next: { revalidate: 3600 },
+    })
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch sitemap data from ${endpoint}`)
+    if (!res.ok) {
+      console.error(`Sitemap fetch failed: ${endpoint}`)
+      return []
+    }
+
+    return (await res.json()) as SitemapItem[]
+  } catch (error) {
+    console.error(`Sitemap fetch error: ${endpoint}`, error)
+    return []
   }
-
-  return res.json() as Promise<SitemapItem[]>
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -29,7 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static SEO pages
   // -------------------------
 
-  const staticRoutes: string[] = [
+  const staticRoutes = [
     "/",
     "/about",
     "/contact",
@@ -70,5 +78,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }))
 
-  return [...staticPages, ...blogPages, ...companyPages]
+  return [
+    ...staticPages,
+    ...blogPages,
+    ...companyPages,
+  ]
 }

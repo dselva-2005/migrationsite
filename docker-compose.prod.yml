@@ -35,12 +35,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     container_name: frontend
     env_file:
       - ./.env.prod
     restart: always
     ports:
-      - "127.0.0.1:3000:3000"   # ✅ Apache → Frontend
+      - "127.0.0.1:3000:3000"
 
   postgres:
     image: postgres:16

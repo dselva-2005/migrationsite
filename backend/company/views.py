@@ -459,3 +459,14 @@ class CompanySuggestionCreateView(APIView):
             {"detail": "Company suggestion submitted successfully"},
             status=status.HTTP_201_CREATED,
         )
+
+class CompanySitemapAPIView(APIView):
+
+    def get(self, request):
+        companies = (
+            Company.objects
+            .filter(is_active=True)
+            .values("slug", "updated_at")
+        )
+
+        return Response(companies)

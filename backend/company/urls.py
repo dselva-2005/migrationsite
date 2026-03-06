@@ -10,6 +10,7 @@ from .views import (
     CompanyDashboardReviewAPIView,
     CompanyMyReviewAPIView,
     CompanySuggestionCreateView,
+    CompanySitemapAPIView,
 )
 
 urlpatterns = [
@@ -19,6 +20,15 @@ urlpatterns = [
     path("list/", CompanyList.as_view(), name="company-list-internal"),
     path("business-login/", BusinessOnboardingView.as_view(), name="business-onboarding"),
     path("suggest-company/", CompanySuggestionCreateView.as_view(), name="suggest-company"),
+
+    # -------------------------
+    # sitemap
+    # -------------------------
+    path(
+        "sitemap/",
+        CompanySitemapAPIView.as_view(),
+        name="company-sitemap",
+    ),
 
     # -------------------------
     # Slug-based nested routes (specific first)

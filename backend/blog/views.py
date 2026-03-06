@@ -229,3 +229,24 @@ class BlogCategoryListView(ListAPIView):
             .filter(post_count__gt=0)
             .order_by("name")
         )
+
+
+class BlogSitemapAPIView(APIView):
+    """
+    GET /api/sitemap/blog/
+    Returns minimal data required for sitemap generation.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        posts = (
+            BlogPost.objects
+            .filter(
+                status=BlogPost.Status.PUBLISHED,
+                published_at__lte=timezone.now(),
+            )
+            .values("slug", "updated_at")
+        )
+
+        return Response(posts)

@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
 
   // Optional: Configure output if you're using static export
   output: 'standalone',
+
+  // Enforce consistent trailing slashes
+  trailingSlash: false, // or false if you want no trailing slash
 };
 
 export default nextConfig;

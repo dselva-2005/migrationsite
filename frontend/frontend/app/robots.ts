@@ -7,9 +7,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        allow: "/",  // Allow everything by default
         disallow: [
-          "/api/",
+          // Private API endpoints
+          "/api/auth/",
+          "/api/admin/",
+          "/api/private/",
+          
+          // Private pages
           "/login/",
           "/register/",
           "/reset-password/",

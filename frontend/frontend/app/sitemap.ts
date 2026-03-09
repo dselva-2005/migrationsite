@@ -34,19 +34,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   // -------------------------
-  // Static SEO pages
+  // Static SEO pages (with trailing slashes)
   // -------------------------
 
   const staticRoutes = [
     "/",
-    "/about",
-    "/contact",
-    "/blog",
-    "/listing",
-    "/review",
-    "/search",
-    "/countries-overview",
-    "/visa-overview",
+    "/about/",
+    "/contact/",
+    "/blog/",
+    "/listing/",
+    "/review/",
+    "/search/",
+    "/countries-overview/",
+    "/visa-overview/",
   ]
 
   const staticPages: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
@@ -57,22 +57,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   // -------------------------
-  // Blog pages
+  // Blog pages (with trailing slashes)
   // -------------------------
 
   const blogPages: MetadataRoute.Sitemap = blogs.map((post) => ({
-    url: `${BASE_URL}/blog/${post.slug}`,
+    url: `${BASE_URL}/blog/${post.slug}/`,
     lastModified: new Date(post.updated_at),
     changeFrequency: "weekly",
     priority: 0.8,
   }))
 
   // -------------------------
-  // Company pages
+  // Company pages (with trailing slashes)
   // -------------------------
 
   const companyPages: MetadataRoute.Sitemap = companies.map((company) => ({
-    url: `${BASE_URL}/listing/${company.slug}`,
+    url: `${BASE_URL}/listing/${company.slug}/`,
     lastModified: new Date(company.updated_at),
     changeFrequency: "weekly",
     priority: 0.9,

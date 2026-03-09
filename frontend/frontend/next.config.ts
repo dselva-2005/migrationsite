@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 
   // Enforce consistent trailing slashes
-  trailingSlash: false, // or false if you want no trailing slash
+  trailingSlash: true, // or false if you want no trailing slash
 };
 
 export default nextConfig;

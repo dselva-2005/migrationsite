@@ -12,26 +12,37 @@ import { Section } from "@/components/Section"
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('visa')
     
+    // Use meta if available, otherwise fall back to defaultMeta
+    const title = meta?.title || defaultMeta.visa?.title || 'Visa Services | Migration Reviews'
+    const description = meta?.description || defaultMeta.visa?.description || 'Explore visa options, requirements, and find trusted migration consultants for your visa needs. Work visas, student visas, and more.'
+    const ogTitle = meta?.ogTitle || meta?.title || defaultMeta.visa?.ogTitle || defaultMeta.visa?.title
+    const ogDescription = meta?.ogDescription || meta?.description || defaultMeta.visa?.ogDescription || defaultMeta.visa?.description
+    const ogImage = meta?.ogImage || defaultMeta.visa?.ogImage
+    const ogType = (meta?.ogType || defaultMeta.visa?.ogType || 'website') as 'article' | 'website'
+    const twitterTitle = meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.visa?.twitterTitle || defaultMeta.visa?.ogTitle || defaultMeta.visa?.title
+    const twitterDescription = meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.visa?.twitterDescription || defaultMeta.visa?.ogDescription || defaultMeta.visa?.description
+    const twitterImage = meta?.twitterImage || meta?.ogImage || defaultMeta.visa?.twitterImage || defaultMeta.visa?.ogImage
+    
     return {
-        title: meta?.title || defaultMeta.visa?.title || 'Visa Services | Migration Reviews',
-        description: meta?.description || defaultMeta.visa?.description || 'Explore visa options, requirements, and find trusted migration consultants for your visa needs. Work visas, student visas, and more.',
-        keywords: meta?.keywords,
+        title,
+        description,
+        keywords: meta?.keywords || defaultMeta.visa?.keywords,
         openGraph: {
-            title: meta?.ogTitle || meta?.title || defaultMeta.visa?.title,
-            description: meta?.ogDescription || meta?.description || defaultMeta.visa?.description,
-            images: meta?.ogImage ? [{ url: meta.ogImage }] : [],
-            type: (meta?.ogType === 'article' ? 'article' : 'website') as 'article' | 'website',
+            title: ogTitle,
+            description: ogDescription,
+            images: ogImage ? [{ url: ogImage }] : [],
+            type: ogType,
         },
         twitter: {
             card: 'summary_large_image',
-            title: meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.visa?.title,
-            description: meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.visa?.description,
-            images: meta?.twitterImage || meta?.ogImage,
+            title: twitterTitle,
+            description: twitterDescription,
+            images: twitterImage ? [twitterImage] : [],
         },
         alternates: {
-            canonical: meta?.canonical,
+            canonical: meta?.canonical || defaultMeta.visa?.canonical,
         },
-        robots: meta?.robots as Metadata['robots'],
+        robots: (meta?.robots || defaultMeta.visa?.robots) as Metadata['robots'],
     }
 }
 

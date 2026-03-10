@@ -7,26 +7,37 @@ export async function generateMetadata(): Promise<Metadata> {
     // Fetch meta for 'home' page from the 'meta' collection
     const meta = await getPageMeta('home')
     
+    // Use meta if available, otherwise fall back to defaultMeta
+    const title = meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services'
+    const description = meta?.description || defaultMeta.home?.description || 'Read authentic reviews about migration consultants, lawyers, and services. Make informed decisions for your migration journey.'
+    const ogTitle = meta?.ogTitle || meta?.title || defaultMeta.home?.ogTitle || defaultMeta.home?.title
+    const ogDescription = meta?.ogDescription || meta?.description || defaultMeta.home?.ogDescription || defaultMeta.home?.description
+    const ogImage = meta?.ogImage || defaultMeta.home?.ogImage
+    const ogType = (meta?.ogType || defaultMeta.home?.ogType || 'website') as 'article' | 'website'
+    const twitterTitle = meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.home?.twitterTitle || defaultMeta.home?.ogTitle || defaultMeta.home?.title
+    const twitterDescription = meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.home?.twitterDescription || defaultMeta.home?.ogDescription || defaultMeta.home?.description
+    const twitterImage = meta?.twitterImage || meta?.ogImage || defaultMeta.home?.twitterImage || defaultMeta.home?.ogImage
+    
     return {
-        title: meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services',
-        description: meta?.description || defaultMeta.home?.description || 'Read authentic reviews about migration consultants, lawyers, and services. Make informed decisions for your migration journey.',
-        keywords: meta?.keywords,
+        title,
+        description,
+        keywords: meta?.keywords || defaultMeta.home?.keywords,
         openGraph: {
-            title: meta?.ogTitle || meta?.title || defaultMeta.home?.title,
-            description: meta?.ogDescription || meta?.description || defaultMeta.home?.description,
-            images: meta?.ogImage ? [{ url: meta.ogImage }] : [],
-            type: (meta?.ogType === 'article' ? 'article' : 'website') as 'article' | 'website',
+            title: ogTitle,
+            description: ogDescription,
+            images: ogImage ? [{ url: ogImage }] : [],
+            type: ogType,
         },
         twitter: {
             card: 'summary_large_image',
-            title: meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.home?.title,
-            description: meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.home?.description,
-            images: meta?.twitterImage || meta?.ogImage,
+            title: twitterTitle,
+            description: twitterDescription,
+            images: twitterImage ? [twitterImage] : [],
         },
         alternates: {
-            canonical: meta?.canonical,
+            canonical: meta?.canonical || defaultMeta.home?.canonical,
         },
-        robots: meta?.robots as Metadata['robots'],
+        robots: (meta?.robots || defaultMeta.home?.robots) as Metadata['robots'],
     }
 }
 

@@ -126,8 +126,15 @@ export async function getBlogReviewsServer(slug: string, page: number = 1, pageS
     results: Review[]
 }> {
     const serverApi = getServerApi()
+    // Fix: Use the same endpoint as client function
     const response = await serverApi.get(
-        `/api/reviews/?blog=${slug}&page=${page}&page_size=${pageSize}`
+        `/api/blog/${slug}/reviews/`,  // Changed from `/api/reviews/?blog=${slug}`
+        {
+            params: {
+                page,
+                page_size: pageSize,
+            }
+        }
     )
     return response.data
 }

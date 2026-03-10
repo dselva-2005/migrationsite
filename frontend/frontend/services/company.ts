@@ -1,5 +1,6 @@
 // services/company.ts
 import publicApi from "@/lib/publicApi"
+import { getServerApi } from "@/lib/serverApi"
 import { Company } from "@/types/company"
 
 export interface CompanyListResponse {
@@ -67,4 +68,17 @@ export async function getCompanyBySlug(slug: string) {
     companyDetailCache.set(slug, normalized)
 
     return normalized
+}
+
+// ✅ SERVER-SIDE FETCHING FUNCTIONS (ADD THESE AT THE BOTTOM)
+export async function getCompanyBySlugServer(slug: string): Promise<Company> {
+    const serverApi = getServerApi() // Initialize inside function
+    const response = await serverApi.get(`/api/company/${slug}/`)
+    return normalizeCompany(response.data)
+}
+
+export async function getCompaniesServer(page = 1, pageSize = 8): Promise<CompanyListResponse> {
+    const serverApi = getServerApi() // Initialize inside function
+    const response = await serverApi.get(`/api/company/?page=${page}&page_size=${pageSize}`)
+    return normalizeCompanyList(response.data)
 }

@@ -1,5 +1,5 @@
 // app/blog/[slug]/page.tsx
-import { getBlogPostServer, getBlogReviewsServer } from "@/services/blog"
+import { getBlogPost, getBlogReviewsServer } from "@/services/blog"
 import { Metadata } from 'next'
 import SingleBlogClient from './SingleBlogClient'
 import { BlogPost } from "@/types/blog"
@@ -13,7 +13,7 @@ export async function generateMetadata({
     const { slug } = await params
     
     try {
-        const post = await getBlogPostServer(slug)
+        const post = await getBlogPost(slug)
         
         return {
             title: `${post.title} | Migration Review Blog`,
@@ -57,7 +57,7 @@ export default async function Page({
     
     try {
         const [postData, reviewsData] = await Promise.all([
-            getBlogPostServer(slug),
+            getBlogPost(slug),
             getBlogReviewsServer(slug, 1, 4)
         ])
         post = postData

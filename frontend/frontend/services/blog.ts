@@ -1,5 +1,7 @@
 import publicApi from "@/lib/publicApi"
+import { getServerApi } from "@/lib/serverApi"
 import { BlogPost } from "@/types/blog"
+import { Review } from "@/types/review"
 
 /* ------------------------------------------------------------------ */
 /* Types */
@@ -99,4 +101,33 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
 
     setCache(cacheKey, res.data)
     return res.data
+}
+
+/* ------------------------------------------------------------------ */
+/* Server-side fetch functions (add these at the bottom) */
+/* ------------------------------------------------------------------ */
+
+export async function getBlogPostServer(slug: string): Promise<BlogPost> {
+    const serverApi = getServerApi()
+    const response = await serverApi.get(`/api/blog/${slug}/`)
+    return response.data
+}
+
+export async function getBlogPostsServer(page: number = 1): Promise<BlogListResponse> {
+    const serverApi = getServerApi()
+    const response = await serverApi.get("/api/blog/", {
+        params: { page },
+    })
+    return response.data
+}
+
+export async function getBlogReviewsServer(slug: string, page: number = 1, pageSize: number = 4): Promise<{
+    count: number
+    results: Review[]
+}> {
+    const serverApi = getServerApi()
+    const response = await serverApi.get(
+        `/api/reviews/?blog=${slug}&page=${page}&page_size=${pageSize}`
+    )
+    return response.data
 }

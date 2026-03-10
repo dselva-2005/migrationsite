@@ -16,7 +16,7 @@ export async function generateMetadata({
         const post = await getBlogPostServer(slug)
         
         return {
-            title: `${post.title} | Immigration Review Blog`,
+            title: `${post.title} | Migration Review Blog`,
             description: post.excerpt || post.content.substring(0, 160),
             openGraph: {
                 title: post.title,

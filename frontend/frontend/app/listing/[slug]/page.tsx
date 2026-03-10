@@ -17,7 +17,7 @@ export async function generateMetadata({
         const company = await getCompanyBySlugServer(slug)
 
         return {
-            title: `${company.name} Reviews & Ratings | Immigration Review`,
+            title: `${company.name} Reviews & Ratings | Migration Review`,
             description: `Read ${company.rating_count || 0} reviews for ${company.name}. Rating: ${company.rating_average || 0}/5.`,
             openGraph: {
                 title: `${company.name} Reviews & Ratings`,

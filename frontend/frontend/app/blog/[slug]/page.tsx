@@ -33,7 +33,7 @@ export async function generateMetadata({
                 images: post.image ? [post.image] : [],
             },
             alternates: {
-                canonical: `https://yourdomain.com/blog/${slug}`,
+                canonical: `https://migrationreviews.com/blog/${slug}`,
             }
         }
     } catch (error) {

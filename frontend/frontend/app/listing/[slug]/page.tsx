@@ -31,7 +31,7 @@ export async function generateMetadata({
                 images: company.logo ? [company.logo] : [],
             },
             alternates: {
-                canonical: `https://yourdomain.com/listing/${slug}/`,
+                canonical: `https://migrationreviews.com/listing/${slug}/`,
             }
         }
     } catch (error) {

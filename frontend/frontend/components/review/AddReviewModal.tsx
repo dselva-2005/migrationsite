@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
+import { toast } from "sonner" // Add this import
 import { createBlogReview } from "@/services/review"
+import { AxiosError } from "axios"
 
 type Props = {
     slug: string
@@ -23,7 +25,7 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
 
     async function handleSubmit() {
         if (!body.trim()) {
-            alert("Review body cannot be empty")
+            toast.error("Review body cannot be empty")
             return
         }
 
@@ -35,11 +37,33 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
         setLoading(true)
         try {
             await createBlogReview(slug, formData)
+            toast.success("Review submitted! Pending approval")
             onSuccess()
             onClose()
         } catch (err) {
             console.error(err)
-            alert("Failed to submit review")
+
+            if (err instanceof AxiosError && err.response?.data) {
+                const errorData = err.response.data as Record<string, unknown>
+
+                if (typeof errorData === 'object' && errorData !== null) {
+                    if ('detail' in errorData && typeof errorData.detail === 'string') {
+                        toast.error(errorData.detail)
+                    } else {
+                        // Handle field validation errors
+                        const firstError = Object.values(errorData)[0]
+                        if (firstError) {
+                            toast.error(Array.isArray(firstError) ? firstError[0] : String(firstError))
+                        } else {
+                            toast.error("Failed to submit review")
+                        }
+                    }
+                } else {
+                    toast.error("Failed to submit review")
+                }
+            } else {
+                toast.error("Failed to submit review")
+            }
         } finally {
             setLoading(false)
         }
@@ -61,11 +85,10 @@ export function AddReviewModal({ slug, onClose, onSuccess }: Props) {
                                 key={star}
                                 type="button"
                                 onClick={() => setRating(star)}
-                                className={`text-2xl ${
-                                    star <= rating
-                                        ? "text-yellow-400"
-                                        : "text-gray-300"
-                                }`}
+                                className={`text-2xl ${star <= rating
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                    }`}
                             >
                                 ★
                             </button>

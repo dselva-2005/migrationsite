@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Avg, Count, Q, F
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
-
+from django.db.utils import IntegrityError
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
@@ -167,7 +167,8 @@ class BlogPostReviewAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
+    
+    # BlogPostReviewAPIView post method
     def post(self, request, slug):
         if not request.user.is_authenticated:
             return Response(
@@ -182,21 +183,49 @@ class BlogPostReviewAPIView(APIView):
             published_at__lte=timezone.now(),
         )
 
+        # Check if user already reviewed this blog
+        content_type = ContentType.objects.get_for_model(BlogPost)
+        existing_review = Review.objects.filter(
+            content_type=content_type,
+            object_id=blog.id,
+            user=request.user
+        ).first()
+        
+        if existing_review:
+            return Response(
+                {
+                    "detail": "You have already submitted a review for this blog post",
+                    "code": "duplicate_review"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = ReviewCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save(
-            content_type=ContentType.objects.get_for_model(BlogPost),
-            object_id=blog.id,
-            title=serializer.validated_data.get("title", ""),
-            author_name=request.user.username,
-            author_email=request.user.email,
-            user=request.user,
-            is_verified=True,
-            moderation_status=Review.ModerationStatus.PENDING,
-            ip_address=request.META.get("REMOTE_ADDR"),
-            user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        )
+        try:
+            serializer.save(
+                content_type=content_type,
+                object_id=blog.id,
+                title=serializer.validated_data.get("title", ""),
+                author_name=request.user.username,
+                author_email=request.user.email,
+                user=request.user,
+                is_verified=True,
+                moderation_status=Review.ModerationStatus.PENDING,
+                ip_address=request.META.get("REMOTE_ADDR"),
+                user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            )
+        except IntegrityError as e:
+            if "unique_review_per_user_per_object" in str(e):
+                return Response(
+                    {
+                        "detail": "You have already submitted a review for this blog post",
+                        "code": "duplicate_review"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            raise e
 
         return Response(
             {"detail": "Review submitted and pending moderation"},

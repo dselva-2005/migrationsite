@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation" // Add this
 import { toast } from "sonner"
 
 import { Section } from "@/components/Section"
@@ -13,8 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
-import { getBlogPost, getBlogReviewsServer } from "@/services/blog"
-
+import { getBlogPost } from "@/services/blog"
+import { getBlogReviews } from "@/services/review"
+import { useAuth } from "@/providers/AuthProvider" // Add this
 
 /* ---------------- Blog Skeletons ---------------- */
 
@@ -84,7 +86,6 @@ function SidebarSkeleton() {
     )
 }
 
-
 function ShadowDOMRenderer({ html }: { html: string }) {
     const containerRef = useRef<HTMLDivElement>(null)
 
@@ -111,36 +112,37 @@ interface SingleBlogClientProps {
     slug: string
     initialPost: BlogPost | null
     initialReviews: Review[]
-    error?: string | null
 }
 
 export default function SingleBlogClient({ 
     slug, 
     initialPost, 
-    initialReviews,
-    error: initialError 
+    initialReviews 
 }: SingleBlogClientProps) {
+    const router = useRouter()
+    const { isLoggedIn, loading: authLoading } = useAuth()
+    
     const [post, setPost] = useState<BlogPost | null>(initialPost)
     const [reviews, setReviews] = useState<Review[]>(initialReviews)
     const [loading, setLoading] = useState(!initialPost)
     const [openModal, setOpenModal] = useState(false)
-    const [error, setError] = useState(initialError)
 
-    // Fetch fresh data on client if needed (e.g., for real-time updates)
+    // Fetch blog post if not provided by server
     useEffect(() => {
-        // If we already have initial data, don't fetch again
-        if (initialPost) return
+        if (!slug) return
+        if (initialPost) {
+            setLoading(false)
+            return
+        }
 
         const fetchPost = async () => {
             setLoading(true)
             try {
                 const data = await getBlogPost(slug)
                 setPost(data)
-                setError(undefined)
             } catch (err) {
                 console.error("Failed to fetch blog post:", err)
                 toast.error("Failed to load blog post")
-                setError("Failed to load blog post")
                 setPost(null)
             } finally {
                 setLoading(false)
@@ -150,10 +152,11 @@ export default function SingleBlogClient({
         fetchPost()
     }, [slug, initialPost])
 
-    // Load more reviews (only on client)
+    // Load reviews
     const loadReviews = useCallback(async () => {
+        if (!slug) return
         try {
-            const data = await getBlogReviewsServer(slug, 1, 4)
+            const data = await getBlogReviews(slug, 1, 4)
             setReviews(data.results)
         } catch (err) {
             console.error("Failed to fetch reviews:", err)
@@ -161,26 +164,26 @@ export default function SingleBlogClient({
         }
     }, [slug])
 
-    // Refresh reviews after adding new one
-    const handleReviewAdded = () => {
-        toast.success("Review submitted! Pending approval")
-        loadReviews()
-        setOpenModal(false)
+    // Initial fetch for reviews if not provided by server
+    useEffect(() => {
+        if (!slug) return
+        if (!initialReviews.length) {
+            loadReviews()
+        }
+    }, [slug, initialReviews.length, loadReviews])
+
+    // Handle add review click with auth check
+    const handleAddReviewClick = () => {
+        if (!isLoggedIn) {
+            toast.error("Please login to add a review")
+            router.push("/login")
+            return
+        }
+        setOpenModal(true)
     }
 
-    // Show error if any
-    if (error) {
-        return (
-            <Section>
-                <div className="container max-w-3xl py-12">
-                    <p className="text-muted-foreground">{error}</p>
-                </div>
-            </Section>
-        )
-    }
-
-    // Show loading skeleton if no data
-    if (loading || !post) {
+    // Loading state
+    if (loading || authLoading) {
         return (
             <Section>
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -191,6 +194,17 @@ export default function SingleBlogClient({
                         <BlogContentSkeleton />
                     </article>
                     <SidebarSkeleton />
+                </div>
+            </Section>
+        )
+    }
+
+    // Not found
+    if (!post) {
+        return (
+            <Section>
+                <div className="container max-w-3xl py-12">
+                    <p className="text-muted-foreground">Blog not found</p>
                 </div>
             </Section>
         )
@@ -236,7 +250,7 @@ export default function SingleBlogClient({
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold">Latest Reviews</h2>
                         <button
-                            onClick={() => setOpenModal(true)}
+                            onClick={handleAddReviewClick}
                             className="text-sm text-primary hover:underline"
                         >
                             Add Review
@@ -258,7 +272,7 @@ export default function SingleBlogClient({
                                 <div className="flex items-center justify-between">
                                     <StarDisplay rating={review.rating} size={18} />
                                     <Badge variant="secondary">
-                                        {/* review.author if available */}
+                                        { review.author }
                                     </Badge>
                                 </div>
                                 <h3 className="font-medium">{review.title}</h3>
@@ -274,12 +288,16 @@ export default function SingleBlogClient({
                 </aside>
             </div>
 
-            {/* Add Review Modal */}
-            {openModal && slug && (
+            {/* Add Review Modal - only shown when logged in */}
+            {openModal && slug && isLoggedIn && (
                 <AddReviewModal
                     slug={slug}
                     onClose={() => setOpenModal(false)}
-                    onSuccess={handleReviewAdded}
+                    onSuccess={() => {
+                        toast.success("Review submitted! Pending approval")
+                        loadReviews()
+                        setOpenModal(false)
+                    }}
                 />
             )}
         </Section>

@@ -54,7 +54,6 @@ export default async function Page({
     // Properly typed initial state
     let post: BlogPost | null = null
     let initialReviews: Review[] = []
-    let error: string | null = null
     
     try {
         const [postData, reviewsData] = await Promise.all([
@@ -64,7 +63,9 @@ export default async function Page({
         post = postData
         initialReviews = reviewsData.results
     } catch (err) {
-        error = err instanceof Error ? err.message : 'Failed to load blog post'
+        // Just log the error, don't pass it to client
+        console.error('Failed to fetch blog data:', err)
+        // post and initialReviews remain null/empty, client will handle
     }
     
     return (
@@ -72,7 +73,6 @@ export default async function Page({
             slug={slug}
             initialPost={post}
             initialReviews={initialReviews}
-            error={error}
         />
     )
 }

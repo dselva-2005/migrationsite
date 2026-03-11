@@ -5,6 +5,24 @@ import SingleBlogClient from './SingleBlogClient'
 import { BlogPost } from "@/types/blog"
 import { Review } from "@/types/review"
 
+// Helper function to convert backend URL to public URL
+function getPublicImageUrl(imagePath: string | null | undefined): string | null {
+    if (!imagePath) return null
+    
+    // If it's already a full URL with http/https
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        // If it's the internal backend URL, replace it
+        if (imagePath.includes('backend:8000')) {
+            return imagePath.replace('http://backend:8000', process.env.NEXT_PUBLIC_BASE_URL || 'https://migrationreviews.com')
+        }
+        return imagePath
+    }
+    
+    // If it's a relative path, prepend the base URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://migrationreviews.com'
+    return `${baseUrl}${imagePath.startsWith('/') ? imagePath : `/${imagePath}`}`
+}
+
 export async function generateMetadata({ 
     params 
 }: { 
@@ -15,13 +33,24 @@ export async function generateMetadata({
     try {
         const post = await getBlogPost(slug)
         
+        // Convert image URL to public URL
+        const publicImageUrl = getPublicImageUrl(post.image)
+        
+        // Create image metadata only if we have a valid public URL
+        const images = publicImageUrl ? [{
+            url: publicImageUrl,
+            width: 1200,
+            height: 630,
+            alt: post.title,
+        }] : []
+
         return {
             title: `${post.title} | Migration Review Blog`,
             description: post.excerpt || post.content.substring(0, 160),
             openGraph: {
                 title: post.title,
                 description: post.excerpt || post.content.substring(0, 160),
-                images: post.image ? [{ url: post.image }] : [],
+                images: images.length > 0 ? images : undefined,
                 type: 'article',
                 publishedTime: post.date,
                 authors: post.author ? [post.author] : [],
@@ -30,7 +59,7 @@ export async function generateMetadata({
                 card: 'summary_large_image',
                 title: post.title,
                 description: post.excerpt || post.content.substring(0, 160),
-                images: post.image ? [post.image] : [],
+                images: publicImageUrl ? [publicImageUrl] : undefined,
             },
             alternates: {
                 canonical: `https://migrationreviews.com/blog/${slug}`,

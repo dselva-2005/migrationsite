@@ -58,18 +58,26 @@ function setCache<T>(key: string, data: T) {
 /* ------------------------------------------------------------------ */
 
 export async function getBlogPosts(
-    page: number = 1
+    page: number = 1,
+    options?: { skipCache?: boolean }
 ): Promise<BlogListResponse> {
     const cacheKey = `blog:list:page:${page}`
 
-    const cached = getCache<BlogListResponse>(cacheKey)
-    if (cached) return cached
+    // Skip cache if requested (useful for loading more)
+    if (!options?.skipCache) {
+        const cached = getCache<BlogListResponse>(cacheKey)
+        if (cached) return cached
+    }
 
     const res = await publicApi.get<BlogListResponse>("/api/blog/", {
         params: { page },
     })
 
-    setCache(cacheKey, res.data)
+    // Don't cache if skipCache is true
+    if (!options?.skipCache) {
+        setCache(cacheKey, res.data)
+    }
+    
     return res.data
 }
 

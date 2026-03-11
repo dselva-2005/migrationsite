@@ -55,14 +55,15 @@ export default function BlogPage() {
         }
     }, [])
 
-    // Load more posts
+    // Load more posts - FIXED: Added skipCache: true
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) return
 
         setLoadingMore(true)
         try {
             const nextPage = currentPage + 1
-            const postsRes = await getBlogPosts(nextPage)
+            // IMPORTANT: Use skipCache to ensure fresh data for next pages
+            const postsRes = await getBlogPosts(nextPage, { skipCache: true })
             
             setPosts(prev => [...prev, ...postsRes.results])
             setTotalCount(postsRes.count)

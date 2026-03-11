@@ -18,18 +18,17 @@ export function Section({ children, tone = "base" }: SectionProps) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // ✅ ENTER (from top OR bottom)
-        if (entry.intersectionRatio > 0.15) {
+        // Activate when any part is visible
+        if (entry.isIntersecting) {
           setActive(true)
-        }
-
-        // ✅ FULL EXIT (top OR bottom)
-        if (entry.intersectionRatio === 0) {
+        } else {
           setActive(false)
         }
       },
       {
-        threshold: [0, 0.15],
+        threshold: 0, // Any visibility triggers
+        // Optional: Add a small rootMargin to trigger slightly before entering
+        // rootMargin: "0px 0px -10px 0px"
       }
     )
 

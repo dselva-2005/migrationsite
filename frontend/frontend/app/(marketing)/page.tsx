@@ -2,39 +2,11 @@
 import { getPageMeta, defaultMeta } from '@/services/meta'
 import { Metadata } from 'next'
 import HomeClient from './HomeClient'
-import fs from 'fs';
-import path from 'path';
-
+export const revalidate = 0; // Disable caching
+export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
     // Fetch meta for 'home' page from the 'meta' collection
     const meta = await getPageMeta('home')
-    
-    // Write debug info to file
-    const debugInfo = {
-        timestamp: new Date().toISOString(),
-        metaExists: !!meta,
-        metaData: meta,
-        defaultTitle: defaultMeta.home?.title,
-        finalTitle: meta?.title || defaultMeta.home?.title,
-        environment: process.env.NODE_ENV
-    }
-    
-    try {
-        // Ensure directory exists
-        const logDir = '/tmp/next-debug';
-        if (!fs.existsSync(logDir)) {
-            fs.mkdirSync(logDir, { recursive: true });
-        }
-        
-        // Write to file
-        fs.appendFileSync(
-            path.join(logDir, 'meta-debug.log'),
-            JSON.stringify(debugInfo, null, 2) + '\n---\n'
-        );
-    } catch (error) {
-        // Silently fail - don't break the app
-        console.error('Failed to write debug log:', error);
-    }
     
     // Use meta if available, otherwise fall back to defaultMeta
     const title = meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services'

@@ -16,6 +16,7 @@ type WhyChooseItem = {
     icon: string
     title: string
     description: string
+    alt:string
 }
 
 type WhyChooseImage = {
@@ -142,7 +143,7 @@ export default function WhyChooseSection() {
                                 <div className="relative h-12 w-12 shrink-0">
                                     <Image
                                         src={item.icon}
-                                        alt=""
+                                        alt={item.alt}
                                         fill
                                         className="object-contain"
                                     />

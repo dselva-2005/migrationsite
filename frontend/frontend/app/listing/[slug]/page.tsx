@@ -31,7 +31,6 @@ export async function generateMetadata({
     const { slug } = await params
 
     try {
-        console.log('Fetching company with slug:', slug) // Add logging
         const company = await getCompanyBySlugServer(slug)
         
         // Convert logo URL to public URL

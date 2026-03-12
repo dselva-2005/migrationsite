@@ -2,12 +2,11 @@
 import { getPageMeta, defaultMeta } from '@/services/meta'
 import { Metadata } from 'next'
 import HomeClient from './HomeClient'
-export const revalidate = 0; // Disable caching
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 export async function generateMetadata(): Promise<Metadata> {
     // Fetch meta for 'home' page from the 'meta' collection
     const meta = await getPageMeta('home')
-    
+
     // Use meta if available, otherwise fall back to defaultMeta
     const title = meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services'
     const description = meta?.description || defaultMeta.home?.description || 'Read authentic reviews about migration consultants, lawyers, and services. Make informed decisions for your migration journey.'
@@ -18,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const twitterTitle = meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.home?.twitterTitle || defaultMeta.home?.ogTitle || defaultMeta.home?.title
     const twitterDescription = meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.home?.twitterDescription || defaultMeta.home?.ogDescription || defaultMeta.home?.description
     const twitterImage = meta?.twitterImage || meta?.ogImage || defaultMeta.home?.twitterImage || defaultMeta.home?.ogImage
-    
+
     return {
         title,
         description,

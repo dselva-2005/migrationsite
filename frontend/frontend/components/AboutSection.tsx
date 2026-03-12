@@ -31,6 +31,7 @@ type AboutHighlight = {
     icon: string
     eyebrow: string
     title: string
+    alt: string
 }
 
 type AboutCTA = {
@@ -212,7 +213,7 @@ export default function AboutSection() {
                     <div className="flex items-start gap-4">
                         <Image
                             src={highlight.icon}
-                            alt=""
+                            alt={highlight.alt}
                             width={48}
                             height={48}
                             className="shrink-0"

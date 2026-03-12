@@ -5,8 +5,10 @@ import HomeClient from './HomeClient'
 
 export async function generateMetadata(): Promise<Metadata> {
     // Fetch meta for 'home' page from the 'meta' collection
+    console.log('🔴🔴🔴🔴🔴 META DEBUG START 🔴🔴🔴🔴🔴')
     const meta = await getPageMeta('home')
-    console.log(meta)
+    console.log('🔴 META OBJECT:', JSON.stringify(meta, null, 2))
+    console.log('🔴🔴🔴🔴🔴 META DEBUG END 🔴🔴🔴🔴🔴')
     // Use meta if available, otherwise fall back to defaultMeta
     const title = meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services'
     const description = meta?.description || defaultMeta.home?.description || 'Read authentic reviews about migration consultants, lawyers, and services. Make informed decisions for your migration journey.'

@@ -5,6 +5,7 @@ import AboutSection from "@/components/AboutSection";
 import { PageContentProvider } from "@/providers/PageContentProvider";
 import { Section } from "@/components/Section";
 import WhyChooseSection from "@/components/WhyChooseSection";
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('about')

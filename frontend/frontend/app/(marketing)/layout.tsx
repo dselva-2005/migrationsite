@@ -10,6 +10,7 @@ export default function MarketingLayout({
     useRoutePrefetch([
         "/blog",
         "/listing",
+        "/review"
     ])
 
     return <>{children}</>

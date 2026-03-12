@@ -8,6 +8,7 @@ import { VisaServicesSection } from "@/components/VisaServicesSection"
 import StatisticsSection from "@/components/visa/StatisticsSectionContent"
 import WhyChooseUsSection from "@/components/WhyChooseUsSection"
 import { Section } from "@/components/Section"
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('visa')

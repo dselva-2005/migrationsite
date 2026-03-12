@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-type Route = "/dashboard" | "/profile" | "/blog" | "/listing"
+type Route = "/dashboard" | "/profile" | "/blog" | "/listing" | "/review"
 
 export function useRoutePrefetch(routes: Route[]) {
     const router = useRouter()

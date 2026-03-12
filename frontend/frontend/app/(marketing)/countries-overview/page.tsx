@@ -7,6 +7,7 @@ import TravelVisaSection from "./TravelVisaSection"
 import CountriesSection from "@/components/CountriesSection"
 import CountriesPageTitle from "./CountriesPageTitle"
 import { Section } from "@/components/Section"
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('countries')

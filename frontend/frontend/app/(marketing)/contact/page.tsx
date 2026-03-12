@@ -6,6 +6,7 @@ import ContactQuickContactSection from "@/components/ContactQuickContactSection"
 import { PageContentProvider } from "@/providers/PageContentProvider"
 import ContactOfficesSection from "@/components/ContactOfficesSection"
 import PageHero from "@/components/contactpageHero"
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('contact')

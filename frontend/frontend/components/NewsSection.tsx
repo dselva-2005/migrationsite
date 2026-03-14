@@ -6,33 +6,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle } from "lucide-react"
 import { usePageContent } from "@/providers/PageContentProvider"
 import { useEffect, useState } from "react"
-import publicApi from "@/lib/publicApi"
+import { getBlogPosts } from "@/services/blog" // Import from your service
 
 /* ---------------- Types ---------------- */
 
 type NewsHeader = {
     eyebrow: string
     title: string
-}
-
-type BlogApiItem = {
-    slug: string
-    title: string
-    excerpt: string
-    image: string
-    category: string
-    author: string
-    date: string
-    views: number
-    rating: number
-    reviewCount: number
-}
-
-type BlogApiResponse = {
-    count: number
-    next: string | null
-    previous: string | null
-    results: BlogApiItem[]
 }
 
 type NewsItem = {
@@ -55,16 +35,17 @@ type NewsItem = {
 export default function NewsSection() {
     const { content, loading } = usePageContent()
     const [blogs, setBlogs] = useState<NewsItem[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    /* ---------------- Fetch blogs ---------------- */
+    /* ---------------- Fetch blogs using service ---------------- */
 
     useEffect(() => {
         async function fetchBlogs() {
+            setIsLoading(true)
             try {
-                const { data } = await publicApi.get<BlogApiResponse>("/api/blog/", {
-                    params: { page_size: 3 },
-                })
-
+                // Use the cached service function
+                const data = await getBlogPosts(1) // Page 1, uses cache automatically
+                
                 const mapped: NewsItem[] = data.results.map((b) => {
                     const dateObj = new Date(b.date)
                     const day = dateObj.getUTCDate().toString().padStart(2, "0")
@@ -73,12 +54,12 @@ export default function NewsSection() {
                     return {
                         id: b.slug,
                         title: b.title,
-                        excerpt: b.excerpt,
-                        image: b.image,
+                        excerpt: b.excerpt || "", // Handle if excerpt might be missing
+                        image: b.image || "/placeholder.jpg", // Provide fallback image
                         date: { day, month },
-                        category: b.category,
-                        author: b.author,
-                        comments: b.reviewCount,
+                        category: b.category || "Uncategorized",
+                        author: b.author || "Anonymous",
+                        comments: b.reviewCount || 0,
                         href: `/blog/${b.slug}`,
                     }
                 })
@@ -86,11 +67,13 @@ export default function NewsSection() {
                 setBlogs(mapped)
             } catch (err) {
                 console.error("Failed to fetch blogs", err)
+            } finally {
+                setIsLoading(false)
             }
         }
 
         fetchBlogs()
-    }, [])
+    }, []) // Empty dependency array means this runs once on mount
 
     /* ---------------- Hook-safe guards ---------------- */
 
@@ -115,75 +98,94 @@ export default function NewsSection() {
                     </h2>
                 </div>
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <Card key={i} className="overflow-hidden rounded-2xl border p-0">
+                                <div className="h-[200px] bg-gray-200 animate-pulse" />
+                                <CardContent className="p-8">
+                                    <div className="h-4 bg-gray-200 animate-pulse mb-4 w-1/3" />
+                                    <div className="h-6 bg-gray-200 animate-pulse mb-4" />
+                                    <div className="h-4 bg-gray-200 animate-pulse mb-2" />
+                                    <div className="h-4 bg-gray-200 animate-pulse mb-2 w-2/3" />
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+
                 {/* News Grid */}
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                    {blogs.map((post) => (
-                        <Card
-                            key={post.id}
-                            className="group overflow-hidden rounded-2xl border p-0 transition-shadow hover:shadow-lg"
-                        >
-                            {/* Image */}
-                            <div className="relative overflow-hidden">
-                                <Image
-                                    src={post.image}
-                                    alt={post.title}
-                                    width={370}
-                                    height={300}
-                                    className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    unoptimized
-                                />
+                {!isLoading && (
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        {blogs.map((post) => (
+                            <Card
+                                key={post.id}
+                                className="group overflow-hidden rounded-2xl border p-0 transition-shadow hover:shadow-lg"
+                            >
+                                {/* Image */}
+                                <div className="relative overflow-hidden">
+                                    <Image
+                                        src={post.image}
+                                        alt={post.title}
+                                        width={370}
+                                        height={300}
+                                        className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        unoptimized
+                                    />
 
-                                {/* Date badge */}
-                                <div className="absolute left-4 top-4 rounded-xl bg-background px-3 py-2 text-center shadow-sm">
-                                    <div className="text-lg font-semibold leading-none">
-                                        {post.date.day}
-                                    </div>
-                                    <div className="text-xs uppercase text-muted-foreground">
-                                        {post.date.month}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <CardContent className="flex flex-col gap-4 p-8">
-                                {/* Meta */}
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span className="font-medium text-primary">
-                                        {post.category}
-                                    </span>
-                                    {/* <span>By {post.author}</span> */}
-                                </div>
-
-                                {/* Title */}
-                                <h4 className="line-clamp-2 text-lg font-semibold leading-snug">
-                                    <Link href={post.href} className="hover:underline">
-                                        {post.title}
-                                    </Link>
-                                </h4>
-
-                                {/* Excerpt */}
-                                <p className="line-clamp-3 text-sm text-muted-foreground">
-                                    {post.excerpt}
-                                </p>
-
-                                {/* Footer */}
-                                <div className="mt-auto flex items-center justify-between">
-                                    <Link
-                                        href={post.href}
-                                        className="text-sm font-medium text-primary hover:underline"
-                                    >
-                                        Read More →
-                                    </Link>
-
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                        <MessageCircle className="h-4 w-4" />
-                                        {post.comments}
+                                    {/* Date badge */}
+                                    <div className="absolute left-4 top-4 rounded-xl bg-background px-3 py-2 text-center shadow-sm">
+                                        <div className="text-lg font-semibold leading-none">
+                                            {post.date.day}
+                                        </div>
+                                        <div className="text-xs uppercase text-muted-foreground">
+                                            {post.date.month}
+                                        </div>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+
+                                {/* Content */}
+                                <CardContent className="flex flex-col gap-4 p-8">
+                                    {/* Meta */}
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <span className="font-medium text-primary">
+                                            {post.category}
+                                        </span>
+                                        {/* <span>By {post.author}</span> */}
+                                    </div>
+
+                                    {/* Title */}
+                                    <h4 className="line-clamp-2 text-lg font-semibold leading-snug">
+                                        <Link href={post.href} className="hover:underline">
+                                            {post.title}
+                                        </Link>
+                                    </h4>
+
+                                    {/* Excerpt */}
+                                    <p className="line-clamp-3 text-sm text-muted-foreground">
+                                        {post.excerpt}
+                                    </p>
+
+                                    {/* Footer */}
+                                    <div className="mt-auto flex items-center justify-between">
+                                        <Link
+                                            href={post.href}
+                                            className="text-sm font-medium text-primary hover:underline"
+                                        >
+                                            Read More →
+                                        </Link>
+
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <MessageCircle className="h-4 w-4" />
+                                            {post.comments}
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     )

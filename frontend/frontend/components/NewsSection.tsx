@@ -46,6 +46,8 @@ export default function NewsSection() {
                 // Use the cached service function
                 const data = await getBlogPosts(1) // Page 1, uses cache automatically
                 
+                // Take only first 3 blogs for the homepage section
+                // (API returns max 8 blogs, so this is efficient enough)
                 const mapped: NewsItem[] = data.results.slice(0, 3).map((b) => {
                     const dateObj = new Date(b.date)
                     const day = dateObj.getUTCDate().toString().padStart(2, "0")

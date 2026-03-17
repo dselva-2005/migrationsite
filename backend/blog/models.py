@@ -12,6 +12,9 @@ class BlogCategory(models.Model):
     slug = models.SlugField(unique=True)
     created_at = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        ordering = ['-created_at']
+
     def __str__(self):
         return self.name
 
@@ -20,6 +23,9 @@ class BlogTag(models.Model):
     name = models.CharField(max_length=50)
     slug = models.SlugField(unique=True)
     created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.name
@@ -88,6 +94,7 @@ class BlogPost(models.Model):
     search_vector = SearchVectorField(null=True)  # <-- Postgres full-text
     
     class Meta:
+        ordering = ['-published_at', '-created_at']
         indexes = [
             # 🔥 Full text
             GinIndex(fields=["search_vector"]),

@@ -8,6 +8,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/providers/AuthProvider"
 import { usePageContent } from "@/providers/PageContentProvider"
+import { GlobalSearch } from "@/components/GlobalSearch"
 
 import {
     Sheet,
@@ -320,9 +321,14 @@ export default function Navbar() {
                     <NavLinks />
                 </div>
 
-                {/* Right side actions - Desktop */}
-                <div className="hidden lg:flex items-center gap-4 ml-auto">
-                    {/* Review button always visible on desktop */}
+                {/* Desktop Search and Actions */}
+                <div className="hidden md:flex items-center gap-3 ml-auto">
+                    {/* Search Bar - Desktop */}
+                    <div className="w-56 xl:w-72">
+                        <GlobalSearch />
+                    </div>
+
+                    {/* Review button */}
                     <Link
                         href="/review"
                         className={reviewButtonStyles}
@@ -339,14 +345,23 @@ export default function Navbar() {
                             Profile
                         </Link>
                     )}
+
+                    {/* Tablet hamburger */}
+                    <div className="lg:hidden">
+                        <MobileNav />
+                    </div>
                 </div>
 
-                {/* Tablet/Mobile hamburger */}
-                <div className="lg:hidden ml-auto">
+                {/* Mobile hamburger */}
+                <div className="md:hidden ml-auto">
                     <MobileNav />
                 </div>
             </div>
 
+            {/* Mobile search - visible only on mobile/tablet */}
+            <div className="md:hidden border-t px-4 py-2 bg-background">
+                <GlobalSearch />
+            </div>
         </header>
     )
 }

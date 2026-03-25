@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
+import Link from "next/link"
 import AboutSection from "@/components/AboutSection"
 import InfoSection from "@/components/InfoSection"
 import { VisaServicesSection } from "@/components/VisaServicesSection"
@@ -102,6 +102,11 @@ export default function Home() {
                                 reviewCount: c.rating_count,
                             }))}
                         />
+                        <div className="flex justify-center mt-7">
+                            <Link href="/review" className="py-3 rounded-lg px-6 font-medium text-white bg-black">
+                                Write a Review
+                            </Link>
+                        </div>
                     </Section>
 
                     <Section tone="soft">

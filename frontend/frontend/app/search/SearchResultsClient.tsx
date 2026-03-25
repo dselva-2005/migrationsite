@@ -183,7 +183,7 @@ export default function SearchResultsPage() {
 
                         {/* ================= LOAD MORE ================= */}
                         {data && !initialLoading && hasMore && (
-                            <div className="pt-5 text-center">
+                            <div className="text-center">
                                 <button
                                     onClick={loadMore}
                                     disabled={loadMoreLoading}

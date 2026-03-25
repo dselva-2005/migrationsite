@@ -11,7 +11,7 @@ import { PageContentProvider } from "@/providers/PageContentProvider"
 import { TrustpilotRating } from "@/components/TrustpilotRating"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-
+import { GlobalSearch } from "@/components/GlobalSearch"
 import {
     fullSearch,
     type Blog,
@@ -106,6 +106,8 @@ export default function SearchResultsPage() {
 
                     {/* ───────── MAIN CONTENT ───────── */}
                     <main className="lg:col-span-3 space-y-16">
+
+                        <GlobalSearch></GlobalSearch>
 
                         {/* ================= COMPANIES ================= */}
                         <section>

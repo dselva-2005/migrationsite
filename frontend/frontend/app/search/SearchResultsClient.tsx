@@ -147,7 +147,7 @@ export default function SearchResultsPage() {
 
                         {/* ================= BLOGS ================= */}
                         <section>
-                            <h2 className="text-xl sm:text-2xl font-bold">
+                            <h2 className="mb-4 text-xl sm:text-2xl font-bold">
                                 Blogs{" "}
                                 <span className="font-normal text-muted-foreground">
                                     ({initialLoading && !data
@@ -173,7 +173,7 @@ export default function SearchResultsPage() {
 
                             {/* Load more skeletons for blogs */}
                             {loadMoreLoading && (
-                                <div className="mt-4 space-y-6">
+                                <div className="mt-4">
                                     {Array.from({ length: 1 }).map((_, i) => (
                                         <BlogSkeletonItem key={`blog-skeleton-${i}`} />
                                     ))}

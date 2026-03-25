@@ -173,7 +173,7 @@ export default function SearchResultsPage() {
 
                             {/* Load more skeletons for blogs */}
                             {loadMoreLoading && (
-                                <div className="mt-4">
+                                <div className="mt-4 space-y-6">
                                     {Array.from({ length: 1 }).map((_, i) => (
                                         <BlogSkeletonItem key={`blog-skeleton-${i}`} />
                                     ))}
@@ -187,7 +187,7 @@ export default function SearchResultsPage() {
                                 <button
                                     onClick={loadMore}
                                     disabled={loadMoreLoading}
-                                    className="rounded-lg bg-black px-8 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                    className="rounded-lg border px-8 py-3 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {loadMoreLoading ? "Loading..." : "Load More"}
                                 </button>

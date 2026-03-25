@@ -25,51 +25,79 @@ export default function SearchResultsPage() {
     const searchParams = useSearchParams()
     const query = searchParams.get("q")?.trim() ?? ""
 
-    const [loading, setLoading] = useState(true)
+    const [initialLoading, setInitialLoading] = useState(true)
+    const [loadMoreLoading, setLoadMoreLoading] = useState(false)
     const [data, setData] = useState<FullSearchResponse | null>(null)
     const [page, setPage] = useState(1)
 
     useEffect(() => {
         let cancelled = false
 
-        async function fetchSearch(reset: boolean) {
+        async function fetchSearch() {
             try {
-                setLoading(true)
+                setInitialLoading(true)
 
                 const res = await fullSearch({
                     query,
-                    page,
+                    page: 1,
                 })
 
                 if (cancelled) return
 
-                setData(prev =>
-                    reset || !prev
-                        ? res
-                        : {
-                              ...res,
-                              companies: [
-                                  ...prev.companies,
-                                  ...res.companies,
-                              ],
-                              blogs: [...prev.blogs, ...res.blogs],
-                          }
-                )
+                setData(res)
+                setPage(1)
+            } catch (error) {
+                console.error("Search failed:", error)
             } finally {
-                if (!cancelled) setLoading(false)
+                if (!cancelled) setInitialLoading(false)
             }
         }
 
-        if (query) fetchSearch(page === 1)
-        else {
-            setLoading(false)
+        if (query) {
+            fetchSearch()
+        } else {
+            setInitialLoading(false)
             setData(null)
+            setPage(1)
         }
 
         return () => {
             cancelled = true
         }
-    }, [query, page])
+    }, [query])
+
+    const loadMore = async () => {
+        if (loadMoreLoading) return
+
+        try {
+            setLoadMoreLoading(true)
+
+            const nextPage = page + 1
+            const res = await fullSearch({
+                query,
+                page: nextPage,
+            })
+
+            setData(prev => {
+                if (!prev) return res
+                return {
+                    ...res,
+                    companies: [...prev.companies, ...res.companies],
+                    blogs: [...prev.blogs, ...res.blogs],
+                }
+            })
+            setPage(nextPage)
+        } catch (error) {
+            console.error("Load more failed:", error)
+        } finally {
+            setLoadMoreLoading(false)
+        }
+    }
+
+    const hasMore = data && (
+        data.companies.length < data.meta.total_companies ||
+        data.blogs.length < data.meta.total_blogs
+    )
 
     return (
         <PageContentProvider page="search">
@@ -84,30 +112,35 @@ export default function SearchResultsPage() {
                             <h2 className="mb-4 text-xl sm:text-2xl font-bold">
                                 Companies{" "}
                                 <span className="font-normal text-muted-foreground">
-                                    (
-                                    {loading && !data
+                                    ({initialLoading && !data
                                         ? "loading…"
-                                        : data?.meta.total_companies ?? 0}
-                                    )
+                                        : data?.meta.total_companies ?? 0})
                                 </span>
                             </h2>
 
-                            {loading && page === 1 && <CompanySkeleton />}
+                            {initialLoading && !data && <CompanySkeleton />}
 
-                            {!loading &&
-                                data?.companies.length === 0 && (
-                                    <p className="text-muted-foreground">
-                                        No companies found.
-                                    </p>
-                                )}
+                            {!initialLoading && data?.companies.length === 0 && (
+                                <p className="text-muted-foreground">
+                                    No companies found.
+                                </p>
+                            )}
 
-                            {!loading &&
-                                data?.companies.map(company => (
-                                    <CompanyRowCard
-                                        key={company.id}
-                                        company={company}
-                                    />
-                                ))}
+                            {data?.companies.map(company => (
+                                <CompanyRowCard
+                                    key={company.id}
+                                    company={company}
+                                />
+                            ))}
+
+                            {/* Load more skeletons for companies */}
+                            {loadMoreLoading && (
+                                <div className="mt-4 space-y-4">
+                                    {Array.from({ length: 2 }).map((_, i) => (
+                                        <CompanyRowSkeleton key={`company-skeleton-${i}`} />
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* ================= BLOGS ================= */}
@@ -115,50 +148,49 @@ export default function SearchResultsPage() {
                             <h2 className="mb-4 text-xl sm:text-2xl font-bold">
                                 Blogs{" "}
                                 <span className="font-normal text-muted-foreground">
-                                    (
-                                    {loading && !data
+                                    ({initialLoading && !data
                                         ? "loading…"
-                                        : data?.meta.total_blogs ?? 0}
-                                    )
+                                        : data?.meta.total_blogs ?? 0})
                                 </span>
                             </h2>
 
-                            {loading && page === 1 && <BlogSkeleton />}
+                            {initialLoading && !data && <BlogSkeleton />}
 
-                            {!loading &&
-                                data?.blogs.length === 0 && (
-                                    <p className="text-muted-foreground">
-                                        No blogs found.
-                                    </p>
-                                )}
+                            {!initialLoading && data?.blogs.length === 0 && (
+                                <p className="text-muted-foreground">
+                                    No blogs found.
+                                </p>
+                            )}
 
-                            {!loading &&
-                                data?.blogs.map(blog => (
-                                    <BlogCard
-                                        key={blog.slug}
-                                        blog={blog}
-                                    />
-                                ))}
+                            {data?.blogs.map(blog => (
+                                <BlogCard
+                                    key={blog.slug}
+                                    blog={blog}
+                                />
+                            ))}
+
+                            {/* Load more skeletons for blogs */}
+                            {loadMoreLoading && (
+                                <div className="mt-4 space-y-6">
+                                    {Array.from({ length: 1 }).map((_, i) => (
+                                        <BlogSkeletonItem key={`blog-skeleton-${i}`} />
+                                    ))}
+                                </div>
+                            )}
                         </section>
 
                         {/* ================= LOAD MORE ================= */}
-                        {data &&
-                            !loading &&
-                            (data.companies.length <
-                                data.meta.total_companies ||
-                                data.blogs.length <
-                                    data.meta.total_blogs) && (
-                                <div className="pt-10 text-center">
-                                    <button
-                                        onClick={() =>
-                                            setPage(p => p + 1)
-                                        }
-                                        className="rounded-lg border px-8 py-3 text-sm hover:bg-gray-100"
-                                    >
-                                        Load More
-                                    </button>
-                                </div>
-                            )}
+                        {data && !initialLoading && hasMore && (
+                            <div className="pt-10 text-center">
+                                <button
+                                    onClick={loadMore}
+                                    disabled={loadMoreLoading}
+                                    className="rounded-lg border px-8 py-3 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {loadMoreLoading ? "Loading..." : "Load More"}
+                                </button>
+                            </div>
+                        )}
                     </main>
 
                     {/* ───────── SIDEBAR (future use) ───────── */}
@@ -281,15 +313,47 @@ function CompanySkeleton() {
     )
 }
 
+function CompanyRowSkeleton() {
+    return (
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between border-b py-6">
+            <div className="flex gap-4 sm:gap-6 flex-1">
+                <div className="h-25 w-25 rounded-xl bg-gray-200 animate-pulse" />
+                <div className="space-y-2 flex-1">
+                    <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                </div>
+            </div>
+            <div className="sm:text-right">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+            </div>
+        </div>
+    )
+}
+
 function BlogSkeleton() {
     return (
         <div className="space-y-6">
             {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                    key={i}
-                    className="h-60 w-full rounded bg-gray-200 animate-pulse"
-                />
+                <BlogSkeletonItem key={i} />
             ))}
         </div>
+    )
+}
+
+function BlogSkeletonItem() {
+    return (
+        <Card className="mb-6 overflow-hidden">
+            <div className="relative h-48 sm:h-56 bg-gray-200 animate-pulse" />
+            <div className="p-4 sm:p-6 space-y-3">
+                <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+                <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse" />
+                <div className="space-y-2">
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse" />
+                </div>
+            </div>
+        </Card>
     )
 }

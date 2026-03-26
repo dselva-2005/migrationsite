@@ -187,7 +187,7 @@ export default function SearchResultsPage() {
                                 <button
                                     onClick={loadMore}
                                     disabled={loadMoreLoading}
-                                    className="rounded-lg bg-black px-8 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                                    className="rounded-lg bg-black px-8 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm transform scale-[1.2]"
                                 >
                                     {loadMoreLoading ? "Loading..." : "Load More"}
                                 </button>

@@ -106,9 +106,7 @@ export default function SearchResultsPage() {
 
                     {/* ───────── MAIN CONTENT ───────── */}
                     <main className="lg:col-span-3 space-y-16">
-
-                        <GlobalSearch></GlobalSearch>
-
+                        
                         {/* ================= COMPANIES ================= */}
                         <section>
                             <h2 className="mb-4 text-xl sm:text-2xl font-bold">

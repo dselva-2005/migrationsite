@@ -5,12 +5,12 @@ import { AuthProvider } from "@/providers/AuthProvider"
 import Navbar from "@/components/header/navbar";
 import { Footer } from "@/components/Footer"
 import { ScrollProgressCircle } from "@/components/ScrollProgress"
-// import Breadcrumbs from "@/components/header/Breadcrumbs";
 import { GlobalPrefetch } from "@/components/GlobalPrefetch";
 import ToasterClient from "@/components/data-table/ToasterClient";
 import AuthToasts from "@/components/AuthToast";
 import { PageContentProvider } from "@/providers/PageContentProvider";
 import { FloatingActionButton } from "@/components/FloatingActionButton"
+import Script from "next/script"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     siteName: "Migration Reviews",
     images: [
       {
-        url: "https://migrationreviews.com/opengraph-image.png", 
+        url: "https://migrationreviews.com/opengraph-image.png",
         width: 1200,
         height: 630,
         alt: "Migration Reviews - Trusted Migration Company Reviews",
@@ -60,6 +60,31 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Migration Reviews",
+  "url": "https://migrationreviews.com",
+  "logo": "https://migrationreviews.com/favicon.png",
+  "description": "Trusted platform for finding and reviewing migration service providers worldwide.",
+  "sameAs": []
+}
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Migration Reviews",
+  "url": "https://migrationreviews.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://migrationreviews.com/search?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -67,6 +92,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          id="schema-organization"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <Script
+          id="schema-website"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -74,8 +111,6 @@ export default function RootLayout({
           <PageContentProvider page="navbar">
             <Navbar />
           </PageContentProvider>
-
-          {/* <Breadcrumbs/> */}
 
           <GlobalPrefetch />
           {children}

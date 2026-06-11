@@ -1,20 +1,17 @@
 import type { MetadataRoute } from "next"
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://migrationreviews.com"
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: "/",  // Allow everything by default
+        allow: "/",
         disallow: [
-          // Private API endpoints
           "/api/auth/",
           "/api/admin/",
           "/api/private/",
-          
-          // Private pages
           "/login/",
           "/register/",
           "/reset-password/",
@@ -24,6 +21,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   }
 }

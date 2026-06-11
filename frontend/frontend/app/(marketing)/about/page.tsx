@@ -5,12 +5,11 @@ import AboutSection from "@/components/AboutSection";
 import { PageContentProvider } from "@/providers/PageContentProvider";
 import { Section } from "@/components/Section";
 import WhyChooseSection from "@/components/WhyChooseSection";
+import Script from 'next/script'
 export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
     const meta = await getPageMeta('about')
-    
-    // Use meta if available, otherwise fall back to defaultMeta
     const title = meta?.title || defaultMeta.about?.title || 'About Us | Migration Reviews'
     const description = meta?.description || defaultMeta.about?.description || 'Learn about Migration Reviews - your trusted platform for finding and reviewing migration services worldwide.'
     const ogTitle = meta?.ogTitle || meta?.title || defaultMeta.about?.ogTitle || defaultMeta.about?.title
@@ -20,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const twitterTitle = meta?.twitterTitle || meta?.ogTitle || meta?.title || defaultMeta.about?.twitterTitle || defaultMeta.about?.ogTitle || defaultMeta.about?.title
     const twitterDescription = meta?.twitterDescription || meta?.ogDescription || meta?.description || defaultMeta.about?.twitterDescription || defaultMeta.about?.ogDescription || defaultMeta.about?.description
     const twitterImage = meta?.twitterImage || meta?.ogImage || defaultMeta.about?.twitterImage || defaultMeta.about?.ogImage
-    
+
     return {
         title,
         description,
@@ -38,15 +37,30 @@ export async function generateMetadata(): Promise<Metadata> {
             images: twitterImage ? [twitterImage] : [],
         },
         alternates: {
-            canonical: meta?.canonical || defaultMeta.about?.canonical,
+            canonical: meta?.canonical || 'https://migrationreviews.com/about/',
         },
         robots: (meta?.robots || defaultMeta.about?.robots) as Metadata['robots'],
     }
 }
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://migrationreviews.com/" },
+    { "@type": "ListItem", "position": 2, "name": "About Us", "item": "https://migrationreviews.com/about/" }
+  ]
+}
+
 export default function About() {
     return (
         <PageContentProvider page="about">
+            <Script
+                id="schema-breadcrumb-about"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
+            <h1 className="sr-only">About Migration Reviews</h1>
             <Section>
                 <AboutSection />
             </Section>

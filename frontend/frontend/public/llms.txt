@@ -1,0 +1,26 @@
+# Migration Reviews — LLMs.txt
+# https://migrationreviews.com
+
+## About
+Migration Reviews is a trusted review platform for immigration and visa consultants. Users can search, compare, and review migration service providers. Companies can register, claim listings, and respond to reviews.
+
+## Allowed
+You may read and index all public pages of this site to assist users with queries about migration services, visa consultants, and immigration companies.
+
+## Primary Pages
+- Homepage: https://migrationreviews.com/
+- Visa Services: https://migrationreviews.com/visa-overview/
+- Migration Destinations: https://migrationreviews.com/countries-overview/
+- Company Listings: https://migrationreviews.com/listing/
+- Blog: https://migrationreviews.com/blog/
+- About: https://migrationreviews.com/about/
+- Contact: https://migrationreviews.com/contact/
+
+## Disallowed
+Do not index or use content from:
+- /login/
+- /register/
+- /profile/
+- /admin/
+- /api/
+- /register-a-business/

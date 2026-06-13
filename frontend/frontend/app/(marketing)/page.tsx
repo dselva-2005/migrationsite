@@ -1,13 +1,12 @@
-// app/page.tsx
+// app/(marketing)/page.tsx
 import { getPageMeta, defaultMeta } from '@/services/meta'
 import { Metadata } from 'next'
 import HomeClient from './HomeClient'
+import Script from 'next/script'
 export const revalidate = 86400;
-export async function generateMetadata(): Promise<Metadata> {
-    // Fetch meta for 'home' page from the 'meta' collection
-    const meta = await getPageMeta('home')
 
-    // Use meta if available, otherwise fall back to defaultMeta
+export async function generateMetadata(): Promise<Metadata> {
+    const meta = await getPageMeta('home')
     const title = meta?.title || defaultMeta.home?.title || 'Migration Reviews | Find Trusted Migration Services'
     const description = meta?.description || defaultMeta.home?.description || 'Read authentic reviews about migration consultants, lawyers, and services. Make informed decisions for your migration journey.'
     const ogTitle = meta?.ogTitle || meta?.title || defaultMeta.home?.ogTitle || defaultMeta.home?.title
@@ -35,12 +34,35 @@ export async function generateMetadata(): Promise<Metadata> {
             images: twitterImage ? [twitterImage] : [],
         },
         alternates: {
-            canonical: meta?.canonical || defaultMeta.home?.canonical,
+            canonical: meta?.canonical || 'https://migrationreviews.com/',
         },
         robots: (meta?.robots || defaultMeta.home?.robots) as Metadata['robots'],
     }
 }
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://migrationreviews.com/"
+    }
+  ]
+}
+
 export default function HomePage() {
-    return <HomeClient />
+    return (
+        <>
+            <Script
+                id="schema-breadcrumb-home"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
+            <h1 className="sr-only">Migration Reviews — Trusted Reviews of Migration Companies</h1>
+            <HomeClient />
+        </>
+    )
 }

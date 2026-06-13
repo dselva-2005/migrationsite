@@ -58,6 +58,10 @@ export const metadata: Metadata = {
       "https://migrationreviews.com/opengraph-image.png"
     ],
   },
+
+  verification: {
+    google: "BWWYHAeDZ6Hf0sItz7mT9OnLrkOF-okq72unPWsMgLI",
+  },
 };
 
 const organizationSchema = {

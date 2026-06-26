@@ -11,6 +11,7 @@ import { BlogListSkeleton } from "@/components/blog/BlogListSkeleton"
 import { BlogSidebarSkeleton } from "@/components/blog/BlogSidebarSkeleton"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import Link from "next/link"
 
 export default function BlogPage() {
     const [posts, setPosts] = useState<BlogPost[]>([])
@@ -29,7 +30,7 @@ export default function BlogPage() {
         async function loadInitial() {
             try {
                 const [postsRes, categoriesRes] = await Promise.all([
-                    getBlogPosts(1), // Explicitly fetch page 1
+                    getBlogPosts(1),
                     getBlogCategories(),
                 ])
 
@@ -55,14 +56,13 @@ export default function BlogPage() {
         }
     }, [])
 
-    // Load more posts - FIXED: Added skipCache: true
+    // Load more posts
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) return
 
         setLoadingMore(true)
         try {
             const nextPage = currentPage + 1
-            // IMPORTANT: Use skipCache to ensure fresh data for next pages
             const postsRes = await getBlogPosts(nextPage, { skipCache: true })
             
             setPosts(prev => [...prev, ...postsRes.results])
@@ -71,7 +71,6 @@ export default function BlogPage() {
             setCurrentPage(nextPage)
         } catch (err) {
             console.error("Failed to load more posts:", err)
-            // Optionally show a toast notification here
         } finally {
             setLoadingMore(false)
         }
@@ -79,6 +78,28 @@ export default function BlogPage() {
 
     return (
         <PageContentProvider page="blog">
+            <h1 className="sr-only">Immigration Blog — Expert Guides, Visa Tips & Consultant Advice</h1>
+            
+            {/* SEO Content Block — Blog Intro */}
+            <Section tone="neutral">
+                <div className="max-w-4xl mx-auto mb-12 text-left">
+                    <div className="border-b border-border/60 pb-8">
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">
+                            Immigration Blog & Resource Hub
+                        </h2>
+                        <p className="text-base leading-relaxed text-muted-foreground mb-4">
+                            Welcome to the Migration Reviews blog—your comprehensive resource for immigration advice, visa guides, consultant selection tips, and global migration news. Whether you're planning your first visa application, evaluating immigration consultants, or staying updated on policy changes, our blog provides actionable insights backed by real data and expert experience.
+                        </p>
+                        <p className="text-base leading-relaxed text-muted-foreground mb-4">
+                            Our articles cover the full immigration journey: visa eligibility assessment, step-by-step application guidance for Australia, Canada, UK, USA, and other destinations, how to identify trustworthy immigration consultants, red flags to watch for, cost breakdowns, timeline expectations, and emerging immigration trends. We publish weekly articles written by immigration experts and updated regularly to reflect policy changes.
+                        </p>
+                        <p className="text-base leading-relaxed text-muted-foreground">
+                            Start exploring our blog below, or browse by category on the right. All articles include practical checklists, comparison tables, and links to verify information on official immigration authority websites.
+                        </p>
+                    </div>
+                </div>
+            </Section>
+
             <Section tone="base">
                 {error ? (
                     <div className="py-16 text-center text-red-500">
@@ -115,7 +136,7 @@ export default function BlogPage() {
                                         </div>
                                     )}
                                     
-                                    {/* Optional: Show post count */}
+                                    {/* Post count */}
                                     <div className="mt-4 text-center text-sm text-muted-foreground">
                                         Showing {posts.length} of {totalCount} posts
                                     </div>

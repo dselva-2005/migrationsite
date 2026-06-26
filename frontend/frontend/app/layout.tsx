@@ -23,18 +23,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Migration Reviews | Trusted Reviews of Migration Companies",
+  title: "Migration Reviews | Verified Immigration Consultant Reviews",
   description:
-    "Discover trusted migration reviews and compare migration companies to find the best service providers. Make informed decisions with verified migration company.",
-
+    "Read authentic reviews from verified past clients about immigration consultants, migration agents, and visa lawyers worldwide. Find trustworthy professionals for your visa application.",
+  keywords: "immigration consultant reviews, migration agent reviews, visa lawyer reviews, trusted immigration services, verified consultant ratings",
   icons: {
     icon: "/favicon.png",
   },
-
   openGraph: {
-    title: "Migration Reviews | Trusted Reviews of Migration Companies",
+    title: "Migration Reviews | Verified Immigration Consultant Reviews",
     description:
-      "Discover trusted migration reviews and compare migration companies to find the best service providers. Make informed decisions with verified migration company.",
+      "Read authentic reviews from verified past clients about immigration consultants and migration agents. Make informed decisions for your visa application.",
     url: "https://migrationreviews.com",
     siteName: "Migration Reviews",
     images: [
@@ -42,23 +41,21 @@ export const metadata: Metadata = {
         url: "https://migrationreviews.com/opengraph-image.png",
         width: 1200,
         height: 630,
-        alt: "Migration Reviews - Trusted Migration Company Reviews",
+        alt: "Migration Reviews - Verified Immigration Consultant Reviews",
       },
     ],
     locale: "en_US",
     type: "website",
   },
-
   twitter: {
     card: "summary_large_image",
-    title: "Migration Reviews | Trusted Reviews of Migration Companies",
+    title: "Migration Reviews | Verified Immigration Consultant Reviews",
     description:
-      "Discover trusted migration reviews and compare migration companies to find the best service providers.",
+      "Read authentic reviews from verified past clients about immigration consultants and find trustworthy migration professionals.",
     images: [
       "https://migrationreviews.com/opengraph-image.png"
     ],
   },
-
   verification: {
     google: "BWWYHAeDZ6Hf0sItz7mT9OnLrkOF-okq72unPWsMgLI",
   },
@@ -70,7 +67,7 @@ const organizationSchema = {
   "name": "Migration Reviews",
   "url": "https://migrationreviews.com",
   "logo": "https://migrationreviews.com/favicon.png",
-  "description": "Trusted platform for finding and reviewing migration service providers worldwide.",
+  "description": "Trusted platform for verified immigration consultant reviews and transparent migration service ratings worldwide.",
   "sameAs": []
 }
 
@@ -115,7 +112,6 @@ export default function RootLayout({
           <PageContentProvider page="navbar">
             <Navbar />
           </PageContentProvider>
-
           <GlobalPrefetch />
           {children}
           <AuthToasts />

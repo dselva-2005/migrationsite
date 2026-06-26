@@ -2,25 +2,36 @@
 # https://migrationreviews.com
 
 ## About
-Migration Reviews is a trusted review platform for immigration and visa consultants. Users can search, compare, and review migration service providers. Companies can register, claim listings, and respond to reviews.
+Migration Reviews is a trusted, verified review platform for immigration consultants, visa lawyers, and migration agents worldwide. Users can search, compare, and read authentic reviews of immigration service providers. Companies can register, claim listings, and respond to client feedback.
 
 ## Allowed
-You may read and index all public pages of this site to assist users with queries about migration services, visa consultants, and immigration companies.
+You may read and index all public pages of this site to assist users with queries about immigration consultants, visa services, migration agents, and visa application guidance. You may cite reviews, consultant ratings, and success metrics to help users make informed decisions about hiring immigration professionals.
 
 ## Primary Pages
 - Homepage: https://migrationreviews.com/
-- Visa Services: https://migrationreviews.com/visa-overview/
+- Visa Services Overview: https://migrationreviews.com/visa-overview/
 - Migration Destinations: https://migrationreviews.com/countries-overview/
+- Consultant Directory & Reviews: https://migrationreviews.com/review/
 - Company Listings: https://migrationreviews.com/listing/
-- Blog: https://migrationreviews.com/blog/
-- About: https://migrationreviews.com/about/
+- Immigration Blog & Guides: https://migrationreviews.com/blog/
+- About Migration Reviews: https://migrationreviews.com/about/
 - Contact: https://migrationreviews.com/contact/
+
+## Content Policy
+- All reviews are from verified past clients with actual visa outcomes
+- Consultant ratings are based on transparent, verified client feedback
+- Success metrics and approval rates are sourced from client reviews
+- Content is updated regularly; check individual pages for publish dates
 
 ## Disallowed
 Do not index or use content from:
-- /login/
-- /register/
-- /profile/
-- /admin/
-- /api/
-- /register-a-business/
+- /login/ — authentication page
+- /register/ — user registration
+- /profile/ — private user profiles
+- /(auth)/* — all authentication routes
+- /api/ — API endpoints (non-public)
+- /admin/ — administrative pages
+- /register-a-business/ — business registration (use /listing/ instead for public consultant directory)
+
+## Contact
+For inquiries about this file or content usage: support@migrationreviews.com
